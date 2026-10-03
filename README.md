@@ -1,4 +1,4 @@
-# 07_Dashboard — App Foundation team dashboard
+# Dashboard — App Foundation team dashboard
 
 Team-only, local dashboard for the App Foundation Agile Pilot (Jira project `APP`). It shows the current sprint and the refinement backlog from two JSON snapshots.
 
