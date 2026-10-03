@@ -1,0 +1,423 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "af-dashboard-snapshot-export/snapshot.schema.json",
+  "title": "Dashboard snapshot (sprint.json / backlog.json)",
+  "description": "Shared schema for both dashboard snapshot files exported by export_dashboard_snapshots.py. The 'tickets' array's item shape differs between sprint.json (Daily-sheet fields) and backlog.json (Backlog Prioritized-sheet fields); this schema only requires the fields common to both, which is sufficient for the structural validation the exporter itself runs. A stricter per-file schema (sprintTicket vs backlogTicket) can be layered on top later if the dashboard needs it. sprint.json additionally carries a top-level 'sprint' object (added 10-01-2026) describing the active sprint, sourced from the tracker's Sprint Metrics tab; backlog.json has no such object.",
+  "type": "object",
+  "required": [
+    "refreshedAt",
+    "source",
+    "tickets"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "refreshedAt": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the snapshot was generated, YYYY-MM-DD. Not a timestamp \u2014 the exporter runs manually, at most a few times a day."
+    },
+    "source": {
+      "type": "string",
+      "description": "Which workbook and sheet this snapshot was derived from, e.g. '03_Team_Enablement/daily_tracker.xlsx \u00b7 Daily'."
+    },
+    "tickets": {
+      "type": "array",
+      "description": "One object per row of the source sheet. Empty array is valid (e.g. an empty backlog).",
+      "items": {
+        "type": "object",
+        "required": [
+          "ticket"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The exact Jira ticket key (e.g. 'APP-123'), preserved verbatim. Never blank \u2014 rows with no ticket key are skipped by the exporter rather than exported with a null key."
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "points": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Story points. Always a JSON number (int or float) or null \u2014 never a numeric value encoded as a string."
+          },
+          "doneDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "sprint.json only. YYYY-MM-DD or null. Set only when the ticket's current status is Done; a non-null value on a non-Done ticket is a non-fatal exporter warning, not a schema violation."
+          },
+          "addedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "sprint.json only. YYYY-MM-DD or null \u2014 the date the ticket entered the active sprint, blank if it was already in the sprint at its start."
+          }
+        }
+      }
+    },
+    "sprint": {
+      "type": "object",
+      "description": "sprint.json only. The active sprint's identity and date range, sourced from the Sprint Metrics tab's last (active-sprint) row. Not present in backlog.json.",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Numeric Jira sprint id, parsed from the leading digits of Sprint Metrics' 'Sprint' column."
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Jira sprint name, e.g. 'APP Sprint 10-09-2026'."
+        },
+        "startDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "YYYY-MM-DD, America/Los_Angeles. Null only before the first af-daily-tracker-jira run populates it."
+        },
+        "endDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "YYYY-MM-DD, America/Los_Angeles. Changes if the sprint is extended."
+        },
+        "carriedOver": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Passthrough of Sprint Metrics' 'Carried Over #', 'Carried Over %' and 'Carried Over Story Points' columns for the active sprint; never recalculated from the ticket list. null (the whole object) means not calculated yet (all three source cells empty), which is different from zero carried over.",
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "percent": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Percent of tickets, 0 to 100."
+            },
+            "storyPoints": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "removed": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Tickets that left the active sprint for the backlog bucket (sprint 4994 / Backlog (Prioritized)), from af-jira-changelog-scan pattern 5, sourced from the Removed From Sprint tab. Absent or null = not tracked for this sprint; [] = nothing removed yet.",
+          "items": {
+            "type": "object",
+            "required": [
+              "ticket",
+              "removedDate"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ticket": {
+                "type": "string"
+              },
+              "removedDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "points": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "addedDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "owner": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tester": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fixVersion": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "parent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "sprintTicket": {
+      "type": "object",
+      "description": "The exact shape of each object in sprint.json's 'tickets' array.",
+      "required": [
+        "ticket"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ticket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Original Jira status, preserved verbatim (To Do, Open, In Progress, In Review, Done, or an unrecognized value \u2014 unrecognized values are never dropped or remapped by the exporter). The dashboard UI may choose to display 'Open' as 'To Do'; that is a display-layer decision documented in the skill file, not something this exporter does to the data."
+        },
+        "tester": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "points": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "linkedWorkItems": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fixVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "currentSituation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "blocker": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionOwner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "followUp": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "demo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "discussed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "doneDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "addedDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "cycleTime": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Days from start of work to Done. Populated only when status is Done; null for every other ticket by design (the metric does not apply)."
+        }
+      }
+    },
+    "backlogTicket": {
+      "type": "object",
+      "description": "The exact shape of each object in backlog.json's 'tickets' array.",
+      "required": [
+        "ticket"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ticket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "priority": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dor": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Ready, Weak, Missing, null (blank), or an unrecognized/documented-unknown value \u2014 unrecognized values are preserved verbatim, never dropped."
+        },
+        "points": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "needsSplitting": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "days": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Days in Current Status as a plain integer. A trailing '*' approximation marker in the source cell (e.g. '223*') is stripped; only the number is exported."
+        },
+        "epic": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risk": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quickCheck": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cluster": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        }
+      }
+    }
+  }
+}

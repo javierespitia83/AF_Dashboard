@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backlog - App Foundation</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">App Foundation</div>
+      <nav class="tabs" aria-label="Pages">
+        <a class="tab" href="index.html">Current sprint</a>
+        <a class="tab active" href="backlog.html" aria-current="page">Backlog</a>
+      </nav>
+      <div class="asof" id="asof">Data as of &mdash;</div>
+    </header>
+    <div class="filterbar" id="filterbar"></div>
+    <main class="board" id="app"><p class="loading">Loading&hellip;</p></main>
+    <noscript><p>This dashboard needs JavaScript.</p></noscript>
+    <footer class="foot">Internal &mdash; team only. Do not reuse in executive or external documents without review.</footer>
+  </div>
+  <script src="dashboard.js"></script>
+  <script src="backlog.js"></script>
+</body>
+</html>
