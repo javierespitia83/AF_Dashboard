@@ -1,6 +1,6 @@
-# AGENTS.md — 07_Dashboard
+# AGENTS.md — AF_Dashboard
 
-Rules for AI coding agents working in this folder. **Read the project root `AGENTS.md` first** — it holds the project-wide rules (English only, never permanently delete files, never use the `temp_snaplogic` folder, re-read a file before editing it). This file only adds what is specific to the dashboard. If the two ever disagree, the root file wins.
+Rules for AI coding agents working in this standalone app folder. Before editing, read the project rules at `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/AGENTS.md` and the app documents below. This file adds dashboard-specific rules; project-wide rules take precedence.
 
 ## Commands
 
@@ -8,14 +8,15 @@ Rules for AI coding agents working in this folder. **Read the project root `AGEN
 # Run the dashboard (from this folder)
 python3 -m http.server 8000        # then open http://localhost:8000/
 
-# Refresh the data (from the project root; close daily_tracker.xlsx in Excel first)
+# Refresh the data (from the AF_Snaplogic project root; close daily_tracker.xlsx first)
+cd "/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic"
 python3 05_Automation/export_dashboard_snapshots.py
 ```
 
-There is no build step and no `npm`. Verification is described in `ACCEPTANCE.md`. After any change run the automated checks (Node 22+, python3, Chrome; about two minutes; exit code 0 means all pass):
+There is no build step and no `npm`. Verification is described in `ACCEPTANCE.md`. When the user requests implementation verification, run the automated checks (Node 22+, python3, Chrome; about two minutes; exit code 0 means all pass):
 
 ```bash
-node 07_Dashboard/scripts/run_acceptance.js
+node scripts/run_acceptance.js
 ```
 
 Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and `ACCEPTANCE.md`. It must stay read-only with respect to the real data files and the tracker.
@@ -30,7 +31,7 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Stack limits (hard)
 
-- Plain HTML, CSS and JavaScript. No framework, no `npm`, no CDN, no external fonts, no network requests.
+- Plain HTML, CSS and JavaScript. No framework, no `npm`, no CDN, no external fonts, no app-initiated remote requests. The app fetches only the two local snapshots; user-clicked Jira links may navigate to Jira.
 - No chart library. Draw bars with HTML/CSS (or inline SVG).
 - No backend. The app is static files served by `python3 -m http.server`.
 - Light mode only.
@@ -47,12 +48,12 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Files you must not overwrite without inspecting first
 
-`sprint.json`, `backlog.json`, `schema/snapshot.schema.json`, `fixtures/sample_snapshot.json`, `../05_Automation/export_dashboard_snapshots.py`, `../06_Skills/af-dashboard-snapshot-export.md`. If the mapping changes, the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` change together in one pass.
+`sprint.json`, `backlog.json`, `schema/snapshot.schema.json`, `fixtures/sample_snapshot.json`, `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/05_Automation/export_dashboard_snapshots.py`, and `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`. If the mapping changes, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 
 ## Do not touch
 
-- `../08__Dashboard_Archive/` — an older, separate attempt. Read-only reference at most; do not copy its code in without telling Carlos.
-- `../03_Team_Enablement/daily_tracker.xlsx` — only the tracker skills edit it.
+- `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/08__Dashboard_Archive/` — an older, separate attempt. Read-only reference at most; do not copy its code in without telling Carlos.
+- `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` — only the tracker skills edit it.
 
 ## Conventions
 

@@ -1,4 +1,4 @@
-# 07_Dashboard — App Foundation team dashboard
+# AF_Dashboard — App Foundation team dashboard
 
 Team-only, local dashboard for the App Foundation Agile Pilot (Jira project `APP`). It shows the current sprint and the refinement backlog from two JSON snapshots.
 
@@ -12,7 +12,7 @@ Team-only, local dashboard for the App Foundation Agile Pilot (Jira project `APP
 | Documentation (this folder's `.md` files) | Done |
 | Web pages: `index.html` (sprint), `backlog.html` (backlog), `dashboard.css`, `dashboard.js`, `sprint.js`, `backlog.js` | v2 (BI-style, cross-filtering) built 2026-10-01; checks to run are in `ACCEPTANCE.md`; what was verified is in the `DECISIONS.md` log |
 
-An earlier, separate attempt is archived in `../08__Dashboard_Archive/`. It is not part of this build.
+An earlier, separate attempt is archived in `AF_Snaplogic/08__Dashboard_Archive/`. It is not part of this build.
 
 ## Pages
 
@@ -24,31 +24,31 @@ v2 is a full-screen, Power BI / Tableau-style dashboard for a **1920 x 1080** br
 ## How to run
 
 ```bash
-cd "<project root>/07_Dashboard"
+cd "$HOME/Documents/Code_Projects/AF_Dashboard"
 python3 -m http.server 8000
 ```
 
-Open `http://localhost:8000/` in a Chromium-based browser (VS Code's primary environment). Opening the HTML files directly with `file://` is not supported, because browsers block `fetch()` of local JSON there. No internet connection is needed once the snapshots exist.
+Open `http://localhost:8000/` in a Chromium-based browser (VS Code's primary environment). Opening the HTML files directly with `file://` is not supported, because browsers block `fetch()` of local JSON there. The dashboard loads without internet access; opening Jira links requires a connection.
 
 ## How to refresh the data
 
 The pages only read `sprint.json` and `backlog.json`. They never read Excel.
 
-1. Update the tracker (`03_Team_Enablement/daily_tracker.xlsx`) and **close it in Excel** (the exporter refuses to run while the lock file `~$daily_tracker.xlsx` exists).
-2. From the project root, run:
+1. Update the tracker (`AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx`) and **close it in Excel** (the exporter refuses to run while the lock file `~$daily_tracker.xlsx` exists).
+2. From the `AF_Snaplogic` project root, run:
    ```bash
    python3 05_Automation/export_dashboard_snapshots.py
    ```
 3. Reload the page in the browser.
 
-The export is manual, read-only, and keeps only the latest snapshot (no history). Full behavior: `../06_Skills/af-dashboard-snapshot-export.md`.
+The export is manual, read-only, and keeps only the latest snapshot (no history). Full behavior: `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`.
 
 ## How to test
 
-After any change to the pages or the data, run the automated acceptance checks from the project root:
+Run the automated acceptance checks from this app folder when verification is requested:
 
 ```bash
-node 07_Dashboard/scripts/run_acceptance.js
+node scripts/run_acceptance.js
 ```
 
 It needs Node 22 or newer, python3 and Google Chrome (set `CHROME_PATH` if Chrome is not in the default macOS location). It takes about two minutes, prints PASS or FAIL per check, and exits 0 only if everything passes. It is read-only: it never changes the real data files, the tracker or the app. Details of what it covers: `ACCEPTANCE.md`.
@@ -78,6 +78,7 @@ It needs Node 22 or newer, python3 and Google Chrome (set `CHROME_PATH` if Chrom
 3. `IMPLEMENTATION.md` — how it is built.
 4. `BUILD_PLAN.md` — the steps to build it.
 5. `ACCEPTANCE.md` — how to know it is done.
+6. `WORKFLOW_AUDIT.md` — skill ownership, context-cost findings, and app-doc maintenance notes.
 
 ## Recreating the app with another AI
 

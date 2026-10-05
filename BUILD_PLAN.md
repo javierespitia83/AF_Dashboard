@@ -2,10 +2,10 @@
 
 Audience: an AI agent rebuilding the app from the documents. Follow the steps in order; each ends with a check you can run. Do not skip the documentation reading (step 0) and do not build features that are not in `SPEC.md`. Design rationale lives in `DECISIONS.md`; code structure in `IMPLEMENTATION.md`.
 
-Working rules (from `AGENTS.md`): English only; never hand-edit `sprint.json` / `backlog.json`; never invent missing values (`—` instead); update the docs *before* changing behaviour; never delete files permanently; do not touch `../08__Dashboard_Archive/` or `../03_Team_Enablement/daily_tracker.xlsx`.
+Working rules (from `AGENTS.md`): English only; never hand-edit `sprint.json` / `backlog.json`; never invent missing values (`—` instead); update the docs *before* changing behaviour; never delete files permanently; do not touch the archive or tracker at their AF_Snaplogic paths documented in `AGENTS.md`.
 
 ## Step 0 — Read, in this order
-1. `README.md` (orientation) → 2. `SPEC.md` → 3. `DATA_CONTRACT.md` → 4. `IMPLEMENTATION.md` → 5. `ACCEPTANCE.md` → 6. `DECISIONS.md` (sections 1–2c and the open questions) → 7. `AGENTS.md`, then the project root `../AGENTS.md`.
+1. `README.md` (orientation) → 2. `SPEC.md` → 3. `DATA_CONTRACT.md` → 4. `IMPLEMENTATION.md` → 5. `ACCEPTANCE.md` → 6. `DECISIONS.md` (sections 1–2c and the open questions) → 7. app `AGENTS.md`, then the AF_Snaplogic project rules at the absolute path listed there.
 Confirm the data exists: `sprint.json`, `backlog.json`, `schema/snapshot.schema.json`, `fixtures/sample_snapshot.json`. If the JSON is missing or stale, see Step 12.
 
 ## Step 1 — Shell and data loading
@@ -37,24 +37,24 @@ Check `DATA_CONTRACT.md` §2a: the sprint file must carry `sprint {id,name,start
 **Check:** values equal the hand-computed answers from a small hand-made sprint (the harness uses six tickets; remaining `[11,6,3,3]`, 3.3 days, 2 added, 3 carried over).
 
 ## Step 8 — Burndown
-Implement `burndown()` then `drawBurndown()` exactly as in `IMPLEMENTATION.md` §7 (scope stepping up on each ticket's `addedDate`, ideal line from the starting scope to 0 linear over calendar days, today = `refreshedAt`, pre-start `doneDate` counts on day 1, Done without `doneDate` not subtracted and counted in the footnote). Place it first in the main row. Redraw on window resize with a `ResizeObserver`; derive the height from the container.
-**Check:** one point per calendar day; no remaining value after today; Today marker only when inside the sprint; responds to every filter; empty state with zero tickets; message when dates are missing; no scroll bars; readable at 1366×768 (this is where the chart was once cut off).
+Implement `burndown()` then `drawBurndown()` exactly as in `IMPLEMENTATION.md` §7 (scope steps for ticket additions and, when present, `sprint.removed`; ideal line from the starting scope to 0 over calendar days; today = `refreshedAt`; pre-start `doneDate` counts on day 1; Done without `doneDate` is not subtracted and is counted in the footnote). Place it first in the main row. Redraw on window resize with a `ResizeObserver`; derive the height from the container.
+**Check:** one point per calendar day; no remaining value after today; Today marker only when inside the sprint; additions and removals respond to filters; empty state with zero tickets; message when dates are missing; no scroll bars; readable at 1366×768 (this is where the chart was once cut off).
 
-## Step 9 — Mid-sprint markers and the added-tickets panel
-Markers on the x axis (`g.bd-added`), `+N` labels, tooltips that say the dates are approximate. Clicking a marker (or Enter/Space) opens the panel (`.bd-pop`) with the tickets added that day; same marker, × or Escape closes; it follows filters, survives resize, changes no filter, stays inside the tile. See `SPEC.md` §6.3 and `DECISIONS.md` D44.
+## Step 9 — Change markers and ticket panels
+Add keyboard-accessible x-axis markers for ticket additions (`g.bd-added`) and removals (`g.bd-removed`). Addition markers show `+N`; removal markers show `−N` below the axis and move date labels down. Tooltips state when dates are approximate. Clicking a marker (or Enter/Space) opens the panel (`.bd-pop`) with that date's tickets; the same marker, ×, or Escape closes it. The panel follows filters, survives resize, changes no filter, and stays inside the tile. See `SPEC.md` §6.3 and `DECISIONS.md` D44/D52.
 **Check:** `ACCEPTANCE.md` burndown block.
 
 ## Step 10 — Accessibility pass
 Real buttons for everything clickable, `aria-pressed`, visible focus, keyboard focus kept after a redraw (`data-key`), scroll position kept, contrast, no colour-only signals, `aria-label` on the SVG, `aria-live` for the DoR hint.
 
 ## Step 11 — Automated acceptance
-Write or reuse `scripts/run_acceptance.js` (design in `IMPLEMENTATION.md` §10). Run `node 07_Dashboard/scripts/run_acceptance.js` from the project root; expect exit code 0 and `TOTAL 204 PASS 204 FAIL 0` for the reference build (the count grows with features). Then do by eye what it cannot: Safari/Firefox, real screen reader, a physical 1920×1080 monitor.
+Write or reuse `scripts/run_acceptance.js` (design in `IMPLEMENTATION.md` §10). Run `node scripts/run_acceptance.js` from this app folder; the documented reference build has 204 checks (the count grows with features). Then do by eye what it cannot: Safari/Firefox, a real screen reader, and a physical 1920×1080 monitor.
 
 ## Step 12 — Refresh data (when needed)
 Close the tracker in Excel, then `python3 05_Automation/export_dashboard_snapshots.py` from the project root (needs `openpyxl`; use a virtual environment if no system Python has it: `python3 -m venv <dir> && <dir>/bin/pip install openpyxl`). The exporter uses the local machine date for `refreshedAt`; a different time zone can shift "Today" by a day versus Pacific-dated Jira dates (known, D-log).
 
 ## Step 13 — Close out
-Update `README.md` status and counts, add a dated line to the `DECISIONS.md` log (what was built, what was verified, known limits), and keep `../AGENTS.md` §3 accurate.
+Update `README.md` status and counts and add a dated line to `DECISIONS.md` (what was built, what was verified, known limits). Update the AF_Snaplogic root rules only if this work changes a project-wide fact or standing rule.
 
 ## Pitfalls found while building (do not repeat)
 - A tile helper that skipped the subtitle element when `sub` was an empty string crashed the page; create the element whenever `sub !== undefined`.

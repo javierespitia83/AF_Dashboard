@@ -44,7 +44,7 @@ Pure (no DOM; unit-checkable in the browser console, e.g. `AF.statusTotals(AF.ti
 | `dayNum(iso)` / `isoOf(n)` / `shortDate(iso)` | Dates as whole UTC days (no time-zone shifts); `shortDate` → `M/D`. |
 | `avgCycleTime(tickets)` → `{avg,n}` | Mean `cycleTime` over Done tickets with a numeric value. |
 | `midSprintAdded(tickets,sprint,thr)` → `{thresholdDate,count,points,tickets}` or `null` | `addedDate > startDate + thr days` (string compare of ISO dates). |
-| `burndown(tickets,sprint,today,thr)` → model or `null` (see §7) | |
+| `burndown(tickets,sprint,today,thr,removed)` → model or `null` (see §7) | `removed` is the filtered `sprint.removed` list, or an empty list when absent. |
 
 DOM helpers: `el(tag,attrs,children)` (attrs: `class`, `text`, `style`, `onclick`-style listeners, anything else becomes an attribute; children are nodes or strings), `clear`, `isMulti(event)`, `tile({title,sub,cls})` → `{root,head,colhead,body,foot}`, `rebuild(tile, fn)` (clears colhead/body/foot, runs `fn`, restores scroll and — via `data-key` — keyboard focus, hides empty colhead/foot), `rowButton({key,cls,selected,dimmed,title,onclick(multi)},children)` (a real `<button class="rowbtn [sel] [dim]" aria-pressed>`), `statusDot`, `stackedBar(segments,total,scale)`, `simpleBar(pct,cls,title)`, `heatStyle(n,max)`, `buildTable(cols,rows,{cls})` (each col `{label,cls,render(row)}`; `null` renders `—`), `filterBar(container,store,controls)` → `update()`, `heatGrid(tile,crossTab,{corner,rowSel,colSel,unit,onCell})`, `emptyState(text)`, `showError`, `setUpdated`.
 
@@ -103,9 +103,9 @@ Clickable things are real `<button>`s in tab order with a visible focus outline 
 
 ## 9. Data pipeline (outside this folder, needed to refresh data)
 
-`03_Team_Enablement/daily_tracker.xlsx` (sheets `Daily`, `Backlog Prioritized`) → `05_Automation/export_dashboard_snapshots.py` (read-only, manual, atomic write, refuses to run while the Excel lock file exists, needs `openpyxl`) → `sprint.json`, `backlog.json` validated by `schema/snapshot.schema.json`. Mapping rules: `DATA_CONTRACT.md` and `../06_Skills/af-dashboard-snapshot-export.md`. A rebuild that has no tracker can develop against `fixtures/sample_snapshot.json` (four sprint tickets with edge cases) and hand-made JSON. If a new field is needed, the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` change together in one pass.
+`AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` (sheets `Daily`, `Backlog Prioritized`) → `AF_Snaplogic/05_Automation/export_dashboard_snapshots.py` (read-only, manual, atomic write, refuses to run while the Excel lock file exists, needs `openpyxl`) → `sprint.json`, `backlog.json` validated by `schema/snapshot.schema.json`. Mapping rules: `DATA_CONTRACT.md` and the AF_Snaplogic skill `af-dashboard-snapshot-export.md` at the absolute path listed in `AGENTS.md`. A rebuild that has no tracker can develop against `fixtures/sample_snapshot.json` (four sprint tickets with edge cases) and hand-made JSON. If a new field is needed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 
-Known data limits that the UI must keep showing, not hide: `addedDate` is approximate for tickets that are not Done (taken from Jira *Created*), so late additions can be understated in the stepped burndown scope (D45); tickets removed from the sprint and re-estimates are not reflected; `sprint.carriedOver` has a ticket percentage only (no points percentage).
+Known data limits that the UI must keep showing, not hide: `addedDate` is approximate for tickets that are not Done (taken from Jira *Created*), so late additions can be understated in the stepped burndown scope (D45); removals are reflected only when `sprint.removed` is present, and re-estimates are not reflected; `sprint.carriedOver` has a ticket percentage only (no points percentage).
 
 ## 10. The acceptance script (`scripts/run_acceptance.js`)
 
