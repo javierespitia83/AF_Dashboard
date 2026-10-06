@@ -31,6 +31,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] No page-level scroll (document height does not exceed the viewport, no horizontal overflow) on both pages.
 - [ ] The board fills the viewport: tiles reach the right edge with equal gutters; no max-width cap; no large empty areas.
 - [ ] Sprint: KPI strip with seven tiles (work items, story points, done, no tester, avg cycle time, added mid-sprint, carried over); main row with four tiles (burndown, status, assignee, tester); lower row with the ticket table and the assignee x tester grid. Backlog: KPI strip with five tiles; main row with five tiles; table below.
+- [ ] At dashboard sizes, the sprint main/lower row heights use a 1.1475:1.2025 ratio, transferring 15% of the former main-row height to the lower row; total board height stays within the viewport.
 - [ ] Long tile bodies (assignee list, tester list, matrix, detail and backlog tables) scroll inside the tile with a visible scrollbar; headers stay sticky; Total lines stay pinned.
 - [ ] Layout also works with no page scroll at 1440 x 900 and 1536 x 864.
 - [ ] Below 1366 wide or 760 high the page falls back to a scrolling layout: no element extends beyond the viewport outside the tile scroll areas, no page-level horizontal scroll, tiles stack (checked at 1280 x 720, 1024 x 768, 800 x 900 and 480 x 900).

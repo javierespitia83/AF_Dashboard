@@ -63,7 +63,7 @@ KPI strip  [ Work items ][ Story points ][ Done ][ No tester ][ Avg cycle time ]
 Main row   [ Burndown ][ Tickets by status ][ Work by assignee ][ Work by tester ]
 Lower row  [ Ticket detail table ][ Assignee x tester ]
 ```
-Rows share the board height: the KPI strip is compact (about 90 px); the main row takes roughly 57% of the remaining height; the lower row the rest. Main row column widths are roughly 1.8 : 1 : 1.25 : 1.25 (the status tile never narrower than 250 px). In the lower row the heat grid has about 28% of the width (at least 440 px) and the ticket table the rest. (Revised 2026-10-01: the burndown joined the main row and the heat grid moved to the lower row, D41.) Every tile has a title, a one-line subtitle, a body that scrolls internally when it overflows (sticky header, visible scrollbar), and where useful a pinned Total line.
+Rows share the board height: the KPI strip is compact (about 90 px); the main row takes about 48.8% of the remaining height and the lower row about 51.2%. This transfers 15% of the main row's previous height to the lower row while keeping total height unchanged. Main row column widths are roughly 1.8 : 1 : 1.25 : 1.25 (the status tile never narrower than 250 px). In the lower row the heat grid has about 28% of the width (at least 440 px) and the ticket table the rest. (Revised 2026-10-01: the burndown joined the main row and the heat grid moved to the lower row, D41.) Every tile has a title, a one-line subtitle, a body that scrolls internally when it overflows (sticky header, visible scrollbar), and where useful a pinned Total line.
 
 ### 6.2 Tiles
 
