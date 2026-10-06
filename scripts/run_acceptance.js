@@ -381,8 +381,11 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('No tester KPI excludes exact Dev to Test classifications (18 of 74)', noTesterKeys.length === 18 && kpi('No tester').querySelector('.value').textContent === '18' && kpi('No tester').querySelector('.hint').textContent.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: kpi('No tester').querySelector('.hint').textContent });
   await run(p, `clickEl(kpi('No tester'))`);
   let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  check('Click No tester filters the lower section to matching tickets', eq([...lowerKeys].sort(), [...noTesterKeys].sort()), { expected: noTesterKeys.length, actual: lowerKeys.length });
-  await run(p, `clickEl(kpi('No tester'))`);
+  const resetEnabled = await run(p, `return !document.querySelector('.resetall').disabled`);
+  check('Click No tester filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
+  await run(p, `clickReset()`);
+  lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  check('Reset all clears the KPI filter and restores the lower section', lowerKeys.length === S.length && !kpi('No tester').classList.contains('selected'), lowerKeys.length);
   const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
   await run(p, `clickEl(kpi('Carried over'))`);
   lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
@@ -394,6 +397,8 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('Layout 1920x1080: 7 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 13 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
   check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 40px of the footer)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
   check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(7, 11).map(t => t.h)).size === 1 && new Set(L.tiles.slice(11, 13).map(t => t.h)).size === 1 && L.tiles[11].w + L.tiles[12].w + 10 >= L.iw - 30 && L.tiles[12].w >= 440 && L.tiles[12].w <= 0.32 * L.iw, L.tiles.slice(7));
+  const rowRatio = L.tiles[7].h / L.tiles[11].h;
+  check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
   check('Layout: main row is Burndown, Tickets by status, Work by assignee, Work by tester; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(7).map(t => t.title), ['Burndown', 'Tickets by status', 'Work by assignee', 'Work by tester', 'Ticket detail', 'Assignee x tester']) && L.tiles[8].w >= 250, L.tiles.slice(7).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
   const st = await run(p, `const out={}; for (const [k,t] of [['assignee','Work by assignee'],['detail','Ticket detail'],['matrix','Assignee x tester']]) { const b=tile(t).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; b.scrollTop=0;} const ft=tile('Work by assignee').querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile('Work by assignee').getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);

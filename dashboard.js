@@ -595,7 +595,7 @@
       if (store.search.tag) {
         tagBox.appendChild(tag(store.search.tag, 'Remove search filter', function () { store.setSearch('', null, ''); }));
       }
-      if (!tags.length && !store.search.tag) {
+      if (!store.isActive()) {
         tagBox.appendChild(el('span', { class: 'nofilter', text: 'No filters. Click a bar, a person, or a cell to filter.' }));
       }
       resetBtn.disabled = !store.isActive();
