@@ -53,6 +53,8 @@
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
     var lowerFilter = null;
+    var hasDashboardFilters = store.isActive;
+    store.isActive = function () { return !!lowerFilter || hasDashboardFilters(); };
     var carriedKeys = sprint && sprint.carriedOver && Array.isArray(sprint.carriedOver.ticketKeys)
       ? sprint.carriedOver.ticketKeys : null;
 
@@ -69,9 +71,7 @@
       if (lowerFilter === 'carriedOver') return !!(carriedKeys && carriedKeys.indexOf(t.ticket) !== -1);
       return true;
     }
-    function setLowerFilter(name) {
-      if (name === 'carriedOver' && !carriedKeys) lowerFilter = name;
-      else lowerFilter = lowerFilter === name ? null : name;
+    function syncLowerKpis() {
       [kMid, kCarried, kNoTester].forEach(function (kpi) {
         var selected =
           (kpi === kMid && lowerFilter === 'midSprint') ||
@@ -80,7 +80,13 @@
         kpi.root.classList.toggle('selected', selected);
         kpi.root.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
+    }
+    function setLowerFilter(name) {
+      if (name === 'carriedOver' && !carriedKeys) lowerFilter = name;
+      else lowerFilter = lowerFilter === name ? null : name;
+      syncLowerKpis();
       renderLower();
+      updateBar();
     }
     [[kMid, 'midSprint'], [kNoTester, 'noTester']].concat(carriedKeys ? [[kCarried, 'carriedOver']] : []).forEach(function (entry) {
       entry[0].root.classList.add('clickable');
@@ -94,6 +100,12 @@
         }
       });
     });
+    var resetFilters = store.reset;
+    store.reset = function () {
+      lowerFilter = null;
+      syncLowerKpis();
+      resetFilters();
+    };
 
     app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kNoTester.root, kCycle.root, kMid.root, kCarried.root]));
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tAssignee.root, tTester.root]));
@@ -127,7 +139,7 @@
 
     // ---- renderers ----
     function renderKpis(f) {
-      var filtered = store.isActive();
+      var filtered = hasDashboardFilters();
       var P = AF.sum(f, 'points'), TP = AF.sum(tickets, 'points');
       var doneP = AF.sum(f.filter(function (t) { return AF.bucketOf(t.status) === 3; }), 'points');
       kItems.value.textContent = String(f.length);

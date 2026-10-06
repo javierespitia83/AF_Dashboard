@@ -68,6 +68,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Clicking a matrix cell sets both assignee and tester; clicking the same cell again clears both.
 - [ ] Fix version and Parent selects filter correctly and show their value; "All" clears; `(none)` selects tickets without a value.
 - [ ] Removing a tag with × removes only that value; **Reset all** clears every filter and selects.
+- [ ] A selected sprint KPI filter enables **Reset all**; Reset all clears the KPI selection and restores both lower tiles.
 - [ ] A filter combination that matches nothing shows the empty-state line in each tile, KPIs of 0, an empty-state message in the table, and does not break.
 - [ ] Filtered tiles obey the per-view invariant: with an unselected dimension the tile's totals equal the filtered set's totals.
 

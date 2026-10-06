@@ -381,8 +381,11 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('No tester KPI excludes exact Dev to Test classifications (18 of 74)', noTesterKeys.length === 18 && kpi('No tester').querySelector('.value').textContent === '18' && kpi('No tester').querySelector('.hint').textContent.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: kpi('No tester').querySelector('.hint').textContent });
   await run(p, `clickEl(kpi('No tester'))`);
   let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  check('Click No tester filters the lower section to matching tickets', eq([...lowerKeys].sort(), [...noTesterKeys].sort()), { expected: noTesterKeys.length, actual: lowerKeys.length });
-  await run(p, `clickEl(kpi('No tester'))`);
+  const resetEnabled = await run(p, `return !document.querySelector('.resetall').disabled`);
+  check('Click No tester filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
+  await run(p, `clickReset()`);
+  lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  check('Reset all clears the KPI filter and restores the lower section', lowerKeys.length === S.length && !kpi('No tester').classList.contains('selected'), lowerKeys.length);
   const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
   await run(p, `clickEl(kpi('Carried over'))`);
   lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
