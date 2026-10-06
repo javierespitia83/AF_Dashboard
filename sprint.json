@@ -1,5 +1,5 @@
 {
-  "refreshedAt": "2026-10-05",
+  "refreshedAt": "2026-10-06",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -45,7 +45,7 @@
       "actionOwner": null,
       "followUp": "Reviewed in the 9/30 daily as the ticket tied to Sync Pro (confirmed by Pavan); Poornima's question about whether all defects are fixed wasn't directly answered in the recorded portion. Alan to review Pavan's latest test comments.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2673",
@@ -65,7 +65,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2719",
@@ -85,7 +85,7 @@
       "actionOwner": null,
       "followUp": "Tests are written and QA (Poornima's team) is doing exploratory testing; review comments from Alan were reported as done verbally but not yet logged in the ticket. Alan to leave the review comment in Jira so status is visible without a call.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-556",
@@ -105,7 +105,7 @@
       "actionOwner": null,
       "followUp": "PR in review. Pavan shared test cases on 9/15; Alan reviewed today (9/29) — left a few comments on the first tab but otherwise looks good, close to ready for merge. (Note: the \"on hold, bundled with org-change ticket\" comment from the 9/29 daily refers to a different, unnamed ticket — not this one.) On 9/30, Poornima asked Alan and Shardul to enable `pipeline_settings_panel` for PlatformQA on Canary; Shardul enabled it and Poornima acknowledged. Alan to confirm the quick-check results.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3030",
@@ -125,7 +125,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Added mid-sprint per the 09-23-2026 Jira sync. Poornima flagged this on Slack (9/22) asking for the file-path issue to be tracked against PSWAT-2704; this ticket is that shadow-task link, so the cross-team traceability is already in place.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2974",
@@ -145,7 +145,7 @@
       "actionOwner": null,
       "followUp": "Carried over from sprint 4697, where it was newly added and not yet discussed.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3029",
@@ -165,7 +165,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Added mid-sprint per the 09-23-2026 Jira sync.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3054",
@@ -185,7 +185,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3055",
@@ -205,7 +205,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3094",
@@ -243,14 +243,14 @@
       "currentSituation": "Carlos confirmed in the 9/30 daily that the PR notification was received; Artem confirmed the PR is still not reviewed yet. Awaiting reviewer.",
       "blocker": null,
       "actionOwner": null,
-      "followUp": "Carlos confirmed in the 9/30 daily that the PR notification was received; Artem confirmed the PR is still not reviewed yet. Awaiting reviewer. Awaiting reply from Poornima Srikantesh on Carlos's 9/29 comment: PR review input needed.",
+      "followUp": "Carlos confirmed in the 9/30 daily that the PR notification was received; Artem confirmed the PR is still not reviewed yet. Awaiting reviewer.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2909",
       "owner": "Artem Velykorodnyi",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Anumeha Singh",
       "points": 1,
       "parent": "APP-55 – App Foundation PSWAT",
@@ -265,7 +265,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2944",
@@ -285,7 +285,7 @@
       "actionOwner": null,
       "followUp": "Confirmed dev-to-test in the 9/30 daily: Artem said unit tests are sufficient but it needs UI-level testing since it's complex; Poornima confirmed this is the backend half (UI ticket covers the rest) and no separate tester is needed. Classification updated to dev-to-test.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3039",
@@ -296,16 +296,16 @@
       "parent": "APP-55 – App Foundation PSWAT",
       "linkedWorkItems": "PLATENG-4350 (relates to)",
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-02",
       "addedDate": "2026-09-24",
-      "cycleTime": null,
+      "cycleTime": 8,
       "summary": "Shadow task (not real APP work) created to track Artem Velykorodnyi's review/testing time on PLAT-15090, a Platform-project bug touching APP-adjacent code; kept only for capacity tracking, relates-to PLAT-15090.",
       "currentSituation": "Not discussed yet.",
       "blocker": null,
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3052",
@@ -324,8 +324,8 @@
       "blocker": "SNAP v4 repo change needs a different test path (SNAP deployment, ~2hr) than standard Canary/PR build; not yet confirmed how to test. Post-code-freeze merge needs approval.",
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: in code review. This is a SNAP v4 repo change, which follows a different test process than the usual Canary/PR-build flow — Artem/Anumeha to check with Rohith, the SnapDev team, or Ashok on how to test a SNAP deployment. Also post-code-freeze, so will need approval to merge.",
-      "demo": null,
-      "discussed": null
+      "demo": "Yes",
+      "discussed": "No"
     },
     {
       "ticket": "APP-2479",
@@ -345,7 +345,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2758",
@@ -365,7 +365,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2939",
@@ -385,33 +385,13 @@
       "actionOwner": null,
       "followUp": "Root cause confirmed: Validate button checked the previously-saved git host, not the value typed in the field. Poornima flagged missing AC (9/22); AI-generated QAForge test plan reviewed 9/23 — it derived solid AC from the PR diff (since none existed on the ticket) and found 2 real gaps: (1) the GitHub provider's Validate button passes the raw click event as git_host instead of a URL string — a genuine bug found in the diff, not yet fixed; (2) Azure, Bitbucket Datacenter, GitLab Cloud and GitLab On-Prem have code changes but zero test coverage (only GHES has a Playwright test, and even that one's mock uses successful:false so it doesn't truly verify the success message). Discussed in the 9/24 daily: only remaining pending item is the Playwright/TestRail test-case linkage; no new blockers reported.",
       "demo": "Yes",
-      "discussed": null
-    },
-    {
-      "ticket": "APP-3067",
-      "owner": "Barbora Novakova",
-      "status": "Open",
-      "tester": null,
-      "points": null,
-      "parent": "APP-2957 – 2026 Ability for an Admin to lock/unlock users as well as resend new user invitation email",
-      "linkedWorkItems": "APP-2968 (blocks), APP-3074 (relates to)",
-      "fixVersion": "4.46",
-      "doneDate": null,
-      "addedDate": "2026-09-29",
-      "cycleTime": null,
-      "summary": "Return account lockout and password update details in the user settings API.",
-      "currentSituation": "Not discussed yet.",
-      "blocker": null,
-      "actionOwner": null,
-      "followUp": "Not discussed yet.",
-      "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2931",
       "owner": "Bornali Nath",
       "status": "In Progress",
-      "tester": null,
+      "tester": "Bornali Nath",
       "points": 5,
       "parent": "APP-2914 – Epic to track QA Activities for 4.45.2.0",
       "linkedWorkItems": null,
@@ -425,7 +405,7 @@
       "actionOwner": null,
       "followUp": "Carried over from sprint 4697, where backlog automation was in progress and expected to slip behind Playwright suite fixes; status not yet re-verified this sprint.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3034",
@@ -445,7 +425,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3056",
@@ -465,7 +445,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3057",
@@ -485,7 +465,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-1710",
@@ -505,7 +485,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2476",
@@ -524,28 +504,28 @@
       "blocker": null,
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Status corrected 9/23: Jira shows In Review, not Open as previously recorded. Discussed in the 9/24 daily: Guannan is merging now; Poornima to test today. No blockers.",
-      "demo": null,
-      "discussed": null
+      "demo": "Yes",
+      "discussed": "No"
     },
     {
       "ticket": "APP-2785",
       "owner": "Guannan He",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "points": 5,
       "parent": "APP-1947 – Restyle Project Manager",
       "linkedWorkItems": "DOC-3398 (relates to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-05",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 13,
       "summary": "Build an org-wide Account Usage report in Monitor, sourced from Classic Manager account stats.",
       "currentSituation": "Discussed in the 9/30 daily: Anumeha confirmed the QA test-case sheet was already shared; Guannan can review and proceed with automation. Poornima asked Anumeha to add a comment confirming these are the final QA-reviewed test cases; Anumeha agreed to add it.",
       "blocker": "Sheet has no per-row Reference/ID; Canary pod run failed, retry pending.",
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: Anumeha confirmed the QA test-case sheet was already shared; Guannan can review and proceed with automation. Poornima asked Anumeha to add a comment confirming these are the final QA-reviewed test cases; Anumeha agreed to add it.",
-      "demo": null,
-      "discussed": null
+      "demo": "Yes",
+      "discussed": "No"
     },
     {
       "ticket": "APP-2927",
@@ -565,7 +545,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2967",
@@ -584,8 +564,8 @@
       "blocker": null,
       "actionOwner": null,
       "followUp": "This spike is effectively finished — refined into APP-2968, APP-3010 and APP-3011 per Guannan's comment. In the daily, Guannan said moving it to Done is Derek's call; Derek to confirm the spike can be closed.",
-      "demo": null,
-      "discussed": null
+      "demo": "Spike",
+      "discussed": "No"
     },
     {
       "ticket": "APP-2971",
@@ -605,7 +585,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Ticket is unassigned in Jira — flagged to Carlos, since every other row has an owner.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3006",
@@ -625,12 +605,12 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3048",
       "owner": "Guannan He",
-      "status": "Open",
+      "status": "In Review",
       "tester": null,
       "points": 2,
       "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
@@ -644,8 +624,8 @@
       "blocker": null,
       "actionOwner": null,
       "followUp": "Discussed in the 9/28 daily's backlog refinement segment: confirmed as a 2-point Spike; team agreed spikes should stay short/time-boxed planning bursts (not open-ended), with resulting stories split out and pointed once the spike concludes. Description updated with two extra lines of context.",
-      "demo": null,
-      "discussed": null
+      "demo": "Spike",
+      "discussed": "No"
     },
     {
       "ticket": "APP-3083",
@@ -665,7 +645,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet. Awaiting reply from Guannan/Poornima on Carlos's 10/5 comment: dev-to-test confirmation.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2882",
@@ -685,7 +665,7 @@
       "actionOwner": null,
       "followUp": "Indrajeet reported this was prioritized and moved to Done this sprint as a cross-team dependency.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2984",
@@ -705,7 +685,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Indrajeet flagged on Slack (9/22) that this blocks the Atlas→Mongo Community Edition migration and asked that the Mongo team be notified ASAP; Indrajeet to notify the Mongo team.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3041",
@@ -725,13 +705,13 @@
       "actionOwner": null,
       "followUp": "Indrajeet reported this was prioritized and moved to Done this sprint as a cross-team dependency (heard as \"946\" in the recording — cross-checked against the sprint ticket list, APP-3041 is the closest match, but this is not 100% confirmed).",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3042",
       "owner": "Indrajeet Kane",
       "status": "In Review",
-      "tester": null,
+      "tester": "Shardul Sardesai",
       "points": 3,
       "parent": "APP-718 – Asset Catalog Enhancements",
       "linkedWorkItems": null,
@@ -745,7 +725,7 @@
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: Indrajeet confirmed no blockers, actively working with no issues to report.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3049",
@@ -765,7 +745,7 @@
       "actionOwner": null,
       "followUp": "Discussed in the 9/28 daily: this shadow-runtime-shard ticket was added to the sprint by a cross-functional team (not created by App Foundation); flagged as touching data that could otherwise be lost, so treated as a near-term fix. Story points estimated at 1 and agreed. Team to keep tracking cross-team-assigned points in a separate bucket so they don't get conflated with the team's own velocity.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-1133",
@@ -783,9 +763,9 @@
       "currentSituation": "Carried over from sprint 4697, where it was the documentation companion to APP-1132 and hadn't been started or discussed — flagged last sprint as a 'ghost ticket' never raised in a daily.",
       "blocker": null,
       "actionOwner": null,
-      "followUp": "Carried over from sprint 4697, where it was the documentation companion to APP-1132 and hadn't been started or discussed — flagged last sprint as a 'ghost ticket' never raised in a daily.",
+      "followUp": "Carried over from sprint 4697, where it was the documentation companion to APP-1132 and hadn't been started or discussed — flagged last sprint as a 'ghost ticket' never raised in a daily. Awaiting reply from Bornali Nath on Carlos's 10/5 comment: tester support (doc review) while Poornima is out.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-1711",
@@ -805,7 +785,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2766",
@@ -825,7 +805,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Awaiting reply from Kyle on Carlos's 9/30 comment: dev-to-test/tester confirmation.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2777",
@@ -845,27 +825,47 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-2781",
+      "owner": "Kyle Scheuerlein",
+      "status": "In Review",
+      "tester": "Namita Prabhu",
+      "points": 3,
+      "parent": "APP-1947 – Restyle Project Manager",
+      "linkedWorkItems": "DOC-3396 (Relates)",
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-05",
+      "cycleTime": null,
+      "summary": "Add an Organization details page to the Sysadmin app so provisioners can view and edit an org's metadata, feature and snap pack subscriptions and API meter limits, which unblocks retiring the legacy Classic Manager.",
+      "currentSituation": "Not discussed yet.",
+      "blocker": null,
+      "actionOwner": null,
+      "followUp": "Not discussed yet.",
+      "demo": null,
+      "discussed": "No"
     },
     {
       "ticket": "APP-2941",
       "owner": "Kyle Scheuerlein",
-      "status": "In Review",
+      "status": "Done",
       "tester": null,
       "points": 1,
       "parent": "APP-142 – UI tech debt",
       "linkedWorkItems": null,
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-05",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 13,
       "summary": "[TechDebt] Lint FormEngine.",
       "currentSituation": "Confirmed dev-to-test by Poornima in the 9/30 daily.",
       "blocker": null,
       "actionOwner": null,
       "followUp": "Confirmed dev-to-test by Poornima in the 9/30 daily.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2972",
@@ -885,12 +885,12 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3061",
       "owner": "Kyle Scheuerlein",
-      "status": "Open",
+      "status": "In Review",
       "tester": "Kyle Scheuerlein",
       "points": 1,
       "parent": "APP-142 – UI tech debt",
@@ -905,7 +905,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet. Awaiting reply from Kyle on Carlos's 9/30 comment: dev-to-test/tester confirmation.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3072",
@@ -925,7 +925,7 @@
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: Poornima clarified this is NOT dev-to-test — it requires QA testing, though Kyle can trigger the regression suite. Carlos to confirm with Kyle offline. Awaiting reply on Carlos's 9/30 comment: assign a tester.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2706",
@@ -945,7 +945,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3027",
@@ -965,7 +965,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Added mid-sprint per the 09-23-2026 Jira sync.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3050",
@@ -985,7 +985,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3051",
@@ -1005,7 +1005,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3058",
@@ -1025,12 +1025,12 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3090",
       "owner": "Pavan V",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Pavan V",
       "points": 3,
       "parent": "APP-2914 – Epic to track QA Activities for 4.45.2.0",
@@ -1065,7 +1065,7 @@
       "actionOwner": null,
       "followUp": "Poornima flagged a QA-side prioritization question on this ticket at the top of the daily but deferred it to the end of the meeting; it was not picked back up in the recorded portion of this session. Current Situation may need a follow-up check with Poornima on what exactly she wanted to raise.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3028",
@@ -1085,7 +1085,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Added mid-sprint per the 09-23-2026 Jira sync.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3035",
@@ -1105,7 +1105,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3036",
@@ -1125,7 +1125,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3076",
@@ -1145,7 +1145,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3077",
@@ -1165,7 +1165,7 @@
       "actionOwner": null,
       "followUp": "Not discussed yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-194",
@@ -1185,7 +1185,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Documentation companion to APP-193 (also in this sprint — see that row).",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2631",
@@ -1205,7 +1205,7 @@
       "actionOwner": null,
       "followUp": "New to sprint; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2699",
@@ -1225,7 +1225,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2702",
@@ -1245,7 +1245,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2731",
@@ -1265,7 +1265,7 @@
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: Salim confirmed this needs the same test environment as APP-2928 (Canary unavailable, tied up for October release).",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2797",
@@ -1285,27 +1285,27 @@
       "actionOwner": null,
       "followUp": "Demoed in the sprint review: bare-minimum implementation working end to end (auth, checkout, commit) against Salim's personal free-trial data-residency GitHub instance, plus new Playwright UI tests for the connection form. Backend PR posted. Danilo's better-designed UI was intentionally deferred to a separate ticket/epic due to time pressure — Derek asked that this get tracked under an epic so it isn't dropped. Risk: no official SnapLogic data-residency test instance exists yet — Salim's personal instance expires in ~17 days (Sept 22 + 17), and Poornima/Pavan haven't started QA yet (starting the day after review); Vishal already asked Scott for a proper instance but has no ETA. Commitment is for the October release (code freeze next Friday), so this is tight. Salim/Vishal to secure an official test instance before Salim's personal one expires; Carlos to confirm the tracking epic gets created. Discussed in the 9/24 daily: confirmed on track — the only customer-commit ticket for this code freeze; Pavan is already testing. Re-demoed in this sprint review (9/29): dropdown wording/UI kept identical to the existing option, only the backend API call changed; confirmed working against the same eval instance flow.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2928",
       "owner": "Salim Abdul",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "points": 3,
       "parent": null,
       "linkedWorkItems": "PLAT-15089 (relates to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-06",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 14,
       "summary": "Deprecated Snaplex version alerts aren't showing up in Monitor.",
       "currentSituation": "Discussed in the 9/30 daily: ticket was created by the QA team; Salim pinged QA to verify the fix is resolved. Also flagged: no test environment currently available (Canary is tied up for the October release, this needs DevLab) — Poornima to add a comment noting this blocks testing.",
       "blocker": "No environment available to test — Canary reserved for October release; needs DevLab or similar.",
       "actionOwner": null,
       "followUp": "Discussed in the 9/30 daily: ticket was created by the QA team; Salim pinged QA to verify the fix is resolved. Also flagged: no test environment currently available (Canary is tied up for the October release, this needs DevLab) — Poornima to add a comment noting this blocks testing.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3007",
@@ -1325,20 +1325,40 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3071",
+      "owner": "Shardul Sardesai",
+      "status": "In Progress",
+      "tester": null,
+      "points": 5,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-05",
+      "cycleTime": null,
+      "summary": "Third round of test automation improvements: fix local and Jenkins runs, tag mock-enabled tests, speed up login and navigation, and enable spec-based test selection.",
+      "currentSituation": "Not discussed yet.",
+      "blocker": null,
+      "actionOwner": null,
+      "followUp": "Not discussed yet.",
+      "demo": null,
+      "discussed": "No"
     },
     {
       "ticket": "APP-3092",
       "owner": "Thanawut (Jump) Anapiriyakul",
-      "status": "Open",
+      "status": "Done",
       "tester": "Pavan V",
-      "points": null,
+      "points": 0,
       "parent": null,
       "linkedWorkItems": null,
       "fixVersion": "4.45.2.0",
-      "doneDate": null,
+      "doneDate": "2026-10-05",
       "addedDate": "2026-10-05",
-      "cycleTime": null,
+      "cycleTime": 0,
       "summary": "The iris_pipeline_search endpoint returns a 500 error on the UAT environment, breaking pipeline search there.",
       "currentSituation": "Not discussed yet.",
       "blocker": null,
@@ -1365,7 +1385,7 @@
       "actionOwner": null,
       "followUp": "Carried over from sprint 4697, where QA found a further variant (Active Pipelines showing 0 despite pipelines having run) that still needed resolution; status not yet re-verified this sprint.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2306",
@@ -1385,27 +1405,27 @@
       "actionOwner": null,
       "followUp": "Carried over from sprint 4697, paired with APP-2939 (also in this sprint); not separately verified last sprint.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2764",
       "owner": "Vlad Storona",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Bornali Nath",
       "points": 2,
       "parent": null,
       "linkedWorkItems": "DOC-3613 (relates to)",
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-06",
       "addedDate": "2026-10-01",
-      "cycleTime": null,
+      "cycleTime": 5,
       "summary": "BYOK S3 bucket creation api returns error 403",
       "currentSituation": "New to sprint; not discussed in any daily yet.",
       "blocker": null,
       "actionOwner": null,
       "followUp": "New to sprint; not discussed in any daily yet.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2881",
@@ -1425,7 +1445,7 @@
       "actionOwner": null,
       "followUp": "Vlad's first fix attempt (PSWAT) was unsuccessful; he's now investigating a different approach/root cause and asked for one more day before reporting back.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-3086",
@@ -1465,7 +1485,7 @@
       "actionOwner": null,
       "followUp": "Carried over from sprint 4697, where QA testing was largely complete with a few test cases still to automate; status not yet re-verified this sprint. Discussed in the 9/24 daily: Vlad is actively working the 3 remaining automated test cases, ETA soon (tomorrow). No blockers.",
       "demo": "Yes",
-      "discussed": null
+      "discussed": "No"
     },
     {
       "ticket": "APP-2918",
@@ -1485,7 +1505,7 @@
       "actionOwner": null,
       "followUp": "New to sprint 12119; not discussed in any daily yet. Discussed in the 9/24 daily: this is a new, currently-unused component; mergeable once Jackie confirms. Only unit tests are needed — no automated/e2e test required. Awaiting reply from Guannan/Poornima on Carlos's 9/29 comment: blocker check-in.",
       "demo": null,
-      "discussed": null
+      "discussed": "No"
     }
   ]
 }
