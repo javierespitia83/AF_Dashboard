@@ -104,6 +104,7 @@ async function openPage(url, w = 1920, h = 1080) {
 const H = `
 const T = n => n.textContent.replace(/\\s+/g,' ').trim();
 const tile = t => [...document.querySelectorAll('section.tile')].find(s => { const h = s.querySelector('h2'); return h && h.textContent.trim() === t; });
+const kpi = t => [...document.querySelectorAll('.kpi')].find(k => T(k.querySelector('.label')) === t);
 const rowsOf = t => [...tile(t).querySelectorAll('.tile-body .rowbtn')];
 const clickEl = (el, o={}) => el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, ctrlKey: !!o.ctrl, metaKey: !!o.meta, shiftKey: !!o.shift}));
 const clickRow = (t, name, o) => { const r = rowsOf(t).find(r => T(r.querySelector('.person, .name')) === name); if(!r) throw new Error('row not found: '+t+' / '+name); clickEl(r, o); };
@@ -190,7 +191,7 @@ function expectSprint(S, f, ctx = CTX) {
   else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in sprint.json'; }
   const midOk = ctx.sprint && !isNaN(dn(ctx.sprint.startDate));
   const kh = { cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr} (approx.)` : 'No sprint start date in sprint.json', carried: carriedH };
-  const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—', String(all.filter(t => t.tester == null || String(t.tester).trim() === '').length),
+  const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—', String(all.filter(t => t.tester === null && !String(t.classifications || '').split('; ').includes('Dev to Test')).length),
     avg === null ? '—' : f1(avg), midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV];
   const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
   const people = (dim) => { const g = group(applyF(S, f, SKEY, [dim]), SKEY[dim]); const o = {}; Object.keys(g).forEach(k => o[k] = [g[k].i, g[k].p]); return o; };
@@ -357,7 +358,8 @@ function linkErrors(cells, values, structured) {
   return errs.slice(0, 4);
 }
 const mtime = f => fs.statSync(f).mtimeMs;
-const before = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(path.join(ROOT, '..', '03_Team_Enablement', 'daily_tracker.xlsx')) };
+const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx';
+const before = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
 const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
 const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 2 };
 
@@ -375,6 +377,18 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('Shell: top bar tabs (Current sprint active), Data as of, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))==='Data as of ${J('sprint.json').refreshedAt}' && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
+  const noTesterKeys = S.filter(t => t.tester === null && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
+  check('No tester KPI excludes exact Dev to Test classifications (18 of 74)', noTesterKeys.length === 18 && kpi('No tester').querySelector('.value').textContent === '18' && kpi('No tester').querySelector('.hint').textContent.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: kpi('No tester').querySelector('.hint').textContent });
+  await run(p, `clickEl(kpi('No tester'))`);
+  let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  check('Click No tester filters the lower section to matching tickets', eq([...lowerKeys].sort(), [...noTesterKeys].sort()), { expected: noTesterKeys.length, actual: lowerKeys.length });
+  await run(p, `clickEl(kpi('No tester'))`);
+  const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
+  await run(p, `clickEl(kpi('Carried over'))`);
+  lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  check('Click Carried Over filters the lower section to exactly the exported 11 keys', carriedKeys.length === 11 && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
+  await run(p, `clickEl(kpi('Carried over'))`);
+  await verifySprint(p, S, f, 'KPI filters clear on second click');
   const L = await run(p, layoutJs);
   check('Layout 1920x1080: no page scroll (width and height)', L.sh <= L.ih && L.sw <= L.iw, L);
   check('Layout 1920x1080: 7 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 13 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
@@ -688,6 +702,10 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     const read = () => run(p, `const k=[...document.querySelectorAll('.kpi')].pop(); return [T(k.querySelector('.value')), T(k.querySelector('.hint'))]`);
     const a = await read(); await run(p, `clickRow('Tickets by status', 'Done')`); const b = await read();
     check(`Carried over tile: ${label}; unchanged by filters; no console errors`, eq(a, want) && eq(b, want) && p.logs.length === 0, { a, b, logs: p.logs });
+    if (name === 'cnull') {
+      const clickable = await run(p, `return kpi('Carried over').classList.contains('clickable')`);
+      check('Carried Over KPI without ticketKeys is visible but not clickable', clickable === false, clickable);
+    }
     await p.close();
   }
   console.log('\n--- Removed tickets (sprint.removed) with hand-made data ---');
@@ -755,7 +773,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const fetches = []; ['dashboard.js', 'sprint.js', 'backlog.js'].forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
   check('Only one fetch(), a local relative path via loadSnapshot', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
   check('No innerHTML / document.write / eval in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|document\.write|\beval\(/.test(strip(f))));
-  const after = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(path.join(ROOT, '..', '03_Team_Enablement', 'daily_tracker.xlsx')) };
+  const after = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
   { const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'schema/snapshot.schema.json'), 'utf8'));
     const vType = (v, ty) => (Array.isArray(ty) ? ty : [ty]).some(x => x === 'null' ? v === null : x === 'integer' ? Number.isInteger(v) : x === 'number' ? typeof v === 'number' : x === 'string' ? typeof v === 'string' : x === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v)) : x === 'array' ? Array.isArray(v) : false);
     const vNode = (v, node, at, errs) => {

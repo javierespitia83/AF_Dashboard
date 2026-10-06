@@ -46,12 +46,13 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `name` | string or null | e.g. `APP Sprint 10-09-2026` |
 | `startDate` | string (date) or null | `YYYY-MM-DD`, America/Los_Angeles |
 | `endDate` | string (date) or null | `YYYY-MM-DD`; changes if the sprint is extended |
-| `carriedOver` | object or null | `{ "count": int or null, "percent": number 0 to 100 or null, "storyPoints": int or null }` |
+| `carriedOver` | object or null | `{ "count": int or null, "percent": number 0 to 100 or null, "storyPoints": int or null, "ticketKeys"?: string[] }` |
 | `removed` | array, null or absent | **Optional (D52).** Tickets that were in the sprint and left it (moved to a later sprint or the backlog). One entry per ticket: `ticket` (key), `removedDate` (`YYYY-MM-DD`, required), and optional `points`, `addedDate` (when it entered the sprint; absent means from the start), `summary`, `status` (at removal), `owner`, `tester`, `fixVersion`, `parent`. Must come from the Jira changelog (Sprint field); the UI never infers it. Absent or `null` = not available (the burndown footnote says removals are not reflected); `[]` = nothing was removed. |
 
 Rules the UI must respect:
 - **`carriedOver` is a passthrough.** It is read straight from the `Carried Over #`, `Carried Over %` and `Carried Over Story Points` columns of `Sprint Metrics`. **Never recalculate it from the ticket list**: the comparison between sprints is only possible at rotation time, and only the tracker captures it.
 - **`carriedOver: null` means "not calculated yet"** (all three source cells empty, e.g. a sprint that has just rotated). It is not "zero carried over". The UI must show it as not calculated, never as 0. A zero count arrives as `{ "count": 0, ... }`.
+- `carriedOver.ticketKeys` is optional and, when present, identifies which current sprint tickets are included in the aggregate. The KPI can filter the lower section by these keys. Without it, the aggregate remains visible but the ticket-level set cannot be shown.
 - **`addedDate` has two origins and the JSON no longer says which** (the approximation flag is removed on export): for Done tickets it comes from a real scan of the Jira changelog; for the others it is an approximation from the ticket's `Created` date. It is reasonably reliable for aggregate counts, but the UI must not present it as an exact, verified per-ticket date (the sprint page says "approx." and the burndown tooltip says the dates are approximate). The detail table does not show it.
 - **`doneDate` and `cycleTime`** are only populated for Done tickets; `null` elsewhere is by design (the metric does not apply), not missing data. A Done ticket without a `doneDate` is possible and is counted separately in the burndown footnote.
 - **`removed` is optional** and is the only source of removals: tickets that left the sprint are not in `tickets`, so without it they cannot be known. Entries without a valid `removedDate` are ignored. Removed entries respond to the sprint filters through the fields they carry (`status`, `owner`, `tester`, `fixVersion`, `parent`; a missing owner or tester counts as `Unassigned`, a missing fix version or parent as `(none)`).
@@ -128,7 +129,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Work items | count of tickets |
 | Story points | sum of `points`, missing = 0 |
 | Done % | Done-bucket story points ÷ story points, as a whole percent; `—` when story points is 0 |
-| No tester | count of tickets whose `tester` is null or blank |
+| No tester | count of tickets whose `tester` is null and whose `classifications`, split on `"; "`, does not include the exact value `Dev to Test` |
 | Avg cycle time | mean of `cycleTime` over tickets with bucket `Done` and a non-null `cycleTime`; shown with at most one decimal; `—` when there are none |
 | Added mid-sprint | tickets with a non-null `addedDate` later than `startDate` + `MID_SPRINT_THRESHOLD_DAYS` days (ISO date comparison); the setting is `AF.config.midSprintThresholdDays` in `dashboard.js`, default 2; reports the count and the points |
 | Carried over | `sprint.carriedOver` as exported (not filtered, not recalculated): count, percent, story points |

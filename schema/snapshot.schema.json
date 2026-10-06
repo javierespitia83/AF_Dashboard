@@ -130,6 +130,12 @@
                 "integer",
                 "null"
               ]
+            },
+            "ticketKeys": {
+              "type": "array",
+              "description": "Optional ticket keys for filtering the lower dashboard section to carried-over work items.",
+              "items": { "type": "string" },
+              "uniqueItems": true
             }
           }
         },
@@ -191,6 +197,13 @@
                   "null"
                 ]
               },
+              "classifications": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Jira Classifications (customfield_11500), multiple values joined with '; '. null when none set."
+              },
               "fixVersion": {
                 "type": [
                   "string",
@@ -240,6 +253,13 @@
             "string",
             "null"
           ]
+        },
+        "classifications": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Jira Classifications (customfield_11500), multiple values joined with '; '. null when none set."
         },
         "points": {
           "type": [

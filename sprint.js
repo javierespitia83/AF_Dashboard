@@ -42,7 +42,7 @@
     var kItems = kpi('items', 'Work items'), kPoints = kpi('points', 'Story points');
     var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester');
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
-    kCarried.root.title = 'Carried over from the previous sprint. Whole sprint: not affected by filters.';
+    kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
     kMid.root.title = 'Tickets added after the first days of the sprint. Dates are approximate for tickets not yet Done.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
     tBurn.body.classList.add('chart');
@@ -52,6 +52,48 @@
     tTester.head.appendChild(el('p', { class: 'sub', text: 'Assignee and tester views overlap by design. The sprint total counts each ticket once.' }));
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
+    var lowerFilter = null;
+    var carriedKeys = sprint && sprint.carriedOver && Array.isArray(sprint.carriedOver.ticketKeys)
+      ? sprint.carriedOver.ticketKeys : null;
+
+    function noTesterAndNotDevToTest(t) {
+      var isDevToTest = String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
+      return t.tester === null && !isDevToTest;
+    }
+    function matchesLowerFilter(t) {
+      if (lowerFilter === 'noTester') return noTesterAndNotDevToTest(t);
+      if (lowerFilter === 'midSprint') {
+        var mid = AF.midSprintAdded([t], sprint, AF.config.midSprintThresholdDays);
+        return !!(mid && mid.count);
+      }
+      if (lowerFilter === 'carriedOver') return !!(carriedKeys && carriedKeys.indexOf(t.ticket) !== -1);
+      return true;
+    }
+    function setLowerFilter(name) {
+      if (name === 'carriedOver' && !carriedKeys) lowerFilter = name;
+      else lowerFilter = lowerFilter === name ? null : name;
+      [kMid, kCarried, kNoTester].forEach(function (kpi) {
+        var selected =
+          (kpi === kMid && lowerFilter === 'midSprint') ||
+          (kpi === kCarried && lowerFilter === 'carriedOver') ||
+          (kpi === kNoTester && lowerFilter === 'noTester');
+        kpi.root.classList.toggle('selected', selected);
+        kpi.root.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      renderLower();
+    }
+    [[kMid, 'midSprint'], [kNoTester, 'noTester']].concat(carriedKeys ? [[kCarried, 'carriedOver']] : []).forEach(function (entry) {
+      entry[0].root.classList.add('clickable');
+      entry[0].root.setAttribute('role', 'button');
+      entry[0].root.setAttribute('tabindex', '0');
+      entry[0].root.setAttribute('aria-pressed', 'false');
+      entry[0].root.addEventListener('click', function () { setLowerFilter(entry[1]); });
+      entry[0].root.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault(); setLowerFilter(entry[1]);
+        }
+      });
+    });
 
     app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kNoTester.root, kCycle.root, kMid.root, kCarried.root]));
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tAssignee.root, tTester.root]));
@@ -94,8 +136,8 @@
       kPoints.hint.textContent = filtered ? 'of ' + fmt(TP) : 'missing counts as 0';
       kDone.value.textContent = P > 0 ? Math.round(doneP / P * 100) + '%' : '—';
       kDone.hint.textContent = fmt(doneP) + ' of ' + fmt(P) + ' points done';
-      kNoTester.value.textContent = String(f.filter(function (t) { return AF.isBlank(t.tester); }).length);
-      kNoTester.hint.textContent = 'of ' + f.length + ' work items';
+      kNoTester.value.textContent = String(f.filter(noTesterAndNotDevToTest).length);
+      kNoTester.hint.textContent = 'no tester, excluding Dev to Test · of ' + f.length + ' work items';
       var ct = AF.avgCycleTime(f);
       kCycle.value.textContent = ct.avg === null ? '\u2014' : AF.oneDecimal(ct.avg);
       kCycle.hint.textContent = ct.n ? 'days, over ' + ct.n + ' Done ticket' + (ct.n === 1 ? '' : 's') : 'no Done tickets with a cycle time';
@@ -274,10 +316,10 @@
     }
 
     function renderMatrix() {
-      var base = store.apply(tickets, ['assignee', 'tester']);
+      var base = store.apply(tickets, ['assignee', 'tester']).filter(matchesLowerFilter);
       var ct = AF.crossTab(base, owner, tester, { lastCol: 'Unassigned' });
       AF.rebuild(tMatrix, function () {
-        if (!ct.rows.length) { tMatrix.body.appendChild(AF.emptyState(EMPTY)); return; }
+        if (!ct.rows.length) { tMatrix.body.appendChild(AF.emptyState(lowerFilter === 'carriedOver' && !carriedKeys ? 'The snapshot has the carried-over total but no ticket keys, so those tickets cannot be identified here yet.' : EMPTY)); return; }
         AF.heatGrid(tMatrix, ct, {
           corner: 'Assignee', unit: 'work items', rowSel: store.sel.assignee, colSel: store.sel.tester,
           onCell: function (r, c, m) { store.clickPair('assignee', r, 'tester', c, m); }
@@ -298,11 +340,19 @@
       { label: 'Blocker', cls: 'wrap', render: function (t) { return AF.show(t.blocker); } }
     ];
     function renderDetail(f) {
-      tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items';
+      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester and not Dev to Test' };
+      tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items' +
+        (lowerFilter ? ' · ' + filterLabels[lowerFilter] + ' (click KPI again to clear)' : '');
       AF.rebuild(tDetail, function () {
-        if (!f.length) { tDetail.body.appendChild(AF.emptyState(EMPTY)); return; }
+        if (!f.length) { tDetail.body.appendChild(AF.emptyState(lowerFilter === 'carriedOver' && !carriedKeys ? 'The snapshot has the carried-over total but no ticket keys, so those tickets cannot be identified here yet.' : EMPTY)); return; }
         tDetail.body.appendChild(AF.buildTable(detailCols, f, { cls: 'data wider' }));
       });
+    }
+
+    function renderLower() {
+      var f = store.apply(tickets).filter(matchesLowerFilter);
+      renderDetail(f);
+      renderMatrix();
     }
 
     function render() {
@@ -312,8 +362,7 @@
       renderStatus();
       renderPeople(tAssignee, 'assignee', owner, 'Assignee');
       renderPeople(tTester, 'tester', tester, 'Tester');
-      renderMatrix();
-      renderDetail(f);
+      renderLower();
       updateBar();
       syncCtl(fixCtl, 'fix');
       syncCtl(parentCtl, 'parent');
