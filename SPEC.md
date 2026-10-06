@@ -59,7 +59,7 @@ Dimensions: Status, Assignee, Tester, Fix version, Parent. The filter bar also h
 ### 6.1 Board layout at 1920 x 1080
 
 ```
-KPI strip  [ Work items ][ Story points ][ Done ][ No tester ][ Avg cycle time ][ Added mid-sprint ][ Carried over ]
+KPI strip  [ Work items ][ Story points ][ Done ][ Added mid-sprint ][ Carried over ][ No tester ][ Avg cycle time ]
 Main row   [ Burndown ][ Tickets by status ][ Work by assignee ][ Work by tester ]
 Lower row  [ Ticket detail table ][ Assignee x tester ]
 ```

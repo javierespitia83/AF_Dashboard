@@ -56,7 +56,7 @@ Jira links: `JIRA_BASE` constant (the **only** place the Jira address appears), 
 
 ### sprint.js
 - Dimensions: `status` (get → bucket label), `assignee` (`personName(owner)`), `tester` (`personName(tester)`), `fix` (`fixVersion` or `(none)`), `parent` (`parent` or `(none)`). `NONE = '(none)'`.
-- Shell: `.kpis.k7` (seven `kpi()` tiles: Work items, Story points, Done, No tester, Avg cycle time, Added mid-sprint, Carried over), `.main.sprint` (Burndown, Tickets by status, Work by assignee, Work by tester), `.lower` (Ticket detail, Assignee x tester).
+- Shell: `.kpis.k7` (seven `kpi()` tiles, in order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time), `.main.sprint` (Burndown, Tickets by status, Work by assignee, Work by tester), `.lower` (Ticket detail, Assignee x tester).
 - Tile renderers: `renderKpis(f)`, `renderBurndown(f)`, `renderStatus()`, `renderPeople(tile, dim, keyFn, label)` (called for assignee and tester), `renderMatrix()`, `renderDetail(f)`. KPIs, burndown and detail use the fully filtered set `f`; status, people and matrix tiles call `store.apply(tickets, ownDimension(s))`.
 - Status tile always shows rows for buckets 0–3, plus `Other` only if some ticket is in it. Bars on people rows are two stacked bars (items, points) split by status bucket; scale per column = max in the tile.
 - Fix version and Parent are `<select>` controls (ids `f-fix`, `f-parent`) passed to `AF.filterBar`; `syncCtl` keeps them equal to the store after any change (including Reset all and tag removal).
