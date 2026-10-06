@@ -107,7 +107,7 @@
       resetFilters();
     };
 
-    app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kNoTester.root, kCycle.root, kMid.root, kCarried.root]));
+    app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kCycle.root]));
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tAssignee.root, tTester.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 

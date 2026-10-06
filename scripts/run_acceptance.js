@@ -204,10 +204,10 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
   if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
   if (!e.active && d.kpis[0].hint !== 'tickets in the sprint') errs.push(['kpi hint', d.kpis[0].hint]);
-  if (d.kpis.length !== 7 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'No tester', 'Avg cycle time', 'Added mid-sprint', 'Carried over'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
-  if (d.kpis[4].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[4].hint, e.kpiHints.cycle]);
-  if (d.kpis[5].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[5].hint, e.kpiHints.mid]);
-  if (d.kpis[6].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[6].hint, e.kpiHints.carried]);
+  if (d.kpis.length !== 7 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
+  if (d.kpis[6].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[6].hint, e.kpiHints.cycle]);
+  if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
+  if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
   { const bd = await run(p, READ_BD), x = e.bd;
     if (!x) { if (bd.has || bd.empty !== 'Sprint dates are not in sprint.json. Run the Jira sync and the export.') errs.push(['burndown message', bd.has, bd.empty]); }
     else if (!e.all.length) { if (bd.has || bd.empty !== 'No work items match these filters. Remove a tag or use Reset all.') errs.push(['burndown empty-state', bd.has, bd.empty]); }
