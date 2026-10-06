@@ -193,6 +193,9 @@ svg.burndown { display: block; }
 .kpi .label { color: var(--muted); font-size: 12px; font-weight: 600; }
 .kpi .value { font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
 .kpi .hint { color: var(--muted); font-size: 12px; }
+.kpi.clickable { cursor: pointer; }
+.kpi.clickable:hover, .kpi.clickable:focus-visible { box-shadow: 0 0 0 2px var(--teal); outline: none; }
+.kpi.clickable.selected { border-color: var(--teal); box-shadow: inset 0 0 0 2px var(--teal); }
 .kpi.items { border-top: 4px solid var(--navy); } .kpi.items .value { color: var(--navy); }
 .kpi.points { border-top: 4px solid var(--teal); } .kpi.points .value { color: var(--teal); }
 .kpi.plain { border-top: 4px solid var(--line); }
