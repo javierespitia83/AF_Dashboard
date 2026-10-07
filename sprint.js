@@ -349,7 +349,7 @@
       { label: 'Parent', cls: 'wrap', render: function (t) { return AF.linkCell(t.parent); } },
       { label: 'Fix version', cls: 'nowrap', render: function (t) { return AF.show(t.fixVersion); } },
       { label: 'Linked work items', cls: 'wrap', render: function (t) { return AF.linkCell(t.linkedWorkItems); } },
-      { label: 'Blocker', cls: 'wrap', render: function (t) { return AF.show(t.blocker); } }
+      { label: 'Current situation', cls: 'wrap current-situation', render: function (t) { return AF.show(t.currentSituation); } }
     ];
     function renderDetail(f) {
       var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester and not Dev to Test' };

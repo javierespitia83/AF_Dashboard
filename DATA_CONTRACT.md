@@ -30,10 +30,8 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `addedDate` | string (date) or null | `YYYY-MM-DD`: when the ticket entered the sprint. **Two different origins the JSON does not distinguish** (§2a). | `—` |
 | `cycleTime` | integer or null | Days from start of work to Done. Only populated when `status` is `Done`; `null` for every other ticket by design. | `—` |
 | `summary` | string or null | Exact Jira `summary` of the ticket (not reworded; since 2026-10-07 the workbook column is `Summary`) | `—` |
-| `currentSituation` | string or null | **Being redefined (2026-10-07):** will become one short sentence on where the ticket stands now (blocker, pending, progress). Until the exporter ships the new text this key still carries the old long narrative. The app does not read it yet | `—` |
-| `blocker` | string or null | Blocker / risk. Kept for now because the app shows it as the last column of Ticket detail; it will be replaced by `currentSituation` in the app before it is dropped from the workbook | `—` |
-| `actionOwner` | string or null | Who owns the next action | `—` |
-| `followUp` | string or null | Follow-up text. The app does not read it; it will be folded into the new `currentSituation` | `—` |
+| `currentSituation` | string or null | Short status plus next step, up to about 200 characters; shown in the last column of the sprint Ticket detail table | `—` |
+| `blocker` | string or null | Blocker / risk retained in the export for now; the app does not read it | `—` |
 | `demoOrSpike` | string or null | `Candidate` (flagged to present), `Presented` (already shown), `No` (reviewed, nothing to present) or null. Renamed from `demo` on 2026-10-07; the app does not read it yet | `—` |
 | `lastComment` | string or null | **Planned (2026-10-07), not exported yet:** latest Jira comment as `<author> · <date>: <text>`, trimmed to about 300 characters, filled by the Jira sync | `—` |
 | `discussed` | string or null | `Yes` / `No` (latest daily only) | `—` |
