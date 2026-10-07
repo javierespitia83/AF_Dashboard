@@ -21,6 +21,7 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `owner` | string or null | Assignee display name | `Unassigned` |
 | `status` | string or null | Original Jira status | `Other` bucket (see §5) |
 | `tester` | string or null | Tester display name (one person) | `Unassigned` |
+| `classifications` | string or null | Semicolon-space (`; `) joined classification values; the `No tester` KPI excludes tickets with the exact `Dev to Test` value | `—` |
 | `points` | number or null | Story points (whole ticket, dev + test) | `—`; counts as 0 |
 | `parent` | string or null | e.g. `APP-189 – Monitor enhancements` | `—` |
 | `linkedWorkItems` | string or null | Comma-joined keys, all projects | `—` |
@@ -28,12 +29,13 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `doneDate` | string (date) or null | `YYYY-MM-DD`, America/Los_Angeles: date of the latest transition to Done. Only populated when `status` is `Done`. | `—` |
 | `addedDate` | string (date) or null | `YYYY-MM-DD`: when the ticket entered the sprint. **Two different origins the JSON does not distinguish** (§2a). | `—` |
 | `cycleTime` | integer or null | Days from start of work to Done. Only populated when `status` is `Done`; `null` for every other ticket by design. | `—` |
-| `summary` | string or null | Plain-language topic | `—` |
-| `currentSituation` | string or null | Narrative | `—` |
-| `blocker` | string or null | Blocker / risk | `—` |
+| `summary` | string or null | Exact Jira `summary` of the ticket (not reworded; since 2026-10-07 the workbook column is `Summary`) | `—` |
+| `currentSituation` | string or null | **Being redefined (2026-10-07):** will become one short sentence on where the ticket stands now (blocker, pending, progress). Until the exporter ships the new text this key still carries the old long narrative. The app does not read it yet | `—` |
+| `blocker` | string or null | Blocker / risk. Kept for now because the app shows it as the last column of Ticket detail; it will be replaced by `currentSituation` in the app before it is dropped from the workbook | `—` |
 | `actionOwner` | string or null | Who owns the next action | `—` |
-| `followUp` | string or null | Follow-up text | `—` |
-| `demo` | string or null | `Yes` or null | `—` |
+| `followUp` | string or null | Follow-up text. The app does not read it; it will be folded into the new `currentSituation` | `—` |
+| `demoOrSpike` | string or null | `Candidate` (flagged to present), `Presented` (already shown), `No` (reviewed, nothing to present) or null. Renamed from `demo` on 2026-10-07; the app does not read it yet | `—` |
+| `lastComment` | string or null | **Planned (2026-10-07), not exported yet:** latest Jira comment as `<author> · <date>: <text>`, trimmed to about 300 characters, filled by the Jira sync | `—` |
 | `discussed` | string or null | `Yes` / `No` (latest daily only) | `—` |
 
 ## 2a. `sprint` object (sprint.json only) and the new ticket fields
@@ -63,7 +65,7 @@ Rules the UI must respect:
 | Field | Type | Meaning | Display when null |
 |---|---|---|---|
 | `ticket` | string, never blank | Jira key | (never null) |
-| `summary` | string or null | Plain-language topic | `—` |
+| `summary` | string or null | Exact Jira `summary` of the ticket (since 2026-10-07 the workbook column is `Summary`) | `—` |
 | `type` | string or null | `Story`, `Bug`, `Task`, `Epic`, `Sub-task`, … (take values from the data, do not hard-code a list) | `—` |
 | `priority` | string or null | `Highest`, `High`, `Medium`, `Low`, `Lowest` (from the data) | `—` |
 | `dor` | string or null | `Well-Formed`, `Weak`, `Missing`, `N/A (Epic)` (as of 2026-10-02; older snapshots used `Ready` for Well-Formed); anything else is preserved | `—` |

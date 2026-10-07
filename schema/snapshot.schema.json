@@ -239,7 +239,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "description": "Exact Jira summary, preserved verbatim; not a plain-language rewrite."
         },
         "status": {
           "type": [
@@ -289,7 +290,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "description": "Exact Jira summary, preserved verbatim; not a plain-language rewrite."
         },
         "currentSituation": {
           "type": [
@@ -315,11 +317,18 @@
             "null"
           ]
         },
-        "demo": {
+        "demoOrSpike": {
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "enum": [
+            "Candidate",
+            "Presented",
+            "No",
+            null
+          ],
+          "description": "Demo or spike status: Candidate, Presented, No, or null."
         },
         "discussed": {
           "type": [
@@ -366,7 +375,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "description": "Exact Jira summary, preserved verbatim; not a plain-language rewrite."
         },
         "type": {
           "type": [
