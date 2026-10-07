@@ -43,7 +43,7 @@
     var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester');
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
     kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
-    kMid.root.title = 'Tickets added after the first days of the sprint. Dates are approximate for tickets not yet Done.';
+    kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
     tBurn.body.classList.add('chart');
     var tStatus = AF.tile({ title: 'Tickets by status', sub: 'Click a status to filter' });
@@ -60,7 +60,8 @@
 
     function noTesterAndNotDevToTest(t) {
       var isDevToTest = String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
-      return t.tester === null && !isDevToTest;
+      var testerMissing = t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
+      return testerMissing && !isDevToTest;
     }
     function matchesLowerFilter(t) {
       if (lowerFilter === 'noTester') return noTesterAndNotDevToTest(t);
@@ -88,6 +89,20 @@
       renderLower();
       updateBar();
     }
+    var baseTags = store.tags;
+    store.tags = function () {
+      var tags = baseTags();
+      if (lowerFilter) {
+        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester' };
+        tags.push({ dim: '__kpi', label: 'KPI', value: labels[lowerFilter] || lowerFilter });
+      }
+      return tags;
+    };
+    var baseRemove = store.remove;
+    store.remove = function (dim, value) {
+      if (dim === '__kpi') { setLowerFilter(lowerFilter); return; }
+      baseRemove(dim, value);
+    };
     [[kMid, 'midSprint'], [kNoTester, 'noTester']].concat(carriedKeys ? [[kCarried, 'carriedOver']] : []).forEach(function (entry) {
       entry[0].root.classList.add('clickable');
       entry[0].root.setAttribute('role', 'button');
@@ -155,7 +170,7 @@
       kCycle.hint.textContent = ct.n ? 'days, over ' + ct.n + ' Done ticket' + (ct.n === 1 ? '' : 's') : 'no Done tickets with a cycle time';
       var days = AF.config.midSprintThresholdDays, mid = AF.midSprintAdded(f, sprint, days);
       kMid.value.textContent = mid ? String(mid.count) : '\u2014';
-      kMid.hint.textContent = mid ? fmt(mid.points) + ' points, added after day ' + days + ' (approx.)' : 'No sprint start date in sprint.json';
+      kMid.hint.textContent = mid ? fmt(mid.points) + ' points, added after day ' + days : 'No sprint start date in sprint.json';
       if (!sprint) { kCarried.value.textContent = '\u2014'; kCarried.hint.textContent = 'No sprint data in sprint.json'; }
       else if (!sprint.carriedOver) { kCarried.value.textContent = '\u2014'; kCarried.hint.textContent = 'Not calculated yet for this sprint'; }
       else {
@@ -242,8 +257,9 @@
         lastOpts.selectedKey = selectedKey;
         AF.drawBurndown(tBurn.body, m, lastOpts);
         var note = hasRemoved
-          ? 'Scope grows on each ticket\'s added date and shrinks on the date a ticket left the sprint. Re-estimates are not reflected. Added dates are approximate for tickets not yet Done, so late additions may be understated.'
-          : 'Scope grows on each ticket\'s added date. Tickets removed from the sprint and re-estimates are not reflected. Added dates are approximate for tickets not yet Done, so late additions may be understated.';
+          ? 'Scope grows on each ticket\'s added date and shrinks on the date a ticket left the sprint. Re-estimates are not reflected.'
+          : 'Scope grows on each ticket\'s added date. Tickets removed from the sprint and re-estimates are not reflected.';
+        note += ' Older snapshots may not identify legacy estimated dates.';
         if (m.unplacedDone) note += ' ' + m.unplacedDone + ' Done ticket' + (m.unplacedDone === 1 ? ' has' : 's have') + ' no done date and ' + (m.unplacedDone === 1 ? 'is' : 'are') + ' not on the line.';
         tBurn.foot.appendChild(el('p', { class: 'footnote', text: note }));
       });

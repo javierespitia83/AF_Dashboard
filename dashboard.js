@@ -208,7 +208,7 @@
   }
   function oneDecimal(x) { return fmtNum(Math.round(x * 10) / 10); }
 
-  // Tickets added after sprint start + thresholdDays (approximate dates for tickets not Done yet).
+  // Tickets added after sprint start + thresholdDays, using exported Added to Sprint dates.
   function midSprintAdded(tickets, sprint, thresholdDays) {
     var out = { thresholdDate: null, count: 0, points: 0, tickets: [] };
     if (!sprint || isNaN(dayNum(sprint.startDate))) return null;
@@ -511,11 +511,11 @@
       var list = m.addedByDate[date], early = date <= m.thresholdDate, px = list.reduce(function (a, t) { return a + t.points; }, 0), cx = x(idx), by = T + ph - 1;
       var mk = svg('g', { class: 'bd-added' + (early ? ' bd-early' : ''), 'data-date': date, 'data-early': early ? '1' : '0', 'data-count': String(list.length), 'data-points': String(px),
         tabindex: 0, role: 'button', 'aria-pressed': opts.selectedKey === 'added:' + date ? 'true' : 'false',
-        'aria-label': shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added (approximate). Show list.' }, [
+        'aria-label': shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added. Show list.' }, [
         svg('rect', { x: cx - 14, y: by - 30, width: 28, height: 32, fill: 'transparent' }),
         svg('path', { d: 'M' + (cx - 6) + ',' + by + ' L' + (cx + 6) + ',' + by + ' L' + cx + ',' + (by - 11) + ' Z', fill: early ? '#ffffff' : '#e3a72f', stroke: '#8a6414', 'stroke-width': early ? 1.5 : 1 }),
         svg('text', { x: cx, y: by - 14, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: INK, text: '+' + list.length }),
-        svg('title', { text: shortDate(date) + ' (approximate): ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added, ' + fmtNum(px) + ' points: '
+        svg('title', { text: shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added, ' + fmtNum(px) + ' points: '
           + list.slice(0, 8).map(function (t) { return t.ticket + ' (' + fmtNum(t.points) + ')'; }).join(', ') + (list.length > 8 ? ', and ' + (list.length - 8) + ' more' : '') })
       ]);
       if (opts.selectedKey === 'added:' + date) mk.setAttribute('class', 'bd-added' + (early ? ' bd-early' : '') + ' bd-sel');
@@ -559,7 +559,7 @@
     g.push(svg('line', { x1: lx + 160, x2: lx + 178, y1: 10, y2: 10, stroke: '#b9c3d0', 'stroke-width': 1.5 }));
     g.push(svg('text', { x: lx + 183, y: 14, 'font-size': 11, fill: MUTED, text: 'Scope' }));
     g.push(svg('path', { d: 'M' + (lx + 230) + ',16 L' + (lx + 242) + ',16 L' + (lx + 236) + ',5 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
-    g.push(svg('text', { x: lx + 247, y: 14, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays + ' (approx.)' }));
+    g.push(svg('text', { x: lx + 247, y: 14, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
     g.push(svg('path', { d: 'M' + (lx + 410) + ',16 L' + (lx + 422) + ',16 L' + (lx + 416) + ',5 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
     g.push(svg('text', { x: lx + 427, y: 14, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
     if (hasRem) {
@@ -676,7 +676,7 @@
         : 'The file is missing or not valid JSON (' + (err && err.message ? err.message : 'unknown error') + ').' }),
       el('p', null, ['Run ', el('code', { text: 'python3 05_Automation/export_dashboard_snapshots.py' }),
         ' from the project root, then reload.']),
-      el('p', null, ['To serve the page: ', el('code', { text: 'cd 07_Dashboard && python3 -m http.server 8000' }),
+      el('p', null, ['To serve the page: ', el('code', { text: 'cd AF_Dashboard && python3 -m http.server 8000' }),
         ', then open http://localhost:8000/.'])
     ]));
   }
