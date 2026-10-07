@@ -30,7 +30,7 @@ Add the `@media (min-width:1366px) and (min-height:760px)` block (grid rows, gri
 
 ## Step 6 — Jira links
 `JIRA_BASE` once, `jiraLink`, `linkify`, `ticketCell`, `linkCell`; link the Ticket column and the Parent / Linked work items (sprint) and Epic / Related-cluster (backlog) cells only.
-**Check:** every `href` is exactly `https://mysnaplogic.atlassian.net/browse/<KEY>`, `target="_blank"`, `rel` has `noopener`; free-text cells (Summary, Blocker, Risk) contain no link (`UTF-8` is not a key); odd data (HTML, `javascript:`) creates no extra element; clicking a link changes no filter.
+**Check:** every `href` is exactly `https://mysnaplogic.atlassian.net/browse/<KEY>`, `target="_blank"`, `rel` has `noopener`; free-text cells (Summary, Current situation, Risk) contain no link (`UTF-8` is not a key); odd data (HTML, `javascript:`) creates no extra element; clicking a link changes no filter.
 
 ## Step 7 — Sprint-page extension: data, then KPIs
 Check `DATA_CONTRACT.md` §2a: the sprint file must carry `sprint {id,name,startDate,endDate,carriedOver}` and per-ticket `doneDate`, `addedDate`, `cycleTime`. If they are missing, **stop and request them from the exporter/skill** — do not invent them. Then add the three KPIs: Avg cycle time, Added mid-sprint (`AF.config.midSprintThresholdDays = 2`), Carried over (read `sprint.carriedOver` as is; `null` → "Not calculated yet for this sprint", never 0; no `sprint` object → "No sprint data in sprint.json").

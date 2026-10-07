@@ -297,21 +297,10 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "description": "Short ticket status and next step, up to about 200 characters; displayed in the sprint ticket detail table."
         },
         "blocker": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "actionOwner": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "followUp": {
           "type": [
             "string",
             "null"

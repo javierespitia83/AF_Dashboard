@@ -80,7 +80,7 @@ Rows share the board height: the KPI strip is compact (about 90 px); the main ro
 - **Work by assignee** (dimension Assignee) — subtitle "Story points on owned tickets". One clickable row per person, sorted by story points descending then name, with two stacked bars (work items, story points) coloured by status bucket and the number beside each bar (two bars per person, D13). Bars use a common scale per column within the tile. Pinned Total row.
 - **Work by tester** (dimension Tester) — subtitle "Points on tickets they test"; same row design; `Unassigned` is a normal row. One-line note: "Assignee and tester views overlap by design. The sprint total counts each ticket once."
 - **Assignee x tester** (dimensions Assignee and Tester) — a heat grid: rows are assignees, columns are testers (including `Unassigned`), each cell shows the number of work items, shaded by count. Rows and columns are sorted by total work items descending (`Unassigned` column last). Clicking a cell filters to that assignee and tester pair. The `Unassigned` tester column is where coverage gaps show.
-- **Ticket detail** — all filtered tickets in tracker order. Columns: Ticket, Summary, Owner, Tester, Status (original text, with colour dot), Story points, Parent, Fix version, Linked work items, Blocker. Header shows "n of N work items". Sticky header, inner scroll with visible scrollbar, long text wraps.
+- **Ticket detail** — all filtered tickets in tracker order. Columns: Ticket, Summary, Owner, Tester, Status (original text, with colour dot), Story points, Parent, Fix version, Linked work items, Current situation. The last column is at least 300 px wide so its short status and next step wrap across a few lines. Header shows "n of N work items". Sticky header, inner scroll with visible scrollbar, long text wraps.
 
 ### 6.3 Burndown tile
 
@@ -152,7 +152,7 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 
 ## 8a. Jira links
 
-- **Where:** the **Ticket** column of both tables is a link. In the sprint table the **Parent** and **Linked work items** cells, and in the backlog table the **Epic** and **Related / cluster** cells, show every Jira key inside them as its own link; the rest of the cell text stays plain. Free-text columns (Summary, Blocker, Risk / open question) are never linked, to avoid false matches such as `UTF-8`.
+- **Where:** the **Ticket** column of both tables is a link. In the sprint table the **Parent** and **Linked work items** cells, and in the backlog table the **Epic** and **Related / cluster** cells, show every Jira key inside them as its own link; the rest of the cell text stays plain. Free-text columns (Summary, Current situation, Risk / open question) are never linked, to avoid false matches such as `UTF-8`.
 - **What a key is:** a whole word shaped like `ABC-123` (capital letter, then capital letters or digits, a hyphen, digits). Any project key works (`APP-189`, `DOC-3360`, `DI-989`).
 - **Link target:** `https://mysnaplogic.atlassian.net/browse/<KEY>`. The Jira address is defined once, as a constant in `dashboard.js`.
 - **Behavior:** opens in a new tab (`target="_blank"`, `rel="noopener noreferrer"`), tooltip "Open <KEY> in Jira", visible focus outline, never changes a filter. Following a link needs internet and a Jira login in that browser; loading the dashboard still makes no external request.
