@@ -127,4 +127,5 @@ None of these blocks implementation.
 | 2026-10-06 | Sprint dashboard layout adjustment: transfer 15% of the desktop main row's former height to the lower row. Grid weights changed from 1.35:1 to 1.1475:1.2025, preserving the total available height. |
 | 2026-10-06 | Sprint KPI filters count as active filters for the filter bar. Reset all clears the KPI filter as well as the regular dashboard selections. |
 | 2026-10-07 | The sprint Ticket detail table's last column now displays `currentSituation` (short status and next step), with a 300 px minimum width. `blocker` remains in the export but is no longer read by the app; `actionOwner` and `followUp` are removed from the exported schema. |
+| 2026-10-07 | Sprint Ticket detail width adjustment: Owner is capped at 150 px and wraps; Current situation minimum width increased from 300 px to 350 px, with horizontal scrolling inside the table tile. |
 | 2026-10-06 | Sprint KPI display order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time. |
