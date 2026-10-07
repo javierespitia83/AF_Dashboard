@@ -34,14 +34,14 @@ Add the `@media (min-width:1366px) and (min-height:760px)` block (grid rows, gri
 
 ## Step 7 — Sprint-page extension: data, then KPIs
 Check `DATA_CONTRACT.md` §2a: the sprint file must carry `sprint {id,name,startDate,endDate,carriedOver}` and per-ticket `doneDate`, `addedDate`, `cycleTime`. If they are missing, **stop and request them from the exporter/skill** — do not invent them. Then add the three KPIs: Avg cycle time, Added mid-sprint (`AF.config.midSprintThresholdDays = 2`), Carried over (read `sprint.carriedOver` as is; `null` → "Not calculated yet for this sprint", never 0; no `sprint` object → "No sprint data in sprint.json").
-**Check:** values equal the hand-computed answers from a small hand-made sprint (the harness uses six tickets; remaining `[11,6,3,3]`, 3.3 days, 2 added, 3 carried over).
+**Check:** values equal the hand-computed answers from a small hand-made sprint (the harness uses six tickets; remaining `[9,4,1,1]` through today, 3.3 days, 2 added, 3 carried over).
 
 ## Step 8 — Burndown
 Implement `burndown()` then `drawBurndown()` exactly as in `IMPLEMENTATION.md` §7 (scope steps for ticket additions and, when present, `sprint.removed`; ideal line from the starting scope to 0 over calendar days; today = `refreshedAt`; pre-start `doneDate` counts on day 1; Done without `doneDate` is not subtracted and is counted in the footnote). Place it first in the main row. Redraw on window resize with a `ResizeObserver`; derive the height from the container.
 **Check:** one point per calendar day; no remaining value after today; Today marker only when inside the sprint; additions and removals respond to filters; empty state with zero tickets; message when dates are missing; no scroll bars; readable at 1366×768 (this is where the chart was once cut off).
 
 ## Step 9 — Change markers and ticket panels
-Add keyboard-accessible x-axis markers for ticket additions (`g.bd-added`) and removals (`g.bd-removed`). Addition markers show `+N`; removal markers show `−N` below the axis and move date labels down. Tooltips state when dates are approximate. Clicking a marker (or Enter/Space) opens the panel (`.bd-pop`) with that date's tickets; the same marker, ×, or Escape closes it. The panel follows filters, survives resize, changes no filter, and stays inside the tile. See `SPEC.md` §6.3 and `DECISIONS.md` D44/D52.
+Add keyboard-accessible x-axis markers for ticket additions (`g.bd-added`) and removals (`g.bd-removed`). Addition markers show `+N`; removal markers show `−N` below the axis and move date labels down. Tooltips show the date, tickets and points; the caveat for older snapshots is documented. Clicking a marker (or Enter/Space) opens the panel (`.bd-pop`) with that date's tickets; the same marker, ×, or Escape closes it. The panel follows filters, survives resize, changes no filter, and stays inside the tile. See `SPEC.md` §6.3 and `DECISIONS.md` D44/D52.
 **Check:** `ACCEPTANCE.md` burndown block.
 
 ## Step 10 — Accessibility pass

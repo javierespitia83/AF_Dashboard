@@ -27,7 +27,7 @@ Order of scripts matters: `dashboard.js` defines `AF`; the page script reads `wi
 
 1. `AF.loadSnapshot(file)` → `fetch(file, {cache:'no-store'})`, require `data.tickets` to be an array.
 2. `.then(init, onError)` — use the two-argument form so a *render* error is not misreported as a "can't load file" error.
-3. `init(data)`: `AF.setUpdated(data.refreshedAt)`, clear `#app`, handle an empty ticket list (neutral message, return), create the store, build the static shell once (KPI strip, main row, lower/detail row), build the filter-bar controls, subscribe `render` to the store, call `render()`.
+3. `init(data)`: `AF.setUpdated(data.refreshedAt, data.exportedAt)`, clear `#app`, handle an empty ticket list (neutral message, return), create the store, build the static shell once (KPI strip, main row, lower/detail row), build the filter-bar controls, subscribe `render` to the store, call `render()`.
 4. `render()` is the only way the screen changes: `f = store.apply(tickets)` then, in order, KPIs, burndown (sprint), each dimension tile, matrix, table, then `updateBar()` and control sync. Tiles are **redrawn from scratch on every filter change** (they are small); there is no incremental DOM diffing.
 
 ## 4. `AF` API (dashboard.js)
@@ -46,7 +46,7 @@ Pure (no DOM; unit-checkable in the browser console, e.g. `AF.statusTotals(AF.ti
 | `midSprintAdded(tickets,sprint,thr)` → `{thresholdDate,count,points,tickets}` or `null` | `addedDate > startDate + thr days` (string compare of ISO dates). |
 | `burndown(tickets,sprint,today,thr,removed)` → model or `null` (see §7) | `removed` is the filtered `sprint.removed` list, or an empty list when absent. |
 
-DOM helpers: `el(tag,attrs,children)` (attrs: `class`, `text`, `style`, `onclick`-style listeners, anything else becomes an attribute; children are nodes or strings), `clear`, `isMulti(event)`, `tile({title,sub,cls})` → `{root,head,colhead,body,foot}`, `rebuild(tile, fn)` (clears colhead/body/foot, runs `fn`, restores scroll and — via `data-key` — keyboard focus, hides empty colhead/foot), `rowButton({key,cls,selected,dimmed,title,onclick(multi)},children)` (a real `<button class="rowbtn [sel] [dim]" aria-pressed>`), `statusDot`, `stackedBar(segments,total,scale)`, `simpleBar(pct,cls,title)`, `heatStyle(n,max)`, `buildTable(cols,rows,{cls})` (each col `{label,cls,render(row)}`; `null` renders `—`), `filterBar(container,store,controls)` → `update()`, `heatGrid(tile,crossTab,{corner,rowSel,colSel,unit,onCell})`, `emptyState(text)`, `showError`, `setUpdated`.
+DOM helpers: `el(tag,attrs,children)` (attrs: `class`, `text`, `style`, `onclick`-style listeners, anything else becomes an attribute; children are nodes or strings), `clear`, `isMulti(event)`, `tile({title,sub,cls})` → `{root,head,colhead,body,foot}`, `rebuild(tile, fn)` (clears colhead/body/foot, runs `fn`, restores scroll and — via `data-key` — keyboard focus, hides empty colhead/foot), `rowButton({key,cls,selected,dimmed,title,onclick(multi)},children)` (a real `<button class="rowbtn [sel] [dim]" aria-pressed>`), `statusDot`, `stackedBar(segments,total,scale)`, `simpleBar(pct,cls,title)`, `heatStyle(n,max)`, `buildTable(cols,rows,{cls})` (each col `{label,cls,render(row)}`; `null` renders `—`), `filterBar(container,store,controls)` → `update()`, `heatGrid(tile,crossTab,{corner,rowSel,colSel,unit,onCell})`, `emptyState(text)`, `showError`, `setUpdated(refreshedAt, exportedAt)` (shows the date and, when present, renders `exportedAt` in the browser's local timezone).
 
 Icons (D49): `AF.icon.priority(name)` and `AF.icon.type(name)` return a 16×16 inline `<svg class="ico" data-icon="priority:High" aria-hidden="true">` built with `createElementNS` (no text inside), or `null` for unknown values; `backlog.js` puts them before the text in the Priority and Type tile rows (`renderDist` takes an optional icon function) and table cells (`iconText`).
 
@@ -57,6 +57,7 @@ Jira links: `JIRA_BASE` constant (the **only** place the Jira address appears), 
 ### sprint.js
 - Dimensions: `status` (get → bucket label), `assignee` (`personName(owner)`), `tester` (`personName(tester)`), `fix` (`fixVersion` or `(none)`), `parent` (`parent` or `(none)`). `NONE = '(none)'`.
 - Shell: `.kpis.k7` (seven `kpi()` tiles, in order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time), `.main.sprint` (Burndown, Tickets by status, Work by assignee, Work by tester), `.lower` (Ticket detail, Assignee x tester).
+- Ticket detail's Owner cells use `.owner` and wrap within 150 px; the final `.current-situation` column has a 350 px minimum width. The detail table scrolls horizontally inside its tile when needed.
 - Tile renderers: `renderKpis(f)`, `renderBurndown(f)`, `renderStatus()`, `renderPeople(tile, dim, keyFn, label)` (called for assignee and tester), `renderMatrix()`, `renderDetail(f)`. KPIs, burndown and detail use the fully filtered set `f`; status, people and matrix tiles call `store.apply(tickets, ownDimension(s))`.
 - Status tile always shows rows for buckets 0–3, plus `Other` only if some ticket is in it. Bars on people rows are two stacked bars (items, points) split by status bucket; scale per column = max in the tile.
 - Fix version and Parent are `<select>` controls (ids `f-fix`, `f-parent`) passed to `AF.filterBar`; `syncCtl` keeps them equal to the store after any change (including Reset all and tag removal).
@@ -82,7 +83,7 @@ Jira links: `JIRA_BASE` constant (the **only** place the Jira address appears), 
 ## 7. Burndown (inline SVG)
 
 **Model** — `AF.burndown(tickets, sprint, today, thr)`; returns `null` when `sprint` is missing or its dates are invalid (`end < start`):
-- `n` = calendar days from `startDate` to `endDate` inclusive (weekends included); `scope(i)` = story points of filtered tickets with `addDay ≤ i` (D45; `addDay` from `addedDate`, null/before start → 0, after end → last day); `total` = the final scope (y-axis top).
+- `n` = calendar days from `startDate` to `endDate` inclusive (weekends included); `scope(i)` = story points of filtered tickets with `addDay ≤ i` (D45; `addDay` from `addedDate`, null/before start → 0, after end → last day); `total` = the largest scope on any day (y-axis top, including when removals lower the final scope).
 - For each Done ticket: if `doneDate` is not a date → counted in `unplacedDone` (and not subtracted); else `idx = max(0, doneDay − startDay)` (a pre-start date counts on day 1); `idx ≥ n` → `afterEndDone` (ignored); otherwise add its points to day `max(idx, addDay)` (never before it entered the scope).
 - `todayIndex = clamp(dayNum(today) − start, −1, n−1)`, `todayInside` = today within `[start,end]`. `today` is the snapshot's `refreshedAt`, **not the browser clock**.
 - `days[i] = {date, scope, ideal: scope(0)·(1 − i/(n−1)), remaining: i ≤ todayIndex ? scope(i) − cumulativeDone : null, doneToday, doneTickets}` (the ideal starts at the *starting* scope).
@@ -105,7 +106,7 @@ Clickable things are real `<button>`s in tab order with a visible focus outline 
 
 `AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` (sheets `Daily`, `Backlog Prioritized`) → `AF_Snaplogic/05_Automation/export_dashboard_snapshots.py` (read-only, manual, atomic write, refuses to run while the Excel lock file exists, needs `openpyxl`) → `sprint.json`, `backlog.json` validated by `schema/snapshot.schema.json`. Mapping rules: `DATA_CONTRACT.md` and the AF_Snaplogic skill `af-dashboard-snapshot-export.md` at the absolute path listed in `AGENTS.md`. A rebuild that has no tracker can develop against `fixtures/sample_snapshot.json` (four sprint tickets with edge cases) and hand-made JSON. If a new field is needed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 
-Known data limits that the UI must keep showing, not hide: `addedDate` is approximate for tickets that are not Done (taken from Jira *Created*), so late additions can be understated in the stepped burndown scope (D45); removals are reflected only when `sprint.removed` is present, and re-estimates are not reflected; `sprint.carriedOver` has a ticket percentage only (no points percentage).
+Known data limits that the UI must keep showing, not hide: older snapshots may contain `addedDate` values from before the approximation marker was retired, but the marker is not preserved in JSON; removals are reflected only when `sprint.removed` is present, and re-estimates are not reflected; `sprint.carriedOver` has a ticket percentage only (no points percentage).
 
 ## 10. The acceptance script (`scripts/run_acceptance.js`)
 

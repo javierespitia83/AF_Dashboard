@@ -5,7 +5,7 @@ A page is done only when every check below passes in a Chromium-based browser wi
 ## 1. Setup
 
 ```bash
-cd "<project root>/07_Dashboard"
+cd "<path to AF_Dashboard>"
 python3 -m http.server 8000
 # open http://localhost:8000/ (index.html) and http://localhost:8000/backlog.html
 ```
@@ -16,7 +16,7 @@ Test at a **1920 x 1080** viewport first, then the other sizes in section 4. Tes
 
 Compute expected values from the JSON, not from this file. Reference numbers from the 2026-10-01 snapshot (orientation only): sprint 68 work items and 173 story points, Done 34 items / 87 points, In Review 16 / 48, In Progress 9 / 29, To Do/Open 9 / 9, 31 without a tester, 3 with null points; backlog 125 tickets and 76 estimated points, DoR Ready 74, Weak 28, Missing 23.
 
-**Automated run:** `node 07_Dashboard/scripts/run_acceptance.js` (from the project root) performs most of the checks below in headless Chrome and compares every tile with an independent calculation from the JSON. A passing run (exit code 0) covers loading, numbers, cross-filtering, layouts, keyboard, edge cases, error states and the safety checks. Not covered by it, so check by eye when relevant: Safari or Firefox, real screen-reader use, a physical 1920 x 1080 monitor. Keep the script in sync with this file, `SPEC.md` and `DATA_CONTRACT.md`. A filtered expectation is always: take the tickets matching the filters (OR within a dimension, AND across dimensions), then apply the metric definition.
+**Automated run:** `node scripts/run_acceptance.js` (from the AF_Dashboard folder) performs most of the checks below in headless Chrome and compares every tile with an independent calculation from the JSON. A passing run (exit code 0) covers loading, numbers, cross-filtering, layouts, keyboard, edge cases, error states and the safety checks. Not covered by it, so check by eye when relevant: Safari or Firefox, real screen-reader use, a physical 1920 x 1080 monitor. Keep the script in sync with this file, `SPEC.md` and `DATA_CONTRACT.md`. A filtered expectation is always: take the tickets matching the filters (OR within a dimension, AND across dimensions), then apply the metric definition.
 
 ## 3. Checks
 
@@ -25,7 +25,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] No errors or warnings in the console on load or during any interaction.
 - [ ] Only requests to localhost; works with the network off. No `npm`, CDN, web font, external library, `innerHTML`, `eval` or `document.write` in the source.
 - [ ] `sprint.json`, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
-- [ ] The footer shows "Internal — team only"; the top bar shows "Data as of <refreshedAt>" and the tabs Current sprint and Backlog, with the active one marked.
+- [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and shows the tabs Current sprint and Backlog with the active one marked.
 
 **Layout at 1920 x 1080**
 - [ ] No page-level scroll (document height does not exceed the viewport, no horizontal overflow) on both pages.
@@ -37,12 +37,13 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Below 1366 wide or 760 high the page falls back to a scrolling layout: no element extends beyond the viewport outside the tile scroll areas, no page-level horizontal scroll, tiles stack (checked at 1280 x 720, 1024 x 768, 800 x 900 and 480 x 900).
 
 **Numbers with no filter — sprint**
-- [ ] KPI tiles: work items, story points, Done percent (Done points ÷ points, whole percent), no-tester count equal the independent calculation.
+- [ ] KPI tiles: work items, story points, Done percent (Done points ÷ points, whole percent), no-tester count (null, blank, missing or `Unassigned`, excluding exact `Dev to Test`) equal the independent calculation.
 - [ ] Status tile: one tile, one clickable bar row per status; each row shows `work items / story points` equal to the calculation; Total row equals the sprint totals; Other row only when the data has an unknown status; `Open` counts inside To Do/Open.
 - [ ] Assignee and tester tiles: one row per person group with the right work items and story points (two bars per person, number beside each bar); rows sorted by story points descending then name; Total rows equal the sprint totals; `Unassigned` appears for a null tester and for a null or literal `Unassigned` owner as a single row.
 - [ ] Assignee x tester grid: every cell equals the count of tickets with that pair; sum of all cells = work items; rows and columns sorted by total descending, `Unassigned` column last.
 - [ ] Detail table: one row per ticket in tracker order, exact keys and names; empty values show `—`, empty tester shows `Unassigned`; status shows the original text; the header shows "n of N".
 - [ ] Labels "Story points on owned tickets", "Points on tickets they test" and the overlap note are visible.
+- [ ] Selecting each clickable KPI filter adds a removable `KPI: <name>` tag; removing that tag clears only the KPI filter and preserves regular dashboard filters.
 
 **Numbers with no filter — backlog**
 - [ ] KPIs: total, estimated points, needing refinement (Weak + Missing), needs splitting, median days equal the calculation.
@@ -51,12 +52,12 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 
 **Burndown and the new KPIs (sprint)**
 - [ ] Avg cycle time equals the mean of `cycleTime` over filtered Done tickets with a value (one decimal at most, `—` when none); it changes with filters; the hint gives the number of tickets.
-- [ ] Added mid-sprint equals the count (and points) of filtered tickets with `addedDate` later than `startDate` + 2 days; changing the threshold setting in one place changes the KPI and the markers; the hint says the dates are approximate.
+- [ ] Added mid-sprint equals the count (and points) of filtered tickets with `addedDate` later than `startDate` + 2 days; changing the threshold setting in one place changes the KPI and the markers; current values are shown without an approximation label, with the older-snapshot caveat documented.
 - [ ] Carried over shows exactly `sprint.carriedOver` (count, percent, points) and does not change with filters; with `carriedOver: null` it shows "Not calculated yet for this sprint" and never 0; with no `sprint` object it shows "No sprint data in sprint.json". The percent shown is the exported one.
 - [ ] Burndown: one point per calendar day from `startDate` to `endDate`; on every day up to today the scope equals the points of filtered tickets added on or before that day, and remaining equals that scope minus Done points with `doneDate` on or before that day (checked against an independent calculation, including a ticket added mid-sprint, a Done ticket dated before the start and a Done ticket with no date); the scope line steps up on the added dates and the remaining line starts at the starting scope, not at the final scope; no remaining value after today; the ideal line goes from the starting scope on day one to 0 on the last day, linear over calendar days; the subtitle uses the scope today.
 - [ ] With `sprint.removed`: the scope steps down on each removal date (and up on the entry date of each removed ticket), remaining and ideal follow the independent calculation, the y axis tops out at the largest scope; a red down-triangle with `−N` sits below the axis on each removal date, the date labels are moved below it (no overlap), the legend shows Removed; clicking it opens a panel "Removed <Mon. D, YYYY>" listing exactly those tickets; the Removed marker follows the filters; without `sprint.removed` (or with `[]`) there is no marker, no Removed legend and the footnote is the one in SPEC §6.3.
 - [ ] Burndown responds to every filter (assignee, tester, status, fix version, parent): scope and both lines are recomputed for the filtered set; with zero results it shows the empty state.
-- [ ] Addition markers appear on every date after the start day that has added tickets, with the right counts: filled amber when the date is after the threshold, hollow when it is within it; the Added mid-sprint KPI counts only the filled ones; the tooltip lists tickets and says the dates are approximate; the "Today" marker is on the snapshot date; hover tooltips exist for every day; the footnote is visible; the chart redraws to fit when the window is resized and has no scroll bars.
+- [ ] Addition markers appear on every date after the start day that has added tickets, with the right counts: filled amber when the date is after the threshold, hollow when it is within it; the Added mid-sprint KPI counts only the filled ones; the tooltip lists tickets without labeling dates approximate; the older-snapshot caveat is in the footnote; the "Today" marker is on the snapshot date; hover tooltips exist for every day; the chart redraws to fit when the window is resized and has no scroll bars.
 - [ ] Clicking a marker opens a panel titled "Added Sep. 28, 2026" (date format `Mon. D, YYYY`) listing exactly the tickets of that marker (key as a Jira link, summary, points, status, assignee) with the right counts; same marker again, × or Escape closes it; another marker replaces it; Enter or Space on a focused marker does the same as a click; `aria-pressed` follows the state; opening or closing it changes no filter, tag, KPI or tile; after a filter change the list matches the filtered set (closes when empty); it survives a window resize; it never covers the page layout (stays inside the burndown tile).
 - [ ] Missing `sprint` dates: the burndown tile shows the explanatory message and the page still works; the unit checks run on a copy of the app with hand-made data whose answers are known.
 
@@ -112,6 +113,6 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 
 ## 4. After changes
 
-- Re-run the exporter, then run `node 07_Dashboard/scripts/run_acceptance.js` and repeat any checks it does not cover.
+- Re-run the exporter, then run `node scripts/run_acceptance.js` from the `AF_Dashboard` folder and repeat any checks it does not cover.
 - If the data mapping changed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 - Record any new decision in `DECISIONS.md`.

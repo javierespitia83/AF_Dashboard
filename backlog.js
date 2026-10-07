@@ -51,7 +51,7 @@
 
   function init(data) {
     var tickets = data.tickets;
-    AF.setUpdated(data.refreshedAt);
+    AF.setUpdated(data.refreshedAt, data.exportedAt);
     AF.clear(app);
     app.classList.add('bl');
     if (!tickets.length) {

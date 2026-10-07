@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * run_acceptance.js — automated acceptance run for the 07_Dashboard web app (ACCEPTANCE.md).
+ * run_acceptance.js — automated acceptance run for the AF_Dashboard web app (ACCEPTANCE.md).
  *
  * Drives a real headless Chrome over the DevTools protocol, clicks through both pages
  * and compares every tile, KPI, tag and table with an independent calculation from
@@ -9,7 +9,7 @@
  * copies of the app in a temp folder.
  *
  * Needs: Node 22+ (global fetch and WebSocket), python3 (for the local servers), Google Chrome.
- * Run from anywhere:   node 07_Dashboard/scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
+ * Run from this app folder: node scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
  * Chrome location:     set CHROME_PATH if it is not the default macOS path.
  * Ports used:          8771-8782 (servers) and 9333 (Chrome debugging) on 127.0.0.1.
  * Exit code:           0 when every check passes, 1 otherwise.
@@ -28,6 +28,13 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const asOfLabel = snapshot => {
+  const d = new Date(snapshot.exportedAt || '');
+  if (!snapshot.exportedAt || isNaN(d.getTime())) return 'Data as of ' + snapshot.refreshedAt;
+  const pad = n => String(n).padStart(2, '0');
+  const offset = -d.getTimezoneOffset(), sign = offset >= 0 ? '+' : '-', abs = Math.abs(offset);
+  return `Data as of ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} · ${pad(d.getHours())}:${pad(d.getMinutes())} UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+};
 
 // ---------- variants (copies; real data files never touched) ----------
 const APP = ['index.html', 'backlog.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js'];
@@ -190,10 +197,10 @@ function expectSprint(S, f, ctx = CTX) {
   else if (!co) { carriedV = '—'; carriedH = 'Not calculated yet for this sprint'; }
   else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in sprint.json'; }
   const midOk = ctx.sprint && !isNaN(dn(ctx.sprint.startDate));
-  const kh = { cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr} (approx.)` : 'No sprint start date in sprint.json', carried: carriedH };
+  const kh = { cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in sprint.json', carried: carriedH };
   const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—',
     midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
-    String(all.filter(t => t.tester === null && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
+    String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
   const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
   const people = (dim) => { const g = group(applyF(S, f, SKEY, [dim]), SKEY[dim]); const o = {}; Object.keys(g).forEach(k => o[k] = [g[k].i, g[k].p]); return o; };
   const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {}; mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
@@ -227,7 +234,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
         const wantAdded = Object.keys(x.by).sort().map(k => [k, x.by[k].c, x.by[k].p]), gotAdded = bd.added.map(a => [a.date, a.count, a.points]).sort();
         if (!eq(gotAdded, wantAdded)) errs.push(['added markers', gotAdded, wantAdded]);
         { const lim = isoN(dn(ctx.sprint.startDate) + (ctx.thr || 2)); const bad = bd.added.filter(a => (a.date <= lim) !== (a.early === '1') || (a.date <= lim) !== (a.fill === '#ffffff')); if (bad.length) errs.push(['early (hollow) vs after-threshold (filled) markers', bad.map(a => [a.date, a.early, a.fill])]); if (!bd.legend.includes('Earlier')) errs.push(['legend Earlier']); }
-        if (!bd.added.every(a => /approximate/.test(a.tip))) errs.push(['marker tooltip lacks "approximate"']);
+        if (!bd.added.every(a => !/approximate/i.test(a.tip))) errs.push(['marker tooltip still labels added dates approximate']);
         { const wantR = Object.keys(x.rby || {}).sort().map(k => [k, x.rby[k].c, x.rby[k].p]), gotR = bd.removed.map(a => [a.date, a.count, a.points]).sort();
           if (!eq(gotR, wantR)) errs.push(['removed markers', gotR, wantR]);
           if (bd.legend.includes('Removed') !== (wantR.length > 0)) errs.push(['legend Removed', bd.legend]);
@@ -245,8 +252,8 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
           if (!bd.scopeLine) errs.push(['scope line missing']);
           else if (bd.scopeLine.n !== 2 * want.length - 1) errs.push(['scope line point count', bd.scopeLine.n, 2 * want.length - 1]);
           else if (bd.scopeLine.vals && !eq(bd.scopeLine.vals, want.map(Math.round))) errs.push(['scope line steps', bd.scopeLine.vals, want]); }
-        if (!bd.legend.includes('Added after day ' + (ctx.thr || 2) + ' (approx.)')) errs.push(['legend threshold', bd.legend]);
-        if (!bd.foot.includes('Scope grows on each ticket') || (x.hasRemoved ? !bd.foot.includes('shrinks on the date a ticket left the sprint') : !bd.foot.includes('Tickets removed from the sprint and re-estimates are not reflected')) || !bd.foot.includes('approximate for tickets not yet Done')) errs.push(['footnote', bd.foot]);
+        if (!bd.legend.includes('Added after day ' + (ctx.thr || 2)) || /approx/i.test(bd.legend)) errs.push(['legend threshold', bd.legend]);
+        if (!bd.foot.includes('Scope grows on each ticket') || (x.hasRemoved ? !bd.foot.includes('shrinks on the date a ticket left the sprint') : !bd.foot.includes('Tickets removed from the sprint and re-estimates are not reflected')) || /approx/i.test(bd.foot)) errs.push(['footnote', bd.foot]);
         if (x.unplaced && !bd.foot.includes(`${x.unplaced} Done ticket${x.unplaced === 1 ? ' has' : 's have'} no done date`)) errs.push(['unplaced note', bd.foot]);
         if (!x.unplaced && /no done date/.test(bd.foot)) errs.push(['unexpected unplaced note']);
         if (bd.bodyOv !== 'hidden') errs.push(['chart overflow', bd.bodyOv]);
@@ -375,10 +382,10 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   console.log('\n--- Sprint page (real data) ---');
   p = await openPage(base + 'index.html');
   check('Sprint: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
-  check('Shell: top bar tabs (Current sprint active), Data as of, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))==='Data as of ${J('sprint.json').refreshedAt}' && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Shell: top bar tabs (Current sprint active), export date and time, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
-  const noTesterKeys = S.filter(t => t.tester === null && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
+  const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
   const noTesterKpi = await run(p, `const k=kpi('No tester'); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
   check('No tester KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
   await run(p, `clickEl(kpi('No tester'))`);
@@ -523,7 +530,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   console.log('\n--- Backlog page (real data) ---');
   p = await openPage(base + 'backlog.html');
   check('Backlog: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { logs: p.logs });
-  check('Shell: Backlog tab active, Data as of, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.getElementById('asof'))==='Data as of ${J('backlog.json').refreshedAt}' && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Shell: Backlog tab active, export date and time, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.getElementById('asof'))===${JSON.stringify(asOfLabel(J('backlog.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let bf = newBF(), q = '';
   await verifyBacklog(p, B, bf, q, 'Backlog: no filters, every tile = independent calculation');
   const LB = await run(p, layoutJs);
@@ -664,7 +671,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   { const BJ = JSON.parse(mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 } }, SP_OK))), BCTX = { sprint: BJ.sprint, today: BJ.refreshedAt, thr: 2 };
     await verifySprint(p, BURN_T, newF(), 'Hand-made sprint: every tile and the burndown equal the independent calculation', BCTX);
     const k = await run(p, READ_SPRINT), bd = await run(p, READ_BD);
-    check('Hand-made sprint: KPIs equal the numbers worked out by hand (6 items, 15 points, 87% done, 2 added mid-sprint, 3 carried over, 2 no tester, cycle time 3.3)', eq(k.kpis.map(x => x.value), ['6', '15', '87%', '2', '3', '2', '3.3']) && k.kpis[6].hint === 'days, over 3 Done tickets' && k.kpis[3].hint === '2 points, added after day 2 (approx.)' && k.kpis[4].hint === '20% of tickets, 8 points', k.kpis);
+    check('Hand-made sprint: KPIs equal the numbers worked out by hand (6 items, 15 points, 87% done, 2 added mid-sprint, 3 carried over, 2 no tester, cycle time 3.3)', eq(k.kpis.map(x => x.value), ['6', '15', '87%', '2', '3', '2', '3.3']) && k.kpis[6].hint === 'days, over 3 Done tickets' && k.kpis[3].hint === '2 points, added after day 2' && k.kpis[4].hint === '20% of tickets, 8 points', k.kpis);
     check('Hand-made sprint: scope [13,13,13,13] (APP-903 enters on 9/26, after today), remaining [9,4,1,1] then nothing after today; ideal falls from the starting scope 13 to 0 in steps of 13/6; done per day [4,5,3,0,0,0,0] (the pre-start date counts on day 1)', eq(bd.days.map(d => d.remaining), [9, 4, 1, 1, null, null, null]) && eq(bd.days.map(d => d.scope), [13, 13, 13, 13, 15, 15, 15]) && eq(bd.days.map(d => Math.round(d.ideal * 1000) / 1000), [13, 10.833, 8.667, 6.5, 4.333, 2.167, 0]) && eq(bd.days.map(d => d.done), [4, 5, 3, 0, 0, 0, 0]), bd.days);
     check('Hand-made sprint: markers on 9/25 (1 ticket, 0 points) and 9/26 (1 ticket, 2 points); today is 9/25; subtitle and footnote as specified', eq(bd.added.map(a => [a.date, a.count, a.points]), [['2026-09-25', 1, 0], ['2026-09-26', 1, 2]]) && bd.todayLabel && bd.sub === '1 of 13 points remaining today, ideal 6.5' && bd.foot.includes('1 Done ticket has no done date and is not on the line.'), { added: bd.added, sub: bd.sub, foot: bd.foot });
     // marker click: list of added tickets (SPEC 6.3, D44)
