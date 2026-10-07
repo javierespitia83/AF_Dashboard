@@ -342,7 +342,7 @@
     var detailCols = [
       { label: 'Ticket', cls: 'nowrap', render: function (t) { return AF.ticketCell(t.ticket); } },
       { label: 'Summary', cls: 'wrap', render: function (t) { return AF.show(t.summary); } },
-      { label: 'Owner', cls: 'nowrap', render: owner },
+      { label: 'Owner', cls: 'nowrap owner', render: owner },
       { label: 'Tester', cls: 'nowrap', render: tester },
       { label: 'Status', cls: 'nowrap', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
       { label: 'Story points', cls: 'num', render: function (t) { return AF.showPoints(t.points); } },
