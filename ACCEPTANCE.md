@@ -25,7 +25,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] No errors or warnings in the console on load or during any interaction.
 - [ ] Only requests to localhost; works with the network off. No `npm`, CDN, web font, external library, `innerHTML`, `eval` or `document.write` in the source.
 - [ ] `sprint.json`, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
-- [ ] The footer shows "Internal — team only"; the top bar shows "Data as of <refreshedAt>" and the tabs Current sprint and Backlog, with the active one marked.
+- [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and shows the tabs Current sprint and Backlog with the active one marked.
 
 **Layout at 1920 x 1080**
 - [ ] No page-level scroll (document height does not exceed the viewport, no horizontal overflow) on both pages.

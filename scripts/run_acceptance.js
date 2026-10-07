@@ -28,6 +28,13 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const asOfLabel = snapshot => {
+  const d = new Date(snapshot.exportedAt || '');
+  if (!snapshot.exportedAt || isNaN(d.getTime())) return 'Data as of ' + snapshot.refreshedAt;
+  const pad = n => String(n).padStart(2, '0');
+  const offset = -d.getTimezoneOffset(), sign = offset >= 0 ? '+' : '-', abs = Math.abs(offset);
+  return `Data as of ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} · ${pad(d.getHours())}:${pad(d.getMinutes())} UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+};
 
 // ---------- variants (copies; real data files never touched) ----------
 const APP = ['index.html', 'backlog.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js'];
@@ -375,7 +382,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   console.log('\n--- Sprint page (real data) ---');
   p = await openPage(base + 'index.html');
   check('Sprint: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
-  check('Shell: top bar tabs (Current sprint active), Data as of, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))==='Data as of ${J('sprint.json').refreshedAt}' && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Shell: top bar tabs (Current sprint active), export date and time, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
   const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
@@ -523,7 +530,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   console.log('\n--- Backlog page (real data) ---');
   p = await openPage(base + 'backlog.html');
   check('Backlog: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { logs: p.logs });
-  check('Shell: Backlog tab active, Data as of, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.getElementById('asof'))==='Data as of ${J('backlog.json').refreshedAt}' && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Shell: Backlog tab active, export date and time, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.getElementById('asof'))===${JSON.stringify(asOfLabel(J('backlog.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let bf = newBF(), q = '';
   await verifyBacklog(p, B, bf, q, 'Backlog: no filters, every tile = independent calculation');
   const LB = await run(p, layoutJs);

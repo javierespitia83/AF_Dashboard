@@ -683,9 +683,19 @@
 
   function emptyState(text) { return el('p', { class: 'empty', text: text }); }
 
-  function setUpdated(refreshedAt) {
+  function setUpdated(refreshedAt, exportedAt) {
     var n = document.getElementById('asof');
-    if (n) n.textContent = 'Data as of ' + (refreshedAt || '—');
+    if (!n) return;
+    var hasOffset = /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(String(exportedAt || ''));
+    var date = hasOffset ? new Date(exportedAt) : null;
+    if (!date || isNaN(date.getTime())) { n.textContent = 'Data as of ' + (refreshedAt || '—'); return; }
+    function pad(value) { return value < 10 ? '0' + value : String(value); }
+    var offsetMinutes = -date.getTimezoneOffset();
+    var sign = offsetMinutes >= 0 ? '+' : '-', absoluteOffset = Math.abs(offsetMinutes);
+    var localDate = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+    var localTime = pad(date.getHours()) + ':' + pad(date.getMinutes());
+    var zone = 'UTC' + sign + pad(Math.floor(absoluteOffset / 60)) + ':' + pad(absoluteOffset % 60);
+    n.textContent = 'Data as of ' + localDate + ' · ' + localTime + ' ' + zone;
   }
 
   root.AF = {

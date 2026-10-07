@@ -14,7 +14,12 @@
     "refreshedAt": {
       "type": "string",
       "format": "date",
-      "description": "Date the snapshot was generated, YYYY-MM-DD. Not a timestamp \u2014 the exporter runs manually, at most a few times a day."
+      "description": "Local calendar date the snapshot was generated, YYYY-MM-DD. Kept separate from exportedAt for date-based dashboard calculations."
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional RFC 3339 timestamp with UTC offset recording when the exporter generated the snapshot. Older snapshots may omit it."
     },
     "source": {
       "type": "string",

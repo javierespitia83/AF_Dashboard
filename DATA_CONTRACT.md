@@ -5,10 +5,11 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 ## 1. File shape (both files)
 
 ```json
-{ "refreshedAt": "YYYY-MM-DD", "source": "<workbook · sheet>", "tickets": [ ... ] }
+{ "refreshedAt": "YYYY-MM-DD", "exportedAt": "YYYY-MM-DDTHH:MM:SS±HH:MM", "source": "<workbook · sheet>", "tickets": [ ... ] }
 ```
 
-- `refreshedAt` is a date, not a timestamp. Show it as "Data as of YYYY-MM-DD".
+- `refreshedAt` is the local calendar date used by date-based calculations; keep it as `YYYY-MM-DD`.
+- `exportedAt` is an optional RFC 3339 timestamp with the exporter machine's UTC offset. Convert it to the viewing browser's local timezone before displaying its date, time and UTC offset; older snapshots without it show `refreshedAt` only.
 - `tickets` may be an empty array (show an empty state, not an error).
 - Order of `tickets` is the sheet's row order. Preserve it unless a feature says otherwise.
 - Latest snapshot only. No history.

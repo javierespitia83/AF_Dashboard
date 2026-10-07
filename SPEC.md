@@ -29,7 +29,7 @@ Questions it must answer, mostly by clicking:
 ## 4. App shell (both pages)
 
 Top to bottom:
-1. **Top bar** (fixed height): app name, tabs **Current sprint** and **Backlog** (the active tab is marked), and "Data as of <refreshedAt>" on the right.
+1. **Top bar** (fixed height): app name, tabs **Current sprint** and **Backlog** (the active tab is marked), and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
 2. **Filter bar** (fixed height): the active-filter tags, page-specific controls (see §6 and §7), and a **Reset all** button. With no filter active it says: "No filters. Click a bar, a person, or a cell to filter."
 3. **Board**: the tiles, filling all remaining height.
 4. **Footer** (slim, fixed height): "Internal — team only. Do not reuse in executive or external documents without review."

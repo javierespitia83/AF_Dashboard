@@ -11,7 +11,7 @@
   function init(data) {
     var tickets = data.tickets;
     var sprint = data.sprint || null; // may be absent in older files (DATA_CONTRACT §2a)
-    AF.setUpdated(data.refreshedAt);
+    AF.setUpdated(data.refreshedAt, data.exportedAt);
     AF.clear(app);
     if (!tickets.length) {
       app.appendChild(el('section', { class: 'message neutral' }, [
