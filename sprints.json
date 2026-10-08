@@ -1,0 +1,22 @@
+{
+  "current": 12119,
+  "sprints": [
+    {
+      "id": 12119,
+      "name": "APP Sprint 10-09-2026",
+      "startDate": "2026-09-22",
+      "endDate": "2026-10-09",
+      "state": "active",
+      "file": "sprint.json"
+    },
+    {
+      "id": 4697,
+      "name": "APP Sprint 09-21-2026",
+      "startDate": "2026-09-09",
+      "endDate": "2026-09-21",
+      "state": "closed",
+      "file": "snapshots/sprint-4697.json",
+      "note": "Reconstructed from Jira on 2026-10-08 (owner, tester, points and fix version are as of today, not at close; no daily narrative)."
+    }
+  ]
+}

@@ -222,8 +222,9 @@
   }
 
   // Burndown model for a set of tickets. Returns null when the sprint dates are missing or invalid.
-  function burndown(tickets, sprint, today, thresholdDays, removed) {
+  function burndown(tickets, sprint, today, thresholdDays, removed, opts) {
     if (!sprint) return null;
+    opts = opts || {};
     var s = dayNum(sprint.startDate), e = dayNum(sprint.endDate);
     if (isNaN(s) || isNaN(e) || e < s) return null;
     var n = e - s + 1, i;
@@ -252,8 +253,9 @@
       var k = isoOf(s + remIdx);
       (removedByDate[k] = removedByDate[k] || []).push({ ticket: r.ticket, points: pts(r.points), summary: r.summary, status: r.status, owner: r.owner });
     });
-    var td = dayNum(today), todayIndex = isNaN(td) ? -1 : Math.max(-1, Math.min(n - 1, td - s));
-    var todayInside = !isNaN(td) && td >= s && td <= e; // the snapshot date falls inside the sprint
+    var chartDate = opts.closed ? sprint.endDate : today;
+    var td = dayNum(chartDate), todayIndex = isNaN(td) ? -1 : Math.max(-1, Math.min(n - 1, td - s));
+    var todayInside = !opts.closed && !isNaN(td) && td >= s && td <= e; // closed sprints have no live Today marker
     var days = [], cum = 0, scope = 0, start = addedOn[0] - removedOn[0], maxScope = 0;
     for (i = 0; i < n; i++) {
       scope += addedOn[i] - removedOn[i]; cum += doneOn[i]; maxScope = Math.max(maxScope, scope);
@@ -656,11 +658,15 @@
   function linkCell(v) { return isBlank(v) ? '\u2014' : el('span', null, linkify(v)); }
 
   // ---- Loading and errors (SPEC §4) ----------------------------------------
-  function loadSnapshot(file) {
+  function loadJson(file) {
     return fetch(file, { cache: 'no-store' }).then(function (res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
-    }).then(function (data) {
+    });
+  }
+
+  function loadSnapshot(file) {
+    return loadJson(file).then(function (data) {
       if (!data || !Array.isArray(data.tickets)) throw new Error('missing "tickets" array');
       return data;
     });
@@ -709,6 +715,6 @@
     statusDot: statusDot, stackedBar: stackedBar, simpleBar: simpleBar, heatStyle: heatStyle,
     buildTable: buildTable, filterBar: filterBar, heatGrid: heatGrid,
     jira: { base: JIRA_BASE, url: jiraUrl, link: jiraLink, linkify: linkify }, ticketCell: ticketCell, linkCell: linkCell,
-    loadSnapshot: loadSnapshot, showError: showError, emptyState: emptyState, setUpdated: setUpdated
+    loadJson: loadJson, loadSnapshot: loadSnapshot, showError: showError, emptyState: emptyState, setUpdated: setUpdated
   };
 })();

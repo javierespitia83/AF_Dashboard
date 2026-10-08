@@ -39,7 +39,7 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Data rules (hard)
 
-- The app reads only `sprint.json` and `backlog.json`, via `fetch()` with relative paths. It never reads Excel.
+- The app reads `sprints.json` when available, then only the selected sprint snapshot named by that validated local manifest entry; it also reads `backlog.json` on the backlog page. If the manifest is missing or invalid, the sprint page falls back to `sprint.json`. All reads use relative local paths; the app never reads Excel or makes remote requests.
 - The app is read-only: it must not write to Excel, Jira, or the JSON snapshots.
 - Never hand-edit `sprint.json` or `backlog.json`. They are generated. If the data looks wrong, fix the tracker or the exporter, then re-export.
 - Never invent missing values. Show `—` or the documented placeholder instead.
@@ -48,7 +48,7 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Files you must not overwrite without inspecting first
 
-`sprint.json`, `backlog.json`, `schema/snapshot.schema.json`, `fixtures/sample_snapshot.json`, `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/05_Automation/export_dashboard_snapshots.py`, and `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`. If the mapping changes, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
+`sprint.json`, `backlog.json`, `sprints.json`, `snapshots/*.json`, `schema/snapshot.schema.json`, `schema/sprints.schema.json`, `fixtures/sample_snapshot.json`, `fixtures/sprints.json`, `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/05_Automation/export_dashboard_snapshots.py`, and `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`. Snapshots and the manifest are generated data; do not hand-edit them. If the mapping changes, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 
 ## Do not touch
 

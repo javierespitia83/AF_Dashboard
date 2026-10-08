@@ -1,17 +1,138 @@
-/* sprint.js — current-sprint page (index.html). Reads sprint.json only. Cross-filtering: SPEC §5. */
+/* sprint.js — sprint selection, current/closed sprint page (index.html). Cross-filtering: SPEC §5. */
 (function () {
   'use strict';
   var AF = window.AF, el = AF.el, fmt = AF.fmtNum;
   var app = document.getElementById('app');
   var barBox = document.getElementById('filterbar');
+  var pickerBox = document.getElementById('sprint-picker');
+  var banner = document.getElementById('sprint-banner');
   var EMPTY = 'No work items match these filters. Remove a tag or use Reset all.';
+  var manifest = null, sprintSelect = null, snapshotCache = Object.create(null);
+  var activeObserver = null, activeEscapeHandler = null;
 
-  AF.loadSnapshot('sprint.json').then(init, function (err) { AF.showError(app, 'sprint.json', err); });
+  function validDate(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    var date = new Date(value + 'T00:00:00Z');
+    return !isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }
+  function safeFile(value) {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9._/-]+$/.test(value)) return false;
+    return value.split('/').every(function (part) { return part && part !== '.' && part !== '..'; });
+  }
+  function validManifest(data) {
+    if (!data || !Number.isInteger(data.current) || !Array.isArray(data.sprints) || !data.sprints.length) return false;
+    if (!Object.keys(data).every(function (k) { return k === 'current' || k === 'sprints'; })) return false;
+    var ids = Object.create(null), active = [], current = null;
+    for (var i = 0; i < data.sprints.length; i++) {
+      var s = data.sprints[i];
+      if (!s || !Object.keys(s).every(function (k) { return ['id', 'name', 'startDate', 'endDate', 'state', 'file', 'note'].indexOf(k) !== -1; })) return false;
+      if (!s || !Number.isInteger(s.id) || s.id < 1 || ids[s.id] || typeof s.name !== 'string' || !s.name.trim() ||
+          !validDate(s.startDate) || !validDate(s.endDate) || s.endDate < s.startDate ||
+          (s.state !== 'active' && s.state !== 'closed') || !safeFile(s.file) ||
+          (s.note !== undefined && typeof s.note !== 'string')) return false;
+      ids[s.id] = true;
+      if (s.state === 'active') active.push(s);
+      if (s.id === data.current) current = s;
+    }
+    return active.length === 1 && current === active[0];
+  }
+  function findSprint(id) {
+    return manifest && manifest.sprints.find(function (s) { return String(s.id) === String(id); });
+  }
+  function showLoading() {
+    AF.clear(app); AF.clear(barBox);
+    app.appendChild(el('p', { class: 'loading', text: 'Loading sprint…' }));
+  }
+  function showUnknownSprint(id) {
+    AF.clear(app); AF.clear(barBox);
+    app.appendChild(el('section', { class: 'message', role: 'alert' }, [
+      el('h2', { text: 'Sprint not found' }),
+      el('p', { text: 'Sprint ' + id + ' is not listed in sprints.json. Choose an available sprint from the Sprint selector.' })
+    ]));
+  }
+  function updateSprintUrl(id) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('sprint', String(id));
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  function buildSelector() {
+    AF.clear(pickerBox);
+    sprintSelect = el('select', { id: 'sprint-select', 'aria-label': 'Sprint' }, [el('option', { value: '', text: 'Choose a sprint', disabled: true })]);
+    manifest.sprints.forEach(function (s) {
+      var dates = s.startDate + ' – ' + s.endDate;
+      sprintSelect.appendChild(el('option', {
+        value: String(s.id),
+        text: s.name + ' · ' + dates + ' (' + s.state + ')'
+      }));
+    });
+    sprintSelect.addEventListener('change', function () {
+      var selected = findSprint(sprintSelect.value);
+      if (!selected) return;
+      updateSprintUrl(selected.id);
+      loadSprint(selected);
+    });
+    pickerBox.appendChild(el('label', { for: 'sprint-select', text: 'Sprint' }));
+    pickerBox.appendChild(sprintSelect);
+  }
+  function loadSprint(entry) {
+    if (!snapshotCache[entry.file]) {
+      snapshotCache[entry.file] = AF.loadSnapshot(entry.file).then(function (data) {
+        if (!data.sprint || data.sprint.id !== entry.id || data.sprint.startDate !== entry.startDate || data.sprint.endDate !== entry.endDate) {
+          throw new Error('snapshot sprint metadata does not match sprints.json');
+        }
+        return data;
+      }).catch(function (err) {
+        delete snapshotCache[entry.file];
+        throw err;
+      });
+    }
+    if (sprintSelect) sprintSelect.value = String(entry.id);
+    showLoading();
+    snapshotCache[entry.file].then(function (data) { init(data, entry); }, function (err) { AF.showError(app, entry.file, err); });
+  }
+  function loadFallback() {
+    AF.clear(pickerBox); sprintSelect = null;
+    AF.clear(banner); banner.hidden = true;
+    if (!snapshotCache['sprint.json']) snapshotCache['sprint.json'] = AF.loadSnapshot('sprint.json');
+    snapshotCache['sprint.json'].then(function (data) { init(data, null); }, function (err) { AF.showError(app, 'sprint.json', err); });
+  }
+  function loadManifest() {
+    AF.loadJson('sprints.json').then(function (data) {
+      if (!validManifest(data)) throw new Error('invalid sprint manifest');
+      return data;
+    }).then(function (data) {
+      manifest = data;
+      buildSelector();
+      var requested = new URLSearchParams(window.location.search).get('sprint');
+      var selected = requested === null ? findSprint(manifest.current) : findSprint(requested);
+      if (!selected) {
+        sprintSelect.value = '';
+        showUnknownSprint(requested);
+        return;
+      }
+      loadSprint(selected);
+    }, function () {
+      // Older deployments may not have the manifest yet. Keep the prior current sprint page quietly.
+      loadFallback();
+    });
+  }
+  loadManifest();
 
-  function init(data) {
+  function init(data, entry) {
+    if (activeObserver) { activeObserver.disconnect(); activeObserver = null; }
+    if (activeEscapeHandler) { document.removeEventListener('keydown', activeEscapeHandler); activeEscapeHandler = null; }
+    AF.clear(barBox);
     var tickets = data.tickets;
     var sprint = data.sprint || null; // may be absent in older files (DATA_CONTRACT §2a)
+    var isClosed = !!entry && entry.state === 'closed';
     AF.setUpdated(data.refreshedAt, data.exportedAt);
+    AF.clear(banner);
+    banner.hidden = !isClosed;
+    if (isClosed) {
+      var asOf = document.getElementById('asof').textContent.replace(/^Data as of /, '');
+      banner.appendChild(el('strong', { text: 'Closed sprint · data as of ' + asOf }));
+      if (entry.note) banner.appendChild(el('span', { class: 'sprint-banner-note', text: entry.note }));
+    }
     AF.clear(app);
     if (!tickets.length) {
       app.appendChild(el('section', { class: 'message neutral' }, [
@@ -230,14 +351,15 @@
       var mk = tBurn.body.querySelector('g.bd-' + kind + '[data-date="' + date + '"]');
       if (mk) mk.focus();
     }
-    document.addEventListener('keydown', function (e) {
+    activeEscapeHandler = function (e) {
       if (e.key === 'Escape' && selectedKey) { closePanel(); drawNow(); }
-    });
+    };
+    document.addEventListener('keydown', activeEscapeHandler);
     function renderBurndown(f) {
       var days = AF.config.midSprintThresholdDays;
       var hasRemoved = !!sprint && Array.isArray(sprint.removed);
       var rf = hasRemoved ? store.apply(sprint.removed) : []; // removed tickets follow the same filters (they carry the filter fields)
-      var m = AF.burndown(f, sprint, data.refreshedAt, days, rf);
+      var m = AF.burndown(f, sprint, data.refreshedAt, days, rf, { closed: isClosed });
       lastModel = null; if (pop) { pop.remove(); pop = null; }
       AF.rebuild(tBurn, function () {
         var sub = tBurn.head.querySelector('.sub');
@@ -248,7 +370,7 @@
         }
         if (!f.length) { closePanel(); sub.textContent = ''; tBurn.body.appendChild(AF.emptyState(EMPTY)); return; }
         var cur = m.todayIndex >= 0 ? m.days[m.todayIndex] : null;
-        var when = data.refreshedAt <= m.days[m.n - 1].date ? 'today' : 'at sprint end';
+        var when = isClosed || data.refreshedAt > m.days[m.n - 1].date ? 'at sprint end' : 'today';
         sub.textContent = cur ? fmt(cur.remaining) + ' of ' + fmt(cur.scope) + ' points remaining ' + when + ', ideal ' + AF.oneDecimal(cur.ideal) : 'The sprint has not started yet';
         lastOpts = {
           thresholdDays: days, onMarker: onMarker, selectedKey: selectedKey,
@@ -268,7 +390,7 @@
     }
     if (typeof ResizeObserver !== 'undefined') {
       var lw = 0, lh = 0;
-      new ResizeObserver(function () {
+      activeObserver = new ResizeObserver(function () {
         var w = tBurn.body.clientWidth, h = tBurn.body.clientHeight;
         if ((w !== lw || h !== lh) && lastModel) { lw = w; lh = h; AF.drawBurndown(tBurn.body, lastModel, lastOpts); }
       }).observe(tBurn.body);
