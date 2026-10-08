@@ -268,8 +268,7 @@ td.center, th.center { text-align: center; }
 table.wider { min-width: 1500px; }
 .lower table.wider { min-width: 1000px; }
 .lower td.wrap { min-width: 160px; }
-.lower th.owner, .lower td.owner { width: 150px; max-width: 150px; }
-.lower td.owner { white-space: normal; overflow-wrap: anywhere; }
+.lower td.wrap-text { white-space: normal; overflow-wrap: break-word; }
 .lower th.current-situation, .lower td.current-situation { min-width: 350px; }
 .empty { margin: 12px 4px; color: var(--muted); }
 .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-weight: 600; font-size: 12px; border: 1px solid rgba(0,0,0,0.12); white-space: nowrap; }

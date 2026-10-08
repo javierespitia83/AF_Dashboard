@@ -358,9 +358,9 @@
     var detailCols = [
       { label: 'Ticket', cls: 'nowrap', render: function (t) { return AF.ticketCell(t.ticket); } },
       { label: 'Summary', cls: 'wrap', render: function (t) { return AF.show(t.summary); } },
-      { label: 'Owner', cls: 'nowrap owner', render: owner },
-      { label: 'Tester', cls: 'nowrap', render: tester },
-      { label: 'Status', cls: 'nowrap', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
+      { label: 'Owner', cls: 'owner wrap-text', render: owner },
+      { label: 'Tester', cls: 'tester wrap-text', render: tester },
+      { label: 'Status', cls: 'status wrap-text', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
       { label: 'Story points', cls: 'num', render: function (t) { return AF.showPoints(t.points); } },
       { label: 'Parent', cls: 'wrap', render: function (t) { return AF.linkCell(t.parent); } },
       { label: 'Fix version', cls: 'nowrap', render: function (t) { return AF.show(t.fixVersion); } },
