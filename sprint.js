@@ -59,10 +59,9 @@
     AF.clear(pickerBox);
     sprintSelect = el('select', { id: 'sprint-select', 'aria-label': 'Sprint' }, [el('option', { value: '', text: 'Choose a sprint', disabled: true })]);
     manifest.sprints.forEach(function (s) {
-      var dates = s.startDate + ' – ' + s.endDate;
       sprintSelect.appendChild(el('option', {
         value: String(s.id),
-        text: s.name + ' · ' + dates + ' (' + s.state + ')'
+        text: s.name + ' (' + s.state + ')'
       }));
     });
     sprintSelect.addEventListener('change', function () {
