@@ -130,3 +130,5 @@ None of these blocks implementation.
 | 2026-10-07 | Sprint Ticket detail width adjustment: Owner is capped at 150 px and wraps; Current situation minimum width increased from 300 px to 350 px, with horizontal scrolling inside the table tile. |
 | 2026-10-06 | Sprint KPI display order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time. |
 | 2026-10-07 | Sprint KPI filters appear as removable `KPI: <name>` tags in the shared filter bar. “No tester” treats null, blank, missing and literal `Unassigned` tester values consistently, excluding exact `Dev to Test`. The burndown uses exported `Added to Sprint` dates without approximation labels; older snapshots may not preserve whether a legacy date was approximate. Burndown y-axis maximum is the largest daily scope, including days before removals. |
+| 2026-10-07 | Superseding the earlier Owner-width cap: Owner and Tester cells in Ticket detail have automatic widths and wrap names at spaces; no fixed Owner width. |
+| 2026-10-07 | Status cells in Ticket detail also wrap at spaces with an automatic width, using the same rule as Owner and Tester. |
