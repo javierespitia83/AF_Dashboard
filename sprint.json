@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-08",
-  "exportedAt": "2026-10-08T15:40:54+00:00",
+  "exportedAt": "2026-10-08T16:46:51+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -424,7 +424,7 @@
     {
       "ticket": "APP-2931",
       "owner": "Bornali Nath",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Bornali Nath",
       "classifications": null,
       "points": 5,
@@ -435,7 +435,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "QA Task: Backlog Automation",
-      "currentSituation": "Bornali has not had time for the backlog automation; she starts tomorrow. Quick check posted 10/7 (carried over from last sprint).",
+      "currentSituation": "In Review. Bornali moved it to In Review on 10/8 and added PR #779 (QAForge) for the backlog automation. Next: a reviewer to review the PR.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1101,6 +1101,25 @@
       "cycleTime": 3,
       "summary": "QA Task : UAT Regression Analysis Oct 02",
       "currentSituation": "Done 10/7. QA task: UAT regression analysis (Oct 02) completed.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3110",
+      "owner": "Pavan V",
+      "status": "In Progress",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": null,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-08",
+      "cycleTime": null,
+      "summary": "QA Task : Git Refactor",
+      "currentSituation": "In Progress; created and started by Pavan on 10/8, no story points yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
