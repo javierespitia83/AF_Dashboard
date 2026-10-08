@@ -22,7 +22,7 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `owner` | string or null | Assignee display name | `Unassigned` |
 | `status` | string or null | Original Jira status | `Other` bucket (see §5) |
 | `tester` | string or null | Tester display name (one person) | `Unassigned` |
-| `classifications` | string or null | Semicolon-space (`; `) joined classification values; the `No tester` KPI excludes tickets with the exact `Dev to Test` value | `—` |
+| `classifications` | string or null | Semicolon-space (`; `) joined classification values; the detail table's `Dev to Test` column shows `Yes` when this includes that exact value | `—` |
 | `points` | number or null | Story points (whole ticket, dev + test) | `—`; counts as 0 |
 | `parent` | string or null | e.g. `APP-189 – Monitor enhancements` | `—` |
 | `linkedWorkItems` | string or null | Comma-joined keys, all projects | `—` |
@@ -51,6 +51,7 @@ The web app reads exactly two files in this folder: `sprint.json` and `backlog.j
 | `removed` | array, null or absent | **Optional (D52).** Tickets that were in the sprint and left it (moved to a later sprint or the backlog). One entry per ticket: `ticket` (key), `removedDate` (`YYYY-MM-DD`, required), and optional `points`, `addedDate` (when it entered the sprint; absent means from the start), `summary`, `status` (at removal), `owner`, `tester`, `fixVersion`, `parent`. Must come from the Jira changelog (Sprint field); the UI never infers it. Absent or `null` = not available (the burndown footnote says removals are not reflected); `[]` = nothing was removed. |
 
 Rules the UI must respect:
+- In the sprint Ticket detail table, `Dev to Test` appears immediately after `Tester`; it shows `Yes` only when `classifications`, split on `"; "`, contains the exact `Dev to Test` value, and `—` otherwise. The `No tester` KPI uses the same exact-value rule when excluding tickets.
 - **`carriedOver` is a passthrough.** It is read straight from the `Carried Over #`, `Carried Over %` and `Carried Over Story Points` columns of `Sprint Metrics`. **Never recalculate it from the ticket list**: the comparison between sprints is only possible at rotation time, and only the tracker captures it.
 - **`carriedOver: null` means "not calculated yet"** (all three source cells empty, e.g. a sprint that has just rotated). It is not "zero carried over". The UI must show it as not calculated, never as 0. A zero count arrives as `{ "count": 0, ... }`.
 - `carriedOver.ticketKeys` is optional and, when present, identifies which current sprint tickets are included in the aggregate. The KPI can filter the lower section by these keys. Without it, the aggregate remains visible but the ticket-level set cannot be shown.

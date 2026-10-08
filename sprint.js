@@ -58,10 +58,12 @@
     var carriedKeys = sprint && sprint.carriedOver && Array.isArray(sprint.carriedOver.ticketKeys)
       ? sprint.carriedOver.ticketKeys : null;
 
+    function isDevToTest(t) {
+      return String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
+    }
     function noTesterAndNotDevToTest(t) {
-      var isDevToTest = String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
       var testerMissing = t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
-      return testerMissing && !isDevToTest;
+      return testerMissing && !isDevToTest(t);
     }
     function matchesLowerFilter(t) {
       if (lowerFilter === 'noTester') return noTesterAndNotDevToTest(t);
@@ -360,6 +362,7 @@
       { label: 'Summary', cls: 'wrap', render: function (t) { return AF.show(t.summary); } },
       { label: 'Owner', cls: 'owner wrap-text', render: owner },
       { label: 'Tester', cls: 'tester wrap-text', render: tester },
+      { label: 'Dev to Test', cls: 'nowrap', render: function (t) { return AF.show(isDevToTest(t) ? 'Yes' : null); } },
       { label: 'Status', cls: 'status wrap-text', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
       { label: 'Story points', cls: 'num', render: function (t) { return AF.showPoints(t.points); } },
       { label: 'Parent', cls: 'wrap', render: function (t) { return AF.linkCell(t.parent); } },
