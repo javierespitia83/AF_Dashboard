@@ -61,7 +61,7 @@ button { font: inherit; color: inherit; }
 .tab.active { color: #fff; border-bottom-color: var(--teal); }
 .tab:focus-visible { outline-color: #fff; outline-offset: -3px; }
 .asof { margin-left: auto; color: #c9d5e6; }
-.sprint-picker { display: flex; align-items: center; gap: 6px; color: #fff; flex: none; }
+.sprint-picker { display: flex; align-items: center; gap: 8px; color: #fff; flex: none; }
 .sprint-picker label { font-weight: 600; }
 .sprint-picker select { max-width: 340px; min-width: 180px; padding: 4px 7px; border: 1px solid #c9d5e6; border-radius: 5px; color: var(--ink); background: var(--surface); font: inherit; }
 .sprint-picker select:focus-visible { outline-color: #fff; }

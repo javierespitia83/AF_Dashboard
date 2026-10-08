@@ -26,7 +26,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Only requests to localhost; works with the network off. No `npm`, CDN, web font, external library, `innerHTML`, `eval` or `document.write` in the source.
 - [ ] `sprints.json`, the selected sprint snapshot, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
 - [ ] The sprint selector fetches `sprints.json` and only its selected snapshot; already loaded snapshots are reused when switching back. The backlog page stays on `backlog.json` only.
-- [ ] A valid manifest defaults to `current`; the select is labelled Sprint and shows each sprint name, date range and state. Selecting a closed sprint updates `?sprint=<id>` with `history.replaceState`, resets filters, and loads it without a full page reload.
+- [ ] A valid manifest defaults to `current`; the select is labelled Sprint and shows each sprint name and state without repeating dates. Selecting a closed sprint updates `?sprint=<id>` with `history.replaceState`, resets filters, and loads it without a full page reload.
 - [ ] A direct `?sprint=<id>` opens the corresponding manifest entry. An unknown id shows a clear error and leaves the selector usable. Missing/invalid manifests silently fall back to `sprint.json` with no selector.
 - [ ] Closed sprints show the snapshot's as-of date/time and optional manifest note; the burndown runs through sprint end and has no live Today marker. Null carried-over, removal, narrative, discussed and demo fields render using their documented placeholders/messages.
 - [ ] `sprints.json` and `fixtures/sprints.json` conform to `schema/sprints.schema.json`; active and closed snapshots conform to `schema/snapshot.schema.json`.
