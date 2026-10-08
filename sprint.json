@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-08",
-  "exportedAt": "2026-10-08T00:07:51+00:00",
+  "exportedAt": "2026-10-08T07:22:21-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -42,6 +42,25 @@
   },
   "tickets": [
     {
+      "ticket": "APP-3106",
+      "owner": null,
+      "status": "In Review",
+      "tester": null,
+      "classifications": "Dev to Test",
+      "points": 1,
+      "parent": "APP-142 – UI tech debt",
+      "linkedWorkItems": null,
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-07",
+      "cycleTime": null,
+      "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
+      "currentSituation": "In Review; PR #6040 was created on 10/7; no assignee is set.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
       "ticket": "APP-193",
       "owner": "Alan Le",
       "status": "In Review",
@@ -55,7 +74,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "Notification dropdown navigation to notification center",
-      "currentSituation": "Pavan finished testing; Alan reviewed the automation test cases (looks good, 10/7) and the ticket moved to In Review. Pending merge.",
+      "currentSituation": "In Review; Pavan approved merging to develop; Alan to merge.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -74,7 +93,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "Alan to address Pavan's comments today; quick check posted 10/7. Mario is doing the visual QA and will post results today.",
+      "currentSituation": "In Review; visual checks passed, but Mario flagged warning text and a double focus outline; Alan to fix.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -384,12 +403,31 @@
       "discussed": "No"
     },
     {
+      "ticket": "APP-3105",
+      "owner": "Barbora Novakova",
+      "status": "In Review",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": 1,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": "4.45.2.0",
+      "doneDate": null,
+      "addedDate": "2026-10-06",
+      "cycleTime": null,
+      "summary": "Unable to select Global Shared on Copy/Move Dialog",
+      "currentSituation": "In Review; Pavan confirmed it is also on UAT (10/7); no next step was stated in that comment.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
       "ticket": "APP-2931",
       "owner": "Bornali Nath",
       "status": "In Progress",
       "tester": "Bornali Nath",
       "classifications": null,
-      "points": 5,
+      "points": 3,
       "parent": "APP-2914 – Epic to track QA Activities for 4.45.2.0",
       "linkedWorkItems": null,
       "fixVersion": null,
@@ -511,7 +549,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": null,
       "summary": "Allow tasks (incl. trigger tasks) to select a pipeline from other project folder",
-      "currentSituation": "Anumeha's automation tests failed because she ran an old build; Guannan says they pass on Canary (pipeline picker uses a new component). Anumeha to rebuild Canary and retest (10/7 daily).",
+      "currentSituation": "In Review; Anumeha asked Guannan whether broken pipeline references during copy/import are expected; confirmation is needed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -663,29 +701,10 @@
       "addedDate": "2026-10-01",
       "cycleTime": null,
       "summary": "Snaps in restricted class id is displayed in asset palette",
-      "currentSituation": "Needs one automation test case: Guannan will add it (needs a test case ID). Carlos asked Bornali to support as tester; she will look tomorrow (10/7 daily).",
+      "currentSituation": "In Review; Jira generated an automation test plan on 10/8; reviewer to mark it reviewed in Confluence (owner unspecified).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
-    },
-    {
-      "ticket": "APP-3105",
-      "owner": "Barbora Novakova",
-      "status": "In Review",
-      "tester": "Pavan V",
-      "classifications": null,
-      "points": 1,
-      "parent": null,
-      "linkedWorkItems": null,
-      "fixVersion": "4.45.2.0",
-      "doneDate": null,
-      "addedDate": "2026-10-06",
-      "cycleTime": null,
-      "summary": "Unable to select Global Shared on Copy/Move Dialog",
-      "currentSituation": "Reassigned to Barbora 10/7; PR created and now In Review. Pavan to test.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
     },
     {
       "ticket": "APP-2882",
@@ -967,7 +986,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": null,
       "summary": "Rewrite Designer in React",
-      "currentSituation": "Will not make the sprint: needs a QA test plan with Poornima. Quick check posted 10/7 to confirm moving it to the backlog (Kyle).",
+      "currentSituation": "In Review; it will not make this sprint; Kyle plans to move it to backlog and revisit after a QA test plan with Poornima.",
       "blocker": "Will not finish this sprint.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1082,6 +1101,25 @@
       "cycleTime": 3,
       "summary": "QA Task : UAT Regression Analysis Oct 02",
       "currentSituation": "Done 10/7. QA task: UAT regression analysis (Oct 02) completed.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3092",
+      "owner": "Ploy Pornapat",
+      "status": "Open",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": 0,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": "4.45.2.0",
+      "doneDate": null,
+      "addedDate": "2026-10-05",
+      "cycleTime": null,
+      "summary": "iris_pipeline_search throwing 500 error on UAT",
+      "currentSituation": "Open; Pavan reopened it after regression found a UAT timeout (10/6); Jump to investigate.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1391,25 +1429,6 @@
       "discussed": "Yes"
     },
     {
-      "ticket": "APP-3092",
-      "owner": "Thanawut (Jump) Anapiriyakul",
-      "status": "Open",
-      "tester": "Pavan V",
-      "classifications": null,
-      "points": 0,
-      "parent": null,
-      "linkedWorkItems": null,
-      "fixVersion": "4.45.2.0",
-      "doneDate": null,
-      "addedDate": "2026-10-05",
-      "cycleTime": null,
-      "summary": "iris_pipeline_search throwing 500 error on UAT",
-      "currentSituation": "Reopened 10/6 by Pavan: iris_pipeline_search is slow in regression. Jump to look; the earlier issue was thought temporary.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
-    },
-    {
       "ticket": "APP-928",
       "owner": "Vlad Storona",
       "status": "Done",
@@ -1518,7 +1537,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "Cannot open account",
-      "currentSituation": "Vlad found the root cause thanks to Frank's information; the fix is simple and the PR comes tomorrow (10/7 daily).",
+      "currentSituation": "In Progress; Vlad acknowledged Frank's clarification; the latest comment gives no new delivery date or next step.",
       "blocker": "Hard to reproduce, few details.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1541,25 +1560,6 @@
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
-    },
-    {
-      "ticket": "APP-3106",
-      "owner": null,
-      "status": "In Review",
-      "tester": null,
-      "classifications": "Dev to Test",
-      "points": 1,
-      "parent": "APP-142 – UI tech debt",
-      "linkedWorkItems": null,
-      "fixVersion": "4.46",
-      "doneDate": null,
-      "addedDate": "2026-10-07",
-      "cycleTime": null,
-      "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "currentSituation": "New this sprint (Dev to Test): removes the old alert component and the react-js-pagination dependency flagged by Dependabot. In review; no owner assigned.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
     }
   ]
 }
