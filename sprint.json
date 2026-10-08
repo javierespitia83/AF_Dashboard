@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-08",
-  "exportedAt": "2026-10-08T07:31:23-05:00",
+  "exportedAt": "2026-10-08T14:22:17+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -102,7 +102,7 @@
       "ticket": "APP-2673",
       "owner": "Alan Le",
       "status": "In Review",
-      "tester": "Poornima Srikantesh",
+      "tester": "Bornali Nath",
       "classifications": "Customer Escalation; POC Impact",
       "points": 2,
       "parent": "APP-303 – Monitor Metrics Accuracy",
@@ -272,18 +272,18 @@
     {
       "ticket": "APP-2909",
       "owner": "Artem Velykorodnyi",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "classifications": null,
       "points": 2,
       "parent": "APP-55 – App Foundation PSWAT",
       "linkedWorkItems": "DOC-3458 (relates to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-08",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 16,
       "summary": "[Admin Manager] [Create User Account] \"create a project for user\" option is not working as expected",
-      "currentSituation": "Waiting for review and testing; Anumeha said she is on it (10/7 daily; matched by owner and tester).",
+      "currentSituation": "Done 10/8. Anumeha verified it on canary; Artem merged PR #6031 to develop.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -701,7 +701,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": null,
       "summary": "Snaps in restricted class id is displayed in asset palette",
-      "currentSituation": "In Review; Jira generated an automation test plan on 10/8; reviewer to mark it reviewed in Confluence (owner unspecified).",
+      "currentSituation": "In Review. Bornali tested on stage 10/8: works as expected. Next: Guannan to move it to Done.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
