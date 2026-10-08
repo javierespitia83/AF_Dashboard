@@ -25,7 +25,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal ",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -44,7 +44,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -139,7 +139,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "Monitor — Snap Usage report API test cases",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -177,7 +177,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": null,
       "summary": "[UI] - Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -234,7 +234,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": null,
       "summary": "QA Task: Backlog Automation",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Progress at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -538,7 +538,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": null,
       "summary": "[TechDebt] Upgrade React 18.3 → 19 workspace-wide",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (To Do at close); moved to sprint 12119 on 9/16. Still In Progress in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -557,7 +557,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": null,
       "summary": "[TechDebt] Upgrade TanStack Query v4 → v5",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/17. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -880,7 +880,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Connection with GHES does not fetch the branches - GHE Cloud data residency support",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -975,7 +975,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Not getting Emails when Asset is restored from recycle bin ",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -994,7 +994,7 @@
       "addedDate": "2026-09-14",
       "cycleTime": null,
       "summary": "Metrics not displayed correctly when time frame selected as last week / for a period in the calendar",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1051,7 +1051,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": null,
+      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null

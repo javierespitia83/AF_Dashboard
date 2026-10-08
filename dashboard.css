@@ -65,9 +65,12 @@ button { font: inherit; color: inherit; }
 .sprint-picker label { font-weight: 600; }
 .sprint-picker select { max-width: 340px; min-width: 180px; padding: 4px 7px; border: 1px solid #c9d5e6; border-radius: 5px; color: var(--ink); background: var(--surface); font: inherit; }
 .sprint-picker select:focus-visible { outline-color: #fff; }
-.sprint-banner { flex: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; padding: 5px 16px; background: #f4f7fa; border-bottom: 1px solid var(--line); color: var(--navy); }
+.sprint-banner { flex: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; padding: 8px 16px; background: #354052; border-left: 6px solid #e3a72f; border-bottom: 1px solid #273243; color: #fff; }
 .sprint-banner[hidden] { display: none; }
-.sprint-banner-note { color: var(--muted); font-size: 11px; }
+.sprint-banner-label { color: #fff; font-size: 12px; letter-spacing: .045em; }
+.sprint-banner-asof { color: #e4eaf1; font-size: 12px; }
+.sprint-banner-note { flex-basis: 100%; color: #e4eaf1; font-size: 11px; }
+.app.historical-sprint { background: #e1e5ea; }
 
 .filterbar {
   flex: none; min-height: var(--filterbar-h); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
@@ -180,7 +183,8 @@ svg.burndown { display: block; }
   .sprint-picker select { flex: 1; width: 1px; min-width: 0; max-width: none; }
   .asof { order: 4; margin-left: 0; font-size: 11px; }
   .sprint-banner { display: block; padding: 6px 12px; }
-  .sprint-banner-note { display: block; }
+  .sprint-banner-asof, .sprint-banner-note { display: block; }
+  .sprint-banner-asof { margin-top: 2px; }
   .kpis, .main { grid-template-columns: minmax(0, 1fr); }
   .ctl input { width: 100%; }
 }

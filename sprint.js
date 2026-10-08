@@ -74,6 +74,9 @@
     pickerBox.appendChild(sprintSelect);
   }
   function loadSprint(entry) {
+    app.classList.toggle('historical-sprint', entry.state === 'closed');
+    AF.clear(banner);
+    banner.hidden = true;
     if (!snapshotCache[entry.file]) {
       snapshotCache[entry.file] = AF.loadSnapshot(entry.file).then(function (data) {
         if (!data.sprint || data.sprint.id !== entry.id || data.sprint.startDate !== entry.startDate || data.sprint.endDate !== entry.endDate) {
@@ -124,12 +127,14 @@
     var tickets = data.tickets;
     var sprint = data.sprint || null; // may be absent in older files (DATA_CONTRACT §2a)
     var isClosed = !!entry && entry.state === 'closed';
+    app.classList.toggle('historical-sprint', isClosed);
     AF.setUpdated(data.refreshedAt, data.exportedAt);
     AF.clear(banner);
     banner.hidden = !isClosed;
     if (isClosed) {
       var asOf = document.getElementById('asof').textContent.replace(/^Data as of /, '');
-      banner.appendChild(el('strong', { text: 'Closed sprint · data as of ' + asOf }));
+      banner.appendChild(el('strong', { class: 'sprint-banner-label', text: 'HISTORICAL VIEW · CLOSED SPRINT' }));
+      banner.appendChild(el('span', { class: 'sprint-banner-asof', text: 'Snapshot as of ' + asOf }));
       if (entry.note) banner.appendChild(el('span', { class: 'sprint-banner-note', text: entry.note }));
     }
     AF.clear(app);
