@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://af-dashboard.local/schema/sprints.schema.json",
+  "title": "AF Dashboard sprint manifest",
+  "description": "Allowlist of current and closed sprint snapshots available to the sprint page.",
+  "type": "object",
+  "required": ["current", "sprints"],
+  "additionalProperties": false,
+  "properties": {
+    "current": { "type": "integer", "minimum": 1 },
+    "sprints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/sprint" },
+      "contains": { "properties": { "state": { "const": "active" } }, "required": ["state"] },
+      "minContains": 1,
+      "maxContains": 1
+    }
+  },
+  "$defs": {
+    "sprint": {
+      "type": "object",
+      "required": ["id", "name", "startDate", "endDate", "state", "file"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "state": { "enum": ["active", "closed"] },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!.*(?:^|/)\\.\\.?(/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+        },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

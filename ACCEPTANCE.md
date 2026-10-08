@@ -24,7 +24,12 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Both pages load through `python3 -m http.server`; both JSON files return 200.
 - [ ] No errors or warnings in the console on load or during any interaction.
 - [ ] Only requests to localhost; works with the network off. No `npm`, CDN, web font, external library, `innerHTML`, `eval` or `document.write` in the source.
-- [ ] `sprint.json`, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
+- [ ] `sprints.json`, the selected sprint snapshot, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
+- [ ] The sprint selector fetches `sprints.json` and only its selected snapshot; already loaded snapshots are reused when switching back. The backlog page stays on `backlog.json` only.
+- [ ] A valid manifest defaults to `current`; the select is labelled Sprint and shows each sprint name, date range and state. Selecting a closed sprint updates `?sprint=<id>` with `history.replaceState`, resets filters, and loads it without a full page reload.
+- [ ] A direct `?sprint=<id>` opens the corresponding manifest entry. An unknown id shows a clear error and leaves the selector usable. Missing/invalid manifests silently fall back to `sprint.json` with no selector.
+- [ ] Closed sprints show the snapshot's as-of date/time and optional manifest note; the burndown runs through sprint end and has no live Today marker. Null carried-over, removal, narrative, discussed and demo fields render using their documented placeholders/messages.
+- [ ] `sprints.json` and `fixtures/sprints.json` conform to `schema/sprints.schema.json`; active and closed snapshots conform to `schema/snapshot.schema.json`.
 - [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and shows the tabs Current sprint and Backlog with the active one marked.
 
 **Layout at 1920 x 1080**
@@ -42,6 +47,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Assignee and tester tiles: one row per person group with the right work items and story points (two bars per person, number beside each bar); rows sorted by story points descending then name; Total rows equal the sprint totals; `Unassigned` appears for a null tester and for a null or literal `Unassigned` owner as a single row.
 - [ ] Assignee x tester grid: every cell equals the count of tickets with that pair; sum of all cells = work items; rows and columns sorted by total descending, `Unassigned` column last.
 - [ ] Detail table: one row per ticket in tracker order, exact keys and names; empty values show `—`, empty tester shows `Unassigned`; status shows the original text; the header shows "n of N".
+- [ ] Detail table displays the exact `Dev to Test` classification as Yes, otherwise `—`.
 - [ ] Labels "Story points on owned tickets", "Points on tickets they test" and the overlap note are visible.
 - [ ] Selecting each clickable KPI filter adds a removable `KPI: <name>` tag; removing that tag clears only the KPI filter and preserves regular dashboard filters.
 
@@ -113,6 +119,6 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 
 ## 4. After changes
 
-- Re-run the exporter, then run `node scripts/run_acceptance.js` from the `AF_Dashboard` folder and repeat any checks it does not cover.
+- Run `node scripts/run_acceptance.js` from the `AF_Dashboard` folder and repeat any checks it does not cover. Manually inspect active and closed sprints at desktop and narrow viewport sizes.
 - If the data mapping changed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 - Record any new decision in `DECISIONS.md`.

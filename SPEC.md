@@ -15,13 +15,13 @@ Questions it must answer, mostly by clicking:
 
 ## 2. Scope
 
-**In v2:** two pages (`index.html` sprint, `backlog.html` backlog) reading `sprint.json` and `backlog.json`, full-screen tiles, page-wide cross-filtering.
+**In v2:** two pages (`index.html` sprint, `backlog.html` backlog) reading the selected sprint snapshot from `sprints.json` (falling back to `sprint.json` if the manifest is unavailable) and `backlog.json`, full-screen tiles, page-wide cross-filtering.
 
 **Non-goals:** reading Excel; Jira write-back or live Jira calls; history or trend charts other than the current-sprint burndown (§6.3); authentication; hosting or sharing; a new backlog ranking algorithm; editing data; dark mode; a build step or any dependency; column sorting; saving or sharing filter state.
 
 ## 3. Runtime and screen target
 
-- Served with `python3 -m http.server`; opened in a modern Chromium-based browser. `file://` is not supported. Works offline once the snapshots exist. No CDN, web fonts, or network calls except the two local JSON files.
+- Served with `python3 -m http.server`; opened in a modern Chromium-based browser. `file://` is not supported. Works offline once the local data files exist. No CDN, web fonts, or remote network calls; the sprint page fetches the manifest and one selected sprint snapshot, and the backlog page fetches its snapshot.
 - **Primary target: 1920 x 1080 browser viewport.** The dashboard uses the whole viewport: no page-level scroll, no wasted side margins, no max-width cap.
 - **The dashboard layout applies at a viewport width of at least 1366 and height of at least 760.** It must also work cleanly at 1440 x 900 and 1536 x 864.
 - **Below that (narrower or shorter), fall back to a normal scrolling layout:** tiles stack in one or two columns, each tile has a fixed height with its own inner scroll, no page-level horizontal scroll.
@@ -29,7 +29,7 @@ Questions it must answer, mostly by clicking:
 ## 4. App shell (both pages)
 
 Top to bottom:
-1. **Top bar** (fixed height): app name, tabs **Current sprint** and **Backlog** (the active tab is marked), and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
+1. **Top bar** (fixed height): app name, tabs **Current sprint** and **Backlog** (the active tab is marked), the sprint page's accessible **Sprint** selector when a valid manifest is available, and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
 2. **Filter bar** (fixed height): the active-filter tags, page-specific controls (see §6 and §7), and a **Reset all** button. With no filter active it says: "No filters. Click a bar, a person, or a cell to filter."
 3. **Board**: the tiles, filling all remaining height.
 4. **Footer** (slim, fixed height): "Internal — team only. Do not reuse in executive or external documents without review."
@@ -55,6 +55,10 @@ States: while loading show "Loading…". A missing or invalid JSON file shows a 
 ## 6. Page 1 — Current sprint (`index.html`)
 
 Dimensions: Status, Assignee, Tester, Fix version, Parent. The filter bar also holds two selects, **Fix version** and **Parent** (options from the data, plus `(none)`). Choosing an option sets that dimension to one value; "All" clears it.
+
+**Sprint selection:** when `sprints.json` is valid, show a keyboard-accessible native select labelled **Sprint** in the top bar. Default to the manifest entry whose id is `current`. Each option shows the sprint name, date range, and `(active)` or `(closed)`. A `?sprint=<id>` URL parameter selects that manifest entry; an unknown id shows a clear error while leaving the selector available. Changing the select updates the query parameter with `history.replaceState` and loads the selected snapshot without a full-page reload. Snapshot loads are cached in memory; changing sprints resets all filters. Never construct a path from the query parameter: resolve the id through the manifest and validate its relative file path. A missing or invalid manifest silently falls back to the existing `sprint.json` behavior and hides the selector.
+
+For a `state: "closed"` sprint, show a banner with the snapshot's own data-as-of date/time and the manifest note when present. The snapshot controls all KPI/chart/table values. Treat the burndown's final day as the sprint end; hide the live Today marker and label the summary as at sprint end. Preserve ordinary null handling, including the uncalculated carried-over hint and `—` for null ticket fields.
 
 ### 6.1 Board layout at 1920 x 1080
 

@@ -4,14 +4,14 @@
  *
  * Drives a real headless Chrome over the DevTools protocol, clicks through both pages
  * and compares every tile, KPI, tag and table with an independent calculation from
- * sprint.json / backlog.json. Read-only: it never modifies the real data files, the
+ * the sprint manifest/snapshots and backlog.json. Read-only: it never modifies the real data files, the
  * tracker or the app; edge cases (fixture, empty, missing, invalid data) run on throwaway
  * copies of the app in a temp folder.
  *
  * Needs: Node 22+ (global fetch and WebSocket), python3 (for the local servers), Google Chrome.
  * Run from this app folder: node scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
  * Chrome location:     set CHROME_PATH if it is not the default macOS path.
- * Ports used:          8771-8782 (servers) and 9333 (Chrome debugging) on 127.0.0.1.
+ * Ports used:          8771-8784 (servers) and 9333 (Chrome debugging) on 127.0.0.1.
  * Exit code:           0 when every check passes, 1 otherwise.
  * Keep it in sync:     if SPEC.md, DATA_CONTRACT.md or ACCEPTANCE.md change, update the
  *                      expectations here in the same pass.
@@ -69,8 +69,9 @@ const dirs = { real: ROOT, missing: variant('missing', {}), invalid: variant('in
   czero: variant('czero', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 0, percent: 0, storyPoints: 0 } }, SP_OK)), 'backlog.json': emptyJson }),
   cpart: variant('cpart', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 5, percent: null, storyPoints: 12 } }, SP_OK)), 'backlog.json': emptyJson }),
   rem: variant('rem', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 }, removed: REMOVED }, SP_OK)), 'backlog.json': emptyJson }),
-  nodates: variant('nodates', { 'sprint.json': mkSprint({ id: 1, name: 'No dates', startDate: null, endDate: null, carriedOver: null }), 'backlog.json': emptyJson }) };
-const ports = { real: 8771, missing: 8772, invalid: 8773, empty: 8774, fixture: 8775, links: 8776, burn: 8777, cnull: 8778, czero: 8779, cpart: 8780, nodates: 8781, rem: 8782 };
+  nodates: variant('nodates', { 'sprint.json': mkSprint({ id: 1, name: 'No dates', startDate: null, endDate: null, carriedOver: null }), 'backlog.json': emptyJson }),
+  noManifest: variant('no_manifest', { 'sprint.json': fixtureTxt }), badManifest: variant('bad_manifest', { 'sprint.json': fixtureTxt, 'sprints.json': '{not json' }) };
+const ports = { real: 8771, missing: 8772, invalid: 8773, empty: 8774, fixture: 8775, links: 8776, burn: 8777, cnull: 8778, czero: 8779, cpart: 8780, nodates: 8781, rem: 8782, noManifest: 8783, badManifest: 8784 };
 const servers = Object.keys(dirs).map(k => spawn('python3', ['-m', 'http.server', String(ports[k]), '--bind', '127.0.0.1', '--directory', dirs[k]], { stdio: 'ignore' }));
 
 // ---------- CDP ----------
@@ -90,7 +91,12 @@ async function openPage(url, w = 1920, h = 1080) {
     if (d.id && pend[d.id]) { pend[d.id](d); delete pend[d.id]; return; }
     if (d.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(d.params.type)) logs.push(d.params.type + ': ' + d.params.args.map(a => a.value || a.description).join(' '));
     if (d.method === 'Runtime.exceptionThrown') logs.push('exception: ' + (d.params.exceptionDetails.exception || {}).description);
-    if (d.method === 'Log.entryAdded' && ['error', 'warning'].includes(d.params.entry.level)) logs.push('log ' + d.params.entry.level + ': ' + d.params.entry.text + ' ' + (d.params.entry.url || ''));
+    if (d.method === 'Log.entryAdded' && ['error', 'warning'].includes(d.params.entry.level)) {
+      const line = 'log ' + d.params.entry.level + ': ' + d.params.entry.text + ' ' + (d.params.entry.url || '');
+      // A missing optional manifest necessarily produces an HTTP 404 in the browser's network log;
+      // sprint.js catches it and falls back without emitting a JavaScript console error.
+      if (!(/sprints\.json/.test(line) && /404/.test(line))) logs.push(line);
+    }
     if (d.method === 'Network.requestWillBeSent') reqs.push(d.params.request.url);
     if (d.method === 'Network.responseReceived') resp[d.params.response.url] = d.params.response.status;
   });
@@ -367,8 +373,9 @@ function linkErrors(cells, values, structured) {
 }
 const mtime = f => fs.statSync(f).mtimeMs;
 const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx';
-const before = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
+const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
 const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
+const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
 const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 2 };
 
 const layoutJs = `const d=document.scrollingElement; const bodies=[...document.querySelectorAll('.tile-body')].map(b=>({sh:b.scrollHeight,ch:b.clientHeight,ov:getComputedStyle(b).overflowY})); const tiles=[...document.querySelectorAll('section.tile')].map(t=>{const r=t.getBoundingClientRect(); return {l:Math.round(r.left), r:Math.round(r.right), t:Math.round(r.top), b:Math.round(r.bottom), w:Math.round(r.width), h:Math.round(r.height), title:(t.querySelector('h2')||t.querySelector('.label')).textContent.trim()};}); const bad=[]; document.querySelectorAll('body *').forEach(n=>{ if(n.closest('.tile-body')) return; const r=n.getBoundingClientRect(); if(r.width>0 && r.right>innerWidth+1) bad.push(n.tagName+'.'+n.className+':'+Math.round(r.right)); }); return {iw:innerWidth, ih:innerHeight, sw:d.scrollWidth, sh:d.scrollHeight, bodies, tiles, bad:bad.slice(0,5)};`;
@@ -381,8 +388,44 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   // =============== SPRINT ===============
   console.log('\n--- Sprint page (real data) ---');
   p = await openPage(base + 'index.html');
-  check('Sprint: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
+  check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
   check('Shell: top bar tabs (Current sprint active), export date and time, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Sprint manifest: accessible selector defaults to current and lists name, dates and state', await run(p, `const s=document.getElementById('sprint-select'), opts=s&&[...s.options].map(o=>T(o)); return s && document.querySelector('label[for="sprint-select"]') && T(document.querySelector('label[for="sprint-select"]'))==='Sprint' && s.value===String(${MANIFEST.current}) && opts.some(x=>x.includes(${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='active').name)})&&x.includes('(active)')) && opts.some(x=>x.includes('2026-09-09')&&x.includes('2026-09-21')&&x.includes('(closed)')) && document.getElementById('sprint-banner').hidden`));
+  const sprintJsonRequests = () => p.reqs.filter(u => u.endsWith('.json'));
+  check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/sprint.json')) && !sprintJsonRequests().some(u => u.includes('/snapshots/')), p.reqs);
+  await run(p, `window.__sprintSessionProbe='kept'; clickRow('Tickets by status','Done'); setSel('sprint-select','4697')`);
+  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='4697'`).catch(() => false)); i++) await sleep(100);
+  const closedView = await run(p, `const det=tile('Ticket detail'), hdr=[...det.querySelectorAll('thead th')].map(T), rows=[...det.querySelectorAll('tbody tr')]; const ix=n=>hdr.indexOf(n), byKey=k=>{const r=rows.find(x=>T(x.children[0])===k);return r?{owner:T(r.children[ix('Owner')]),points:T(r.children[ix('Story points')]),situation:T(r.children[ix('Current situation')])}:null}; const k=kpi('Carried over'),b=tile('Burndown'),svg=b.querySelector('svg.burndown'); return {url:location.search,probe:window.__sprintSessionProbe,selected:document.getElementById('sprint-select').value,count:rows.length,work:T(kpi('Work items').querySelector('.value')),closed:!document.getElementById('sprint-banner').hidden,banner:T(document.getElementById('sprint-banner')),carried:[T(k.querySelector('.value')),T(k.querySelector('.hint'))],tags:document.querySelectorAll('.tags .tag').length,rowsNullSituation:rows.every(r=>T(r.children[ix('Current situation')])==='—'),noToday:![...svg.querySelectorAll('text')].some(x=>T(x)==='Today'),days:svg.querySelectorAll('rect.bd-day').length,unassigned:byKey('APP-2983'),nullPoints:rows.filter(r=>T(r.children[ix('Story points')])==='—').length,note:document.querySelector('.sprint-banner-note')&&T(document.querySelector('.sprint-banner-note')),foot:T(b.querySelector('.tile-foot'))};`);
+  check('Closed sprint: selection uses SPA navigation, updates the URL, resets filters and loads all 73 tickets', closedView.url === '?sprint=4697' && closedView.probe === 'kept' && closedView.selected === '4697' && closedView.count === CLOSED.tickets.length && closedView.work === String(CLOSED.tickets.length) && closedView.tags === 0 && closedView.closed, closedView);
+  check('Closed sprint: as-of banner and note, null carriedOver, null narratives, no Today marker, burndown ends at sprint end', closedView.banner.includes('Closed sprint · data as of ' + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.note === MANIFEST.sprints.find(x=>x.id===4697).note && eq(closedView.carried,['—','Not calculated yet for this sprint']) && closedView.rowsNullSituation && closedView.noToday && closedView.days === 13 && closedView.foot.includes('Tickets removed from the sprint and re-estimates are not reflected'), closedView);
+  check('Closed sprint: null owner displays Unassigned and all three null point values display —', closedView.unassigned && closedView.unassigned.owner === 'Unassigned' && closedView.nullPoints === 3, { unassigned: closedView.unassigned, nullPoints: closedView.nullPoints });
+  { const shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_1920.png'),Buffer.from(shot.result.data,'base64')); }
+  await p.resize(480,900);
+  { const l=await run(p,layoutJs), pick=await run(p,`const r=document.getElementById('sprint-picker').getBoundingClientRect(),s=document.getElementById('sprint-select').getBoundingClientRect(); return {picker:[r.left,r.right,r.width],select:[s.left,s.right,s.width],text:document.getElementById('sprint-select').value}`), shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_480.png'),Buffer.from(shot.result.data,'base64')); check('Closed sprint: selector remains visible at narrow width without page-level horizontal overflow', pick.select[2]>0 && l.sw<=l.iw && l.bad.length===0, { scrollWidth:l.sw, innerWidth:l.iw, bad:l.bad, picker:pick }); }
+  await p.resize(1920,1080);
+  await run(p, `setSel('sprint-select','12119')`);
+  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='12119'`).catch(() => false)); i++) await sleep(100);
+  const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
+  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/sprint.json')).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector==='12119', { requests:p.reqs, returned });
+  let unknown = await openPage(base + 'index.html?sprint=999999');
+  const unknownState = await run(unknown, `return {heading:T(document.querySelector('#app h2')),picker:!!document.getElementById('sprint-select'),options:document.getElementById('sprint-select')&&document.getElementById('sprint-select').options.length,value:document.getElementById('sprint-select')&&document.getElementById('sprint-select').value}`);
+  check('Unknown sprint id: clear error and usable selector remain visible', unknownState.heading==='Sprint not found' && unknownState.picker && unknownState.options===MANIFEST.sprints.length+1, unknownState);
+  await run(unknown, `setSel('sprint-select','12119')`);
+  for (let i=0;i<40 && !(await run(unknown,`!!document.querySelector('.kpis')`).catch(()=>false));i++) await sleep(100);
+  const recovered = await run(unknown, `return {kpis:!!document.querySelector('.kpis'),value:document.getElementById('sprint-select').value,search:location.search,heading:document.querySelector('#app h2')&&T(document.querySelector('#app h2')),rows:document.querySelectorAll('#app tbody tr').length}`);
+  check('Unknown sprint id: choosing a valid option recovers', recovered.kpis && recovered.value==='12119' && recovered.search==='?sprint=12119', recovered);
+  await unknown.close();
+  let direct = await openPage(base + 'index.html?sprint=4697');
+  const directState = await run(direct, `return {selected:document.getElementById('sprint-select').value,count:tile('Ticket detail').querySelectorAll('tbody tr').length,banner:!document.getElementById('sprint-banner').hidden}`);
+  check('Direct URL: ?sprint=4697 opens the closed snapshot from the manifest', directState.selected==='4697' && directState.count===CLOSED.tickets.length && directState.banner && direct.reqs.filter(u=>u.endsWith('.json')).length===2 && direct.reqs.some(u=>u.endsWith('/sprints.json')) && direct.reqs.some(u=>u.includes('/snapshots/sprint-4697.json')), { state:directState, requests:direct.reqs });
+  await direct.close();
+  for (const variantName of ['noManifest','badManifest']) {
+    const fallbackPage = await openPage('http://127.0.0.1:' + ports[variantName] + '/index.html');
+    const state = await run(fallbackPage, `return {selector:!!document.getElementById('sprint-select'),count:document.querySelectorAll('#app .lower .data tbody tr').length,errors:document.querySelectorAll('#app .message[role="alert"]').length}`);
+    const appLogs = fallbackPage.logs.filter(line => !(variantName === 'noManifest' && /sprints\.json/.test(line) && /404/.test(line)));
+    check(`Manifest ${variantName === 'noManifest' ? 'missing' : 'invalid'}: silently falls back to sprint.json without selector`, !state.selector && state.count===JSON.parse(fixtureTxt).tickets.length && state.errors===0 && appLogs.length===0 && fallbackPage.reqs.some(u=>u.endsWith('/sprint.json')), { state, logs:fallbackPage.logs, reqs:fallbackPage.reqs });
+    await fallbackPage.close();
+  }
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
   const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
@@ -529,7 +572,8 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   // =============== BACKLOG ===============
   console.log('\n--- Backlog page (real data) ---');
   p = await openPage(base + 'backlog.html');
-  check('Backlog: JSON 200, no console errors/warnings, only localhost requests', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { logs: p.logs });
+  const backlogShell = await run(p, `return !document.getElementById('sprint-select')`);
+  check('Backlog: JSON 200, no selector or manifest request, no console errors/warnings', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && backlogShell && p.reqs.filter(u=>u.endsWith('.json')).length===1 && p.reqs.some(u=>u.endsWith('/backlog.json')) && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { logs: p.logs, reqs:p.reqs });
   check('Shell: Backlog tab active, export date and time, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.getElementById('asof'))===${JSON.stringify(asOfLabel(J('backlog.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   let bf = newBF(), q = '';
   await verifyBacklog(p, B, bf, q, 'Backlog: no filters, every tile = independent calculation');
@@ -787,9 +831,9 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     check('The Jira address appears once in the app source (one constant in dashboard.js)', eq(hits, ['dashboard.js x1']), hits); }
   const strip = f => codeOf(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
   const fetches = []; ['dashboard.js', 'sprint.js', 'backlog.js'].forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
-  check('Only one fetch(), a local relative path via loadSnapshot', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
+  check('Only one fetch() code path, loading a local relative JSON path via loadJson', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
   check('No innerHTML / document.write / eval in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|document\.write|\beval\(/.test(strip(f))));
-  const after = { s: mtime(path.join(ROOT, 'sprint.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
+  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
   { const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'schema/snapshot.schema.json'), 'utf8'));
     const vType = (v, ty) => (Array.isArray(ty) ? ty : [ty]).some(x => x === 'null' ? v === null : x === 'integer' ? Number.isInteger(v) : x === 'number' ? typeof v === 'number' : x === 'string' ? typeof v === 'string' : x === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v)) : x === 'array' ? Array.isArray(v) : false);
     const vNode = (v, node, at, errs) => {
@@ -804,9 +848,34 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     };
     const conform = (obj, def) => { const errs = []; vNode(obj, Object.assign({}, schema, { properties: Object.assign({}, schema.properties, { tickets: { type: 'array' } }) }), 'root', errs); (obj.tickets || []).forEach((tk, i) => vNode(tk, schema.definitions[def], 'tickets[' + i + ']', errs)); return errs.slice(0, 4); };
     check('sprint.json conforms to the schema (keys, types, dates, sprint and carriedOver objects)', conform(J('sprint.json'), 'sprintTicket').length === 0, conform(J('sprint.json'), 'sprintTicket'));
+    check('snapshots/sprint-4697.json conforms to the snapshot schema', conform(CLOSED, 'sprintTicket').length === 0, conform(CLOSED, 'sprintTicket'));
     check('backlog.json conforms to the schema', conform(J('backlog.json'), 'backlogTicket').length === 0, conform(J('backlog.json'), 'backlogTicket'));
-    check('fixtures/sample_snapshot.json conforms to the schema (with sprint.carriedOver and cycleTime)', conform(JSON.parse(fixtureTxt), 'sprintTicket').length === 0 && !!JSON.parse(fixtureTxt).sprint.carriedOver, conform(JSON.parse(fixtureTxt), 'sprintTicket')); }
-  check('sprint.json, backlog.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
+    check('fixtures/sample_snapshot.json conforms to the schema (with sprint.carriedOver and cycleTime)', conform(JSON.parse(fixtureTxt), 'sprintTicket').length === 0 && !!JSON.parse(fixtureTxt).sprint.carriedOver, conform(JSON.parse(fixtureTxt), 'sprintTicket'));
+    const manifestSchema=J('schema/sprints.schema.json');
+    const vManifest=(v,node,at,errs)=>{
+      if(node.$ref){const target=node.$ref.split('/').slice(1).reduce((o,k)=>o&&o[k.replace(/~1/g,'/').replace(/~0/g,'~')],manifestSchema);return vManifest(v,target,at,errs);}
+      const okType=(x,t)=>t==='object'&&x!==null&&typeof x==='object'&&!Array.isArray(x)||t==='array'&&Array.isArray(x)||t==='integer'&&Number.isInteger(x)||t==='string'&&typeof x==='string';
+      if(node.type&&!okType(v,node.type)){errs.push(at+' type');return;}
+      if(node.const!==undefined&&!Object.is(v,node.const))errs.push(at+' const');
+      if(node.enum&&!node.enum.includes(v))errs.push(at+' enum');
+      if(node.format==='date'&&(!/^\d{4}-\d{2}-\d{2}$/.test(v)||new Date(v+'T00:00:00Z').toISOString().slice(0,10)!==v))errs.push(at+' date');
+      if(node.minLength!==undefined&&v.length<node.minLength)errs.push(at+' minLength');
+      if(node.pattern&&!new RegExp(node.pattern).test(v))errs.push(at+' pattern');
+      if(typeof v==='number'&&node.minimum!==undefined&&v<node.minimum)errs.push(at+' minimum');
+      if(Array.isArray(v)){
+        if(node.minItems!==undefined&&v.length<node.minItems)errs.push(at+' minItems');
+        if(node.items)v.forEach((x,i)=>vManifest(x,node.items,at+'['+i+']',errs));
+        if(node.contains){let n=0;v.forEach((x,i)=>{const e=[];vManifest(x,node.contains,at+'['+i+']',e);if(!e.length)n++;});if(n<(node.minContains||1)||node.maxContains!==undefined&&n>node.maxContains)errs.push(at+' contains');}
+      }
+      if(v!==null&&typeof v==='object'&&!Array.isArray(v)&&node.properties){
+        (node.required||[]).forEach(k=>{if(!(k in v))errs.push(at+' missing '+k);});
+        Object.keys(v).forEach(k=>{if(node.properties[k])vManifest(v[k],node.properties[k],at+'.'+k,errs);else if(node.additionalProperties===false)errs.push(at+' unexpected '+k);});
+      }
+    };
+    const manifestConform=obj=>{const errs=[];vManifest(obj,manifestSchema,'manifest',errs);const ids=obj.sprints.map(s=>s.id),act=obj.sprints.filter(s=>s.state==='active');if(new Set(ids).size!==ids.length)errs.push('duplicate ids');if(act.length!==1||!act[0]||act[0].id!==obj.current)errs.push('current must match exactly one active entry');return errs.slice(0,5);};
+    const liveManifestErrors=manifestConform(MANIFEST),fixtureManifestErrors=manifestConform(J('fixtures/sprints.json'));
+    check('sprints.json and manifest fixture conform to schema, with exactly one active current id and unique ids',liveManifestErrors.length===0&&fixtureManifestErrors.length===0,{live:liveManifestErrors,fixture:fixtureManifestErrors}); }
+  check('manifest, selected snapshots, backlog.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
 
   const failed = results.filter(r => !r.ok);
   console.log(`\nTOTAL ${results.length}  PASS ${results.length - failed.length}  FAIL ${failed.length}`);

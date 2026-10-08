@@ -5,7 +5,7 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 ## 1. Stack and hard limits
 
 - Static HTML, CSS and vanilla JavaScript (ES5-style: `var`, `function`, no modules, no classes, no build). Served with `python3 -m http.server` from this folder. `file://` is unsupported (browsers block `fetch` of local JSON).
-- No npm, no CDN, no web fonts, no library, no network call except `fetch('sprint.json')` and `fetch('backlog.json')`. Charts are inline SVG built with `createElementNS`; bars and heat grids are HTML/CSS.
+- No npm, no CDN, no web fonts, no library, no remote network calls. `dashboard.js` has one fetch path for relative local JSON: the sprint page loads `sprints.json` then one selected sprint snapshot (or falls back to `sprint.json`), while the backlog page loads `backlog.json`. Charts are inline SVG built with `createElementNS`; bars and heat grids are HTML/CSS.
 - **No `innerHTML`, `eval`, `document.write`.** Every DOM node is built with `AF.el` (text nodes only) so data can never inject markup. The acceptance script greps for this.
 - Light mode only. System fonts only (`--font` stack in `dashboard.css`).
 - The app is read-only: it writes nothing (not Excel, Jira or the JSON).
@@ -14,9 +14,9 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 
 | File | Responsibility | Approx. size |
 |---|---|---|
-| `index.html` / `backlog.html` | Shell only: top bar with tabs and `#asof`, `#filterbar`, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then `sprint.js` (or `backlog.js`). Inline favicon `data:,` (avoids a 404 console error). | 28 lines each |
+| `index.html` / `backlog.html` | Shell only: top bar with tabs, sprint selector mount on the sprint page, `#asof`, `#filterbar`, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then `sprint.js` (or `backlog.js`). Inline favicon `data:,` (avoids a 404 console error). | 28 lines each |
 | `dashboard.js` | Shared engine, exported as `window.AF`: status buckets, value helpers, pure aggregation, the filter store, burndown model and SVG drawing, DOM helpers (tile, rebuild, rowButton, bars, table, heat grid, filter bar), Jira link helpers, loading and error states. | ~610 lines |
-| `sprint.js` | Sprint page: builds the shell tiles, defines the five dimensions, one `render*` function per tile, the marker panel, the resize observer. | ~320 lines |
+| `sprint.js` | Sprint page: validates the sprint manifest, creates the sprint selector, caches selected snapshots, builds the shell tiles, defines the five dimensions, one `render*` function per tile, the marker panel, the resize observer. | ~400 lines |
 | `backlog.js` | Backlog page: DoR prefix search, age buckets, four distribution tiles, matrix, table. Exposes `AF.backlog` for tests. | ~205 lines |
 | `dashboard.css` | Tokens, shell, tiles, KPI tiles, bars, clickable rows, heat grid, tables, chart tile, burndown panel, layout modes. | ~270 lines |
 | `scripts/run_acceptance.js` | Automated acceptance (see §10). | ~800 lines |
@@ -25,9 +25,9 @@ Order of scripts matters: `dashboard.js` defines `AF`; the page script reads `wi
 
 ## 3. Page lifecycle (both pages)
 
-1. `AF.loadSnapshot(file)` → `fetch(file, {cache:'no-store'})`, require `data.tickets` to be an array.
+1. `AF.loadJson(file)` → the single `fetch(file, {cache:'no-store'})` path for relative local JSON. `AF.loadSnapshot(file)` calls it and requires `data.tickets` to be an array. The sprint page validates `sprints.json` before using its file paths; a missing or invalid manifest silently falls back to `sprint.json`.
 2. `.then(init, onError)` — use the two-argument form so a *render* error is not misreported as a "can't load file" error.
-3. `init(data)`: `AF.setUpdated(data.refreshedAt, data.exportedAt)`, clear `#app`, handle an empty ticket list (neutral message, return), create the store, build the static shell once (KPI strip, main row, lower/detail row), build the filter-bar controls, subscribe `render` to the store, call `render()`.
+3. `init(data)`: set the header timestamp, show a closed-sprint banner if applicable, clear `#app` and sprint filter bar, handle an empty ticket list (neutral message, return), create a fresh store, build the shell and controls, subscribe `render` to the store, call `render()`. On sprint switch the page calls `init` again with the cached or newly loaded snapshot so all filters reset.
 4. `render()` is the only way the screen changes: `f = store.apply(tickets)` then, in order, KPIs, burndown (sprint), each dimension tile, matrix, table, then `updateBar()` and control sync. Tiles are **redrawn from scratch on every filter change** (they are small); there is no incremental DOM diffing.
 
 ## 4. `AF` API (dashboard.js)
@@ -44,7 +44,7 @@ Pure (no DOM; unit-checkable in the browser console, e.g. `AF.statusTotals(AF.ti
 | `dayNum(iso)` / `isoOf(n)` / `shortDate(iso)` | Dates as whole UTC days (no time-zone shifts); `shortDate` → `M/D`. |
 | `avgCycleTime(tickets)` → `{avg,n}` | Mean `cycleTime` over Done tickets with a numeric value. |
 | `midSprintAdded(tickets,sprint,thr)` → `{thresholdDate,count,points,tickets}` or `null` | `addedDate > startDate + thr days` (string compare of ISO dates). |
-| `burndown(tickets,sprint,today,thr,removed)` → model or `null` (see §7) | `removed` is the filtered `sprint.removed` list, or an empty list when absent. |
+| `burndown(tickets,sprint,today,thr,removed,opts)` → model or `null` (see §7) | `removed` is the filtered `sprint.removed` list, or an empty list when absent; `opts.closed` computes through sprint end and suppresses the live Today marker. |
 
 DOM helpers: `el(tag,attrs,children)` (attrs: `class`, `text`, `style`, `onclick`-style listeners, anything else becomes an attribute; children are nodes or strings), `clear`, `isMulti(event)`, `tile({title,sub,cls})` → `{root,head,colhead,body,foot}`, `rebuild(tile, fn)` (clears colhead/body/foot, runs `fn`, restores scroll and — via `data-key` — keyboard focus, hides empty colhead/foot), `rowButton({key,cls,selected,dimmed,title,onclick(multi)},children)` (a real `<button class="rowbtn [sel] [dim]" aria-pressed>`), `statusDot`, `stackedBar(segments,total,scale)`, `simpleBar(pct,cls,title)`, `heatStyle(n,max)`, `buildTable(cols,rows,{cls})` (each col `{label,cls,render(row)}`; `null` renders `—`), `filterBar(container,store,controls)` → `update()`, `heatGrid(tile,crossTab,{corner,rowSel,colSel,unit,onCell})`, `emptyState(text)`, `showError`, `setUpdated(refreshedAt, exportedAt)` (shows the date and, when present, renders `exportedAt` in the browser's local timezone).
 
@@ -56,6 +56,8 @@ Jira links: `JIRA_BASE` constant (the **only** place the Jira address appears), 
 
 ### sprint.js
 - Dimensions: `status` (get → bucket label), `assignee` (`personName(owner)`), `tester` (`personName(tester)`), `fix` (`fixVersion` or `(none)`), `parent` (`parent` or `(none)`). `NONE = '(none)'`.
+- The manifest validator enforces one active sprint matching `current`, unique integer ids, valid date ranges and safe relative paths. Only manifest entries can select files; query-string values are ids, never paths. The selector uses `history.replaceState`, and snapshots are cached by manifest file for this page session. A missing or invalid manifest silently loads `sprint.json` without showing the selector.
+- A sprint switch calls `init` with a new snapshot and entry, disconnecting the prior resize observer and removing the prior Escape handler. The fresh store resets all filters. A closed entry adds the data-as-of banner and note; burndown calculation runs through `endDate` with `opts.closed`, so there is no Today marker.
 - Shell: `.kpis.k7` (seven `kpi()` tiles, in order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time), `.main.sprint` (Burndown, Tickets by status, Work by assignee, Work by tester), `.lower` (Ticket detail, Assignee x tester).
 - Ticket detail shows `Dev to Test` immediately after Tester, using the exact `classifications` value and displaying Yes or `—`. Owner, Tester and Status cells use `.wrap-text` and wrap at spaces with automatic column widths; the final `.current-situation` column has a 350 px minimum width. The detail table scrolls horizontally inside its tile when needed.
 - Tile renderers: `renderKpis(f)`, `renderBurndown(f)`, `renderStatus()`, `renderPeople(tile, dim, keyFn, label)` (called for assignee and tester), `renderMatrix()`, `renderDetail(f)`. KPIs, burndown and detail use the fully filtered set `f`; status, people and matrix tiles call `store.apply(tickets, ownDimension(s))`.
@@ -82,7 +84,7 @@ Jira links: `JIRA_BASE` constant (the **only** place the Jira address appears), 
 
 ## 7. Burndown (inline SVG)
 
-**Model** — `AF.burndown(tickets, sprint, today, thr)`; returns `null` when `sprint` is missing or its dates are invalid (`end < start`):
+**Model** — `AF.burndown(tickets, sprint, today, thr, removed, opts)`; returns `null` when `sprint` is missing or its dates are invalid (`end < start`). For a closed sprint, `opts.closed` makes the effective chart date the sprint end and hides the live Today marker:
 - `n` = calendar days from `startDate` to `endDate` inclusive (weekends included); `scope(i)` = story points of filtered tickets with `addDay ≤ i` (D45; `addDay` from `addedDate`, null/before start → 0, after end → last day); `total` = the largest scope on any day (y-axis top, including when removals lower the final scope).
 - For each Done ticket: if `doneDate` is not a date → counted in `unplacedDone` (and not subtracted); else `idx = max(0, doneDay − startDay)` (a pre-start date counts on day 1); `idx ≥ n` → `afterEndDone` (ignored); otherwise add its points to day `max(idx, addDay)` (never before it entered the scope).
 - `todayIndex = clamp(dayNum(today) − start, −1, n−1)`, `todayInside` = today within `[start,end]`. `today` is the snapshot's `refreshedAt`, **not the browser clock**.
