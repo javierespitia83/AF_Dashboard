@@ -1,13 +1,44 @@
 {
   "refreshedAt": "2026-09-22",
   "exportedAt": "2026-10-08T21:00:00-05:00",
-  "source": "Reconstructed from Jira (sprint 4697) · not from daily_tracker.xlsx",
+  "source": "Reconstructed from Jira (sprint 4697) · not from daily_tracker.xlsx · carriedOver reconstructed from Jira changelogs (tickets moved from sprint 11092 to 4697 unfinished at start)",
   "sprint": {
     "id": 4697,
     "name": "APP Sprint 09-21-2026",
     "startDate": "2026-09-09",
     "endDate": "2026-09-21",
-    "carriedOver": null,
+    "carriedOver": {
+      "count": 25,
+      "percent": 34.2,
+      "storyPoints": 52,
+      "ticketKeys": [
+        "APP-556",
+        "APP-2719",
+        "APP-2899",
+        "APP-2290",
+        "APP-2775",
+        "APP-369",
+        "APP-2614",
+        "APP-2364",
+        "APP-928",
+        "APP-1599",
+        "APP-2305",
+        "APP-2633",
+        "APP-2442",
+        "APP-2444",
+        "APP-2449",
+        "APP-2450",
+        "APP-2451",
+        "APP-2455",
+        "APP-2456",
+        "APP-2459",
+        "APP-2463",
+        "APP-2464",
+        "APP-2468",
+        "APP-2477",
+        "APP-2676"
+      ]
+    },
     "removed": null
   },
   "tickets": [
