@@ -16,7 +16,7 @@
       "endDate": "2026-09-21",
       "state": "closed",
       "file": "snapshots/sprint-4697.json",
-      "note": "Reconstructed from Jira on 2026-10-08 (owner, tester, points and fix version are as of today, not at close; no daily narrative)."
+      "note": "Reconstructed from Jira on 2026-10-08 (owner, tester, points and fix version are as of today, not at close; no daily narrative); carryover into the sprint (25 tickets from sprint 11092) reconstructed from Jira changelogs."
     }
   ]
 }
