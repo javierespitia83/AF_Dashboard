@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-09",
-  "exportedAt": "2026-10-09T16:47:26+00:00",
+  "exportedAt": "2026-10-09T17:51:34+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -72,6 +72,30 @@
         "tester": "Kyle Scheuerlein",
         "fixVersion": null,
         "parent": "APP-3089 – Rewrite Designer workbench in React Flow"
+      },
+      {
+        "ticket": "APP-2643",
+        "removedDate": "2026-10-09",
+        "points": 5,
+        "addedDate": "2026-09-22",
+        "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
+        "status": "In Review",
+        "owner": "Artem Velykorodnyi",
+        "tester": "Anumeha Singh",
+        "fixVersion": "4.46",
+        "parent": "APP-55 – App Foundation PSWAT"
+      },
+      {
+        "ticket": "APP-3086",
+        "removedDate": "2026-10-09",
+        "points": 3,
+        "addedDate": "2026-10-05",
+        "summary": "Cannot open account",
+        "status": "In Review",
+        "owner": "Vlad Storona",
+        "tester": "Anumeha Singh",
+        "fixVersion": null,
+        "parent": "APP-55 – App Foundation PSWAT"
       }
     ]
   },
@@ -79,18 +103,18 @@
     {
       "ticket": "APP-193",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Pavan V",
       "classifications": null,
       "points": 2,
       "parent": "APP-189 – Monitor enhancements",
       "linkedWorkItems": "APP-2944 (connects to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-09",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 17,
       "summary": "Notification dropdown navigation to notification center",
-      "currentSituation": "In Review; Pavan asked Alan on 10/9 to approve PR #6008. Alan (absent from the 10/8 daily) to approve and merge.",
+      "currentSituation": "Done 10/9. Pavan approved; PR #6008 merged and moved to Done.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -109,7 +133,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Review; Mario's visual QA (10/7) flagged fixes: warning text, double focus ring, extra frame, Esc. Alan (absent 10/8) to fix.",
+      "currentSituation": "Carried over. Alan addressed Mario's 9 visual QA points on 10/9; Pavan to do the final pass. If not closed today, it goes to Backlog (Prioritized).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -117,18 +141,18 @@
     {
       "ticket": "APP-2673",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "Done",
       "tester": "Bornali Nath",
       "classifications": "Customer Escalation; POC Impact",
       "points": 2,
       "parent": "APP-303 – Monitor Metrics Accuracy",
       "linkedWorkItems": "DOC-3360 (relates to), DI-989 (relates to), APP-246 (relates to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-09",
       "addedDate": "2026-09-22",
-      "cycleTime": null,
+      "cycleTime": 17,
       "summary": "[Monitor][UI] Display LTTB for network charts.",
-      "currentSituation": "Testing completed by Bornali; Alan will merge (10/7 daily). Can move to Done once merged. Awaiting reply from Alan/Bornali to Carlos's 10/7 question.",
+      "currentSituation": "Done 10/9. Bornali's tests passed; PR #6006 merged to develop.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -136,7 +160,7 @@
     {
       "ticket": "APP-2719",
       "owner": "Alan Le",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Pavan V",
       "classifications": null,
       "points": 1,
@@ -147,7 +171,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "currentSituation": "Poornima moved it back to In Progress on 10/8: the issue raised on 10/7 (project path on import) is still open. Alan to fix.",
+      "currentSituation": "Carried over. Alan fixed the project-path issue (existing bug) on 10/9; Pavan/Poornima to retest. If not closed today, it goes to Backlog (Prioritized).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -303,25 +327,6 @@
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
-    },
-    {
-      "ticket": "APP-2643",
-      "owner": "Artem Velykorodnyi",
-      "status": "In Review",
-      "tester": "Anumeha Singh",
-      "classifications": null,
-      "points": 5,
-      "parent": "APP-55 – App Foundation PSWAT",
-      "linkedWorkItems": null,
-      "fixVersion": "4.46",
-      "doneDate": null,
-      "addedDate": "2026-09-22",
-      "cycleTime": null,
-      "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "currentSituation": "Stuck in Platform code review for over a week (tested on feature branch). Vishal to escalate to Jigish; Martin tagged reviewers on 10/8.",
-      "blocker": "Platform team code review pending.",
-      "demoOrSpike": null,
-      "discussed": "Yes"
     },
     {
       "ticket": "APP-2909",
@@ -850,7 +855,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": null,
       "summary": "[Asset Catalog] Pipeline hourly OM table: partition by execution_date + bucket(org_snode_id, 50)",
-      "currentSituation": "Deploying to UAT on 10/8 after the UAT upgrade; stays In Review until verified in production. No work left.",
+      "currentSituation": "Indrajeet deploys to UAT today and will close it after the UAT deployment; production with 4.45.2 on 10/14.",
       "blocker": "Token expiration on US/production pods until Friday.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -888,7 +893,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": null,
       "summary": "[adm-e2e] Migrate all UI tests using playwright to ClientApps Phase 1",
-      "currentSituation": "PR coming soon; added late with 5 pts, unlikely by 10/9. Indrajeet to split the remaining work into a new ticket. Awaiting reply from Indrajeet to Carlos's 10/8 question.",
+      "currentSituation": "Split: Phase 1 here (3 pts), the rest in APP-3118. Phase 1 expected before the sprint closes; otherwise Backlog (Prioritized).",
       "blocker": "Hard to split; may carry over.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1144,7 +1149,7 @@
       "ticket": "APP-3115",
       "owner": "Pavan V",
       "status": "Done",
-      "tester": null,
+      "tester": "Pavan V",
       "classifications": null,
       "points": 5,
       "parent": "APP-2914 – Epic to track QA Activities for 4.45.2.0",
@@ -1162,7 +1167,7 @@
     {
       "ticket": "APP-3092",
       "owner": "Ploy Pornapat",
-      "status": "Open",
+      "status": "In Review",
       "tester": "Pavan V",
       "classifications": null,
       "points": 0,
@@ -1173,7 +1178,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "iris_pipeline_search throwing 500 error on UAT",
-      "currentSituation": "Open; regression keeps failing because of this UAT 500 error. Poornima asked Jump for an update on 10/8, no answer yet.",
+      "currentSituation": "Fix PR merged on 10/9 (sl-app-launcher-gitops #5218); Poornima asked Pavan to test it.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1458,7 +1463,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "Test automation - infra setup and qaforge parity",
-      "currentSituation": "Most of the work is done by other teams; Shardul moved one item out and will split the rest. Awaiting reply from Shardul to Carlos's 10/8 question.",
+      "currentSituation": "Resized to 3 pts. Per Shardul, expected Done today; otherwise it goes to Backlog (Prioritized).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1555,25 +1560,6 @@
       "summary": "File download from Project Manager retrieves stale browser-cached file instead of updated data",
       "currentSituation": "Done 10/8. Pavan verified the fix on develop (build develop_35796).",
       "blocker": "Waiting for Canary deployment of the feature branch.",
-      "demoOrSpike": null,
-      "discussed": "Yes"
-    },
-    {
-      "ticket": "APP-3086",
-      "owner": "Vlad Storona",
-      "status": "In Review",
-      "tester": "Anumeha Singh",
-      "classifications": null,
-      "points": 3,
-      "parent": "APP-55 – App Foundation PSWAT",
-      "linkedWorkItems": null,
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": "2026-10-05",
-      "cycleTime": null,
-      "summary": "Cannot open account",
-      "currentSituation": "Vlad tested the fix with the HAR file; PR #6048 created on 10/8.",
-      "blocker": "Hard to reproduce, few details.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
