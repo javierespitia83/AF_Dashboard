@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-09",
-  "exportedAt": "2026-10-09T13:35:09+00:00",
+  "exportedAt": "2026-10-09T15:26:07+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12119,
@@ -55,10 +55,10 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "Notification dropdown navigation to notification center",
-      "currentSituation": "In Review; Pavan approved merging to develop; Alan to merge.",
+      "currentSituation": "In Review; Pavan asked Alan on 10/9 to approve PR #6008. Alan (absent from the 10/8 daily) to approve and merge.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-556",
@@ -74,10 +74,10 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Review; visual checks passed, but Mario flagged warning text and a double focus outline; Alan to fix.",
+      "currentSituation": "In Review; Mario's visual QA (10/7) flagged fixes: warning text, double focus ring, extra frame, Esc. Alan (absent 10/8) to fix.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2673",
@@ -96,7 +96,7 @@
       "currentSituation": "Testing completed by Bornali; Alan will merge (10/7 daily). Can move to Done once merged. Awaiting reply from Alan/Bornali to Carlos's 10/7 question.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2719",
@@ -112,10 +112,10 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "currentSituation": "Pavan left comments (project path not updated on import); Alan to check them (10/7 daily; matched by Pavan's tickets).",
+      "currentSituation": "Poornima moved it back to In Progress on 10/8: the issue raised on 10/7 (project path on import) is still open. Alan to fix.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3030",
@@ -283,8 +283,8 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "currentSituation": "Needs a Platform team review (no new ticket needed). Artem added coverage for Copilot's edge cases and it may need a retest (10/7 daily).",
-      "blocker": "Tester Poornima out until Wed; sprint ends Fri.",
+      "currentSituation": "Stuck in Platform code review for over a week (tested on feature branch). Vishal to escalate to Jigish; Martin tagged reviewers on 10/8.",
+      "blocker": "Platform team code review pending.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -305,7 +305,7 @@
       "currentSituation": "Done 10/8. Anumeha verified it on canary; Artem merged PR #6031 to develop.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2944",
@@ -378,8 +378,8 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "restyle pipeline version dialog",
-      "currentSituation": "Waiting for Poornima, back tomorrow, to review the tests; Barbora expects them to pass (10/7 daily).",
-      "blocker": "Tester Poornima out until Wed; QA at capacity.",
+      "currentSituation": "Poornima, back from PTO, picked up testing again on 10/8 and will continue.",
+      "blocker": null,
       "demoOrSpike": "Presented",
       "discussed": "Yes"
     },
@@ -400,7 +400,7 @@
       "currentSituation": "Done 10/7. Anumeha completed testing and reviewed the automated tests; PR merged.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2939",
@@ -435,10 +435,10 @@
       "addedDate": "2026-10-06",
       "cycleTime": null,
       "summary": "Unable to select Global Shared on Copy/Move Dialog",
-      "currentSituation": "In Review; Pavan confirmed it is also on UAT (10/7); no next step was stated in that comment.",
+      "currentSituation": "Pavan verified on branch 10/9. Only seen in one UAT org; no merge to main before release, patch via triage if needed. Poornima to tell Kalpana if a known-issue note is needed.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2931",
@@ -454,7 +454,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "QA Task: Backlog Automation",
-      "currentSituation": "In Review. Bornali moved it to In Review on 10/8 and added PR #779 (QAForge) for the backlog automation. Next: a reviewer to review the PR. Awaiting reply from Bornali to Carlos's 10/7 question.",
+      "currentSituation": "Automated tests in PR #779 await review; Bornali expects Done by 10/9 once the dry run passes and it merges. Awaiting reply from Bornali to Carlos's 10/7 question.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -568,8 +568,8 @@
       "addedDate": "2026-09-29",
       "cycleTime": null,
       "summary": "Allow tasks (incl. trigger tasks) to select a pipeline from other project folder",
-      "currentSituation": "In Review; Anumeha asked Guannan whether broken pipeline references during copy/import are expected; confirmation is needed.",
-      "blocker": null,
+      "currentSituation": "Anumeha logged defects. Picker now lists pipelines org-wide with no search (slow API, per Guannan); requirements unclear. Derek to set a session with Danilo and Poornima.",
+      "blocker": "Requirements gap on cross-project pipeline search.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -720,7 +720,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": null,
       "summary": "Snaps in restricted class id is displayed in asset palette",
-      "currentSituation": "In Review. Bornali tested on stage 10/8: works as expected. Next: Guannan to move it to Done.",
+      "currentSituation": "Bornali finished testing and added test cases; Guannan to implement the automated test (if not done) and merge.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -796,7 +796,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": null,
       "summary": "[Asset Catalog] Pipeline hourly OM table: partition by execution_date + bucket(org_snode_id, 50)",
-      "currentSituation": "Only left to verify in production; it ships with the broad release. Indrajeet will add a Jira comment so it is not reviewed daily (10/7 daily).",
+      "currentSituation": "Deploying to UAT on 10/8 after the UAT upgrade; stays In Review until verified in production. No work left.",
       "blocker": "Token expiration on US/production pods until Friday.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -834,8 +834,8 @@
       "addedDate": "2026-10-06",
       "cycleTime": null,
       "summary": "[adm-e2e] Migrate all UI tests using playwright to ClientApps",
-      "currentSituation": "Indrajeet continues the Playwright UI test migration and his dev setup. Fix version 4.46 agreed with Guannan; will merge to develop (10/7 daily). Awaiting reply from Indrajeet to Carlos's 10/8 question.",
-      "blocker": null,
+      "currentSituation": "PR coming soon; added late with 5 pts, unlikely by 10/9. Indrajeet to split the remaining work into a new ticket. Awaiting reply from Indrajeet to Carlos's 10/8 question.",
+      "blocker": "Hard to split; may carry over.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -875,7 +875,7 @@
       "currentSituation": "Docs team was absent from the 10/7 daily; pending Docs comments to consider this sprint (matched by topic, unconfirmed).",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2766",
@@ -891,7 +891,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "[TechDebt] Upgrade React 18.3 → 19 workspace-wide",
-      "currentSituation": "Kyle is on the React 18 to 19 upgrade, no blockers (10/7 daily). Carlos's 9/30 dev-to-test question is still unanswered.",
+      "currentSituation": "Kyle expected to finish the React 18 to 19 upgrade on 10/8; still In Progress in Jira on 10/9.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -929,8 +929,8 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "Sysadmin — Organization details page (unblocks Classic Manager retirement)",
-      "currentSituation": "Kyle reviewed the changes and messaged Barbora to look at it (10/7 daily). Poornima to verify on her return.",
-      "blocker": null,
+      "currentSituation": "Added 10/5; QA can't finish by 10/9 even with its e2e tests. Poornima to review the tests; if not done, Kyle moves it to the top of the priority backlog.",
+      "blocker": "QA capacity; added mid-sprint.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -1005,7 +1005,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": null,
       "summary": "Rewrite Designer in React",
-      "currentSituation": "In Review; it will not make this sprint; Kyle plans to move it to backlog and revisit after a QA test plan with Poornima.",
+      "currentSituation": "Will not make this sprint; Kyle to move it to the backlog.",
       "blocker": "Will not finish this sprint.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1127,10 +1127,10 @@
     {
       "ticket": "APP-3110",
       "owner": "Pavan V",
-      "status": "In Review",
+      "status": "In Progress",
       "tester": "Pavan V",
       "classifications": "QA to Test",
-      "points": 5,
+      "points": 3,
       "parent": "APP-2914 – Epic to track QA Activities for 4.45.2.0",
       "linkedWorkItems": null,
       "fixVersion": "4.45.2.0",
@@ -1138,10 +1138,10 @@
       "addedDate": "2026-10-08",
       "cycleTime": null,
       "summary": "QA Task : Git Refactor",
-      "currentSituation": "In Review since 10/9; 5 pts, QA to Test, fix version 4.45.2.0. Not discussed in daily yet.",
+      "currentSituation": "Back to In Progress on 10/9, now 3 pts (Derek asked for points in the 10/8 daily). Pavan expected to finish the Git refactor by 10/9.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3115",
@@ -1176,7 +1176,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "iris_pipeline_search throwing 500 error on UAT",
-      "currentSituation": "Open; Pavan reopened it after regression found a UAT timeout (10/6); Jump to investigate.",
+      "currentSituation": "Open; regression keeps failing because of this UAT 500 error. Poornima asked Jump for an update on 10/8, no answer yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1312,7 +1312,7 @@
       "currentSituation": "Docs team was absent from the 10/7 daily; pending Docs comments to consider this sprint (matched by topic, unconfirmed).",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2631",
@@ -1348,25 +1348,6 @@
       "cycleTime": 1,
       "summary": "National Broadband Ireland is using the EMEA control plane and has to authorize GitHub at least once a day",
       "currentSituation": "Done 9/23. National Broadband Ireland no longer needs to re-authorize; customer is monitoring (Atul Pande, 9/24).",
-      "blocker": null,
-      "demoOrSpike": "No",
-      "discussed": "No"
-    },
-    {
-      "ticket": "APP-2702",
-      "owner": "Salim Abdul",
-      "status": "Done",
-      "tester": "Pavan V",
-      "classifications": null,
-      "points": 1,
-      "parent": "APP-55 – App Foundation PSWAT",
-      "linkedWorkItems": "APP-3038 (relates to)",
-      "fixVersion": null,
-      "doneDate": "2026-09-24",
-      "addedDate": "2026-09-22",
-      "cycleTime": 2,
-      "summary": "Designer unable to load pipelines for projects containing a very large number of assets(files)",
-      "currentSituation": "Done 9/24. Designer now loads pipelines for projects with a very large number of items; on 10/4 Saikiran asked for a customer-facing RCA document.",
       "blocker": null,
       "demoOrSpike": "No",
       "discussed": "No"
@@ -1442,8 +1423,8 @@
       "addedDate": "2026-10-06",
       "cycleTime": null,
       "summary": "Configure git providers for e2e testing",
-      "currentSituation": "Salim is setting up Git providers for e2e testing; credential and Bitbucket issues, working with IT. Created as a Task; he says it can be marked dev-to-test (10/7 daily).",
-      "blocker": null,
+      "currentSituation": "All Git providers set up except Bitbucket: Bitbucket Server needs a new license only Platform can apply. Salim to open a ticket; Bitbucket likely moves to next sprint.",
+      "blocker": "Bitbucket license change needs Platform team.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -1480,7 +1461,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "Test automation - mark 3",
-      "currentSituation": "Shardul is reviewing Snapcode requirements for the release; little progress here yesterday, no blockers (10/7 daily). Awaiting reply from Shardul to Carlos's 10/8 question.",
+      "currentSituation": "Most of the work is done by other teams; Shardul moved one item out and will split the rest. Awaiting reply from Shardul to Carlos's 10/8 question.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1594,7 +1575,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": null,
       "summary": "Cannot open account",
-      "currentSituation": "In Review. Vlad opened PR #6048 (develop) on 10/8 and moved it to In Review. Tester not set yet.",
+      "currentSituation": "Vlad tested the fix with the HAR file; PR #6048 created on 10/8.",
       "blocker": "Hard to reproduce, few details.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1619,6 +1600,25 @@
       "discussed": "Yes"
     },
     {
+      "ticket": "APP-2702",
+      "owner": null,
+      "status": "Done",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": 1,
+      "parent": "APP-55 – App Foundation PSWAT",
+      "linkedWorkItems": "APP-3038 (relates to)",
+      "fixVersion": null,
+      "doneDate": "2026-09-24",
+      "addedDate": "2026-09-22",
+      "cycleTime": 2,
+      "summary": "Designer unable to load pipelines for projects containing a very large number of assets(files)",
+      "currentSituation": "Done 9/24. Designer now loads pipelines for projects with a very large number of items; on 10/4 Saikiran asked for a customer-facing RCA document.",
+      "blocker": null,
+      "demoOrSpike": "No",
+      "discussed": "No"
+    },
+    {
       "ticket": "APP-3106",
       "owner": null,
       "status": "In Review",
@@ -1632,7 +1632,7 @@
       "addedDate": "2026-10-07",
       "cycleTime": null,
       "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "currentSituation": "In Review; PR #6040 was created on 10/7; no assignee is set.",
+      "currentSituation": "In Review; PR #6040 open since 10/7, no assignee or reviewer in Jira. Awaiting reply from Guannan to Carlos's 10/9 question (owner, reviewer, carry over to 4.46).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
