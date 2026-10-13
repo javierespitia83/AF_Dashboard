@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-13",
-  "exportedAt": "2026-10-13T11:38:59+00:00",
+  "exportedAt": "2026-10-13T18:16:59+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -8,10 +8,12 @@
     "startDate": "2026-10-12",
     "endDate": "2026-10-23",
     "carriedOver": {
-      "count": 7,
-      "percent": 15.9,
-      "storyPoints": 21,
+      "count": 9,
+      "percent": 19.1,
+      "storyPoints": 27,
       "ticketKeys": [
+        "APP-556",
+        "APP-2719",
         "APP-2643",
         "APP-2968",
         "APP-3067",
@@ -24,6 +26,44 @@
     "removed": []
   },
   "tickets": [
+    {
+      "ticket": "APP-556",
+      "owner": "Alan Le",
+      "status": "In Review",
+      "tester": "Pavan V",
+      "classifications": "Customer Escalation",
+      "points": 5,
+      "parent": "APP-265 – Restyle designer",
+      "linkedWorkItems": "DOC-3492 (relates to), APP-2719 (blocks)",
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-13",
+      "cycleTime": null,
+      "summary": "[Designer]  Modernize Pipeline Settings Modal",
+      "currentSituation": "In Review. Alan says all 9 visual QA points are fixed. Pavan found some test cases not automated and missing TestRail IDs. Alan to check them and mark any not needed.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-2719",
+      "owner": "Alan Le",
+      "status": "In Review",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": 1,
+      "parent": null,
+      "linkedWorkItems": "APP-556 (is blocked by)",
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-13",
+      "cycleTime": null,
+      "summary": "[Designer] Create new pipeline in same project space as current pipeline",
+      "currentSituation": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. Some test cases still lack automation and TestRail IDs.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
     {
       "ticket": "APP-2883",
       "owner": "Alan Le",
@@ -82,9 +122,28 @@
       "discussed": "No"
     },
     {
-      "ticket": "APP-3130",
+      "ticket": "APP-3128",
       "owner": "Anumeha Singh",
       "status": "Open",
+      "tester": null,
+      "classifications": null,
+      "points": null,
+      "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-13",
+      "cycleTime": null,
+      "summary": "Regression Fixes for CP and Studio for 4.46 release",
+      "currentSituation": "Open; no comments yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3130",
+      "owner": "Anumeha Singh",
+      "status": "In Progress",
       "tester": "Anumeha Singh",
       "classifications": null,
       "points": 3,
@@ -95,7 +154,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Automate Oauth Test cases into grafana",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -103,7 +162,7 @@
     {
       "ticket": "APP-3132",
       "owner": "Anumeha Singh",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Anumeha Singh",
       "classifications": null,
       "points": 3,
@@ -114,7 +173,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Backlog automation for CP and Studio",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -141,7 +200,7 @@
     {
       "ticket": "APP-2880",
       "owner": "Artem Velykorodnyi",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Poornima Srikantesh",
       "classifications": null,
       "points": 3,
@@ -152,7 +211,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Metadata update snap removed pipeline/plex mapping.",
-      "currentSituation": "Open; low priority. Salim gave the customer a workaround and they are satisfied.",
+      "currentSituation": "In Progress, started 10/13. Low-priority PSWAT; the customer is happy with the workaround Salim proposed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -160,18 +219,18 @@
     {
       "ticket": "APP-3078",
       "owner": "Artem Velykorodnyi",
-      "status": "In Progress",
+      "status": "Done",
       "tester": "Artem Velykorodnyi",
       "classifications": "Dev to Test",
       "points": 2,
       "parent": null,
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-13",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "summary": "[ELT] Fix ELT daily regression run",
-      "currentSituation": "In Progress; no comments yet.",
+      "currentSituation": "Done 10/13. ELT daily regression run fixed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -209,7 +268,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "currentSituation": "Open; only comment is a mention of Derek, no progress noted.",
+      "currentSituation": "Open. An AI-generated test plan was posted 10/13 and is waiting for review. Assigned to Barbora Novakova, with Pavan V as tester.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -445,7 +504,7 @@
     {
       "ticket": "APP-3118",
       "owner": "Indrajeet Kane",
-      "status": "Open",
+      "status": "In Progress",
       "tester": null,
       "classifications": null,
       "points": 5,
@@ -456,7 +515,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "[adm-e2e] Migrate all UI tests using playwright to ClientApps Phase 2",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -673,7 +732,7 @@
     {
       "ticket": "APP-3135",
       "owner": "Pavan V",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Pavan V",
       "classifications": null,
       "points": 2,
@@ -683,8 +742,8 @@
       "doneDate": null,
       "addedDate": "2026-10-12",
       "cycleTime": null,
-      "summary": "QA Task : Git Refactor - 2",
-      "currentSituation": "Open; no comments yet.",
+      "summary": "QA Task : Optimize Git related automated Testcases",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -711,7 +770,7 @@
     {
       "ticket": "APP-3147",
       "owner": "Poornima Srikantesh",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Poornima Srikantesh",
       "classifications": null,
       "points": 3,
@@ -722,7 +781,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Fixing flaky/auto failed tests",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -730,7 +789,7 @@
     {
       "ticket": "APP-1607",
       "owner": "Salim Abdul",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Salim Abdul",
       "classifications": null,
       "points": 8,
@@ -741,7 +800,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Support linking to any repository directory across GitLab.com and GitLab self-managed for all operations.",
-      "currentSituation": "Open; Indrajeet asked Yoelvis on 8/11 to add more details to the ticket. No reply yet.",
+      "currentSituation": "In Progress, started 10/13 by Salim. Only comment is from August: Indrajeet asked for more details on the ticket.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -760,7 +819,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "currentSituation": "In Progress since 10/12 (Salim); only comment is a mention of Derek, no updates.",
+      "currentSituation": "In Progress. Salim found the existing brute-force lockout can't be reused for an admin lock, so a new attribute is needed. Salim to set up a meeting with Guannan and Barbora to update the ACs.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -787,7 +846,7 @@
     {
       "ticket": "APP-3010",
       "owner": "Vlad Storona",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Bornali Nath",
       "classifications": null,
       "points": 3,
@@ -798,7 +857,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -857,7 +916,7 @@
       "summary": "JellyRoll 2.0: Align Slider with the updated spec (paired Number input, readout, width presets)",
       "currentSituation": "Done 10/12. JellyRoll 2.0 Slider aligned with updated spec; PR #6050 merged to develop.",
       "blocker": null,
-      "demoOrSpike": null,
+      "demoOrSpike": "Candidate",
       "discussed": "No"
     }
   ]
