@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-13",
-  "exportedAt": "2026-10-13T18:16:59+00:00",
+  "exportedAt": "2026-10-13T23:46:32+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1967,21 +1967,6 @@
       "quickCheck": "Hi @Anumeha Singh, this ticket has no description or acceptance criteria. Please add the manual regression scope you cover (components and test suites), the exit criteria, and how it differs from APP-3143 (Pavan). Thanks!",
       "cluster": null,
       "created": "2026-10-12"
-    },
-    {
-      "ticket": "APP-3166",
-      "summary": "Install Appcues code snippet on Canary pod for evaluation purposes",
-      "type": "Story",
-      "priority": "High",
-      "dor": "Weak",
-      "points": 2,
-      "needsSplitting": null,
-      "days": 0,
-      "epic": null,
-      "risk": "Clear ask and install link, but no acceptance criteria (which Canary pod, how to verify the snippet loads, when to remove it after the evaluation).",
-      "quickCheck": "Hi Barbora, the goal and the install link are clear. Could you add acceptance criteria: which Canary pod gets the Appcues snippet, how we verify it loads (and does not conflict with the Userpilot snippet), and when/how it gets removed after the evaluation? Thanks!",
-      "cluster": null,
-      "created": "2026-10-13"
     }
   ]
 }
