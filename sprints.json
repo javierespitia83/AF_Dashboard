@@ -1,13 +1,22 @@
 {
-  "current": 12119,
+  "current": 12176,
   "sprints": [
+    {
+      "id": 12176,
+      "name": "App Sprint 10-23-2026",
+      "startDate": "2026-10-12",
+      "endDate": "2026-10-23",
+      "state": "active",
+      "file": "sprint.json"
+    },
     {
       "id": 12119,
       "name": "APP Sprint 10-09-2026",
       "startDate": "2026-09-22",
       "endDate": "2026-10-09",
-      "state": "active",
-      "file": "sprint.json"
+      "state": "closed",
+      "file": "snapshots/sprint-12119.json",
+      "note": "Final snapshot exported 2026-10-13 after the sprint was closed in Jira (completed 2026-10-13). 77 tickets, 76 Done; APP-194/1711 (converted sub-tasks), 556 and 2719 left to Backlog (Prioritized) at close; APP-3106 moved straight to sprint 12176."
     },
     {
       "id": 4697,
