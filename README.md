@@ -16,9 +16,9 @@ An earlier, separate attempt is archived in `AF_Snaplogic/08__Dashboard_Archive/
 
 ## Pages
 
-v2 is a full-screen, Power BI / Tableau-style dashboard for a **1920 x 1080** browser window (it also works from 1366 x 760 up; below that it falls back to a scrolling layout). Clicking any bar, person or cell filters every tile on the page (cross-filtering). Ctrl, Cmd or Shift + click selects several values; **Reset all** clears everything.
+v2 is a full-screen dashboard for a **1920 x 1080** browser window (it also works from 1366 x 760 up; below that it falls back to a scrolling layout). Clicking any bar, person or cell filters every tile on the page (cross-filtering). Status rows can be selected one at a time with repeated clicks; other dimensions support modifier-click for multiple values. **Reset all** clears everything.
 
-- `index.html` — current and closed sprint review: a Sprint selector loads the active sprint by default or a closed sprint chosen from the manifest, then shows seven KPIs, the **burndown chart**, status and people breakdowns, ticket detail and an assignee x tester grid. Fix version and Parent selects remain in the filter bar. `?sprint=<id>` opens a sprint directly. `sprints.json` lists available sprints; each selected entry points to one local snapshot. If the manifest is missing or invalid, the page falls back silently to `sprint.json` without a selector.
+- `index.html` — current and closed sprint review: a Sprint selector loads the active sprint by default or a closed sprint chosen from the manifest, then shows seven KPIs, the **burndown chart**, Tickets by status, a unified Team Contribution table, ticket detail and an assignee x tester grid. Team Contribution shows independent role W.I counts and the unique per-person `N W.I | P SP` total. Clicking a name filters tickets where that person is assignee or tester. Fix version and Parent selects remain in the filter bar. `?sprint=<id>` opens a sprint directly. `sprints.json` lists available sprints; each selected entry points to one local snapshot. If the manifest is missing or invalid, the page falls back silently to `sprint.json` without a selector.
 - `backlog.html` — backlog analysis: KPIs, readiness (DoR), priority, type, days-in-status buckets, a readiness x priority grid, and the ticket table. Search box in the filter bar (type `mis`, `wea` or `rea` to filter by readiness).
 
 ## How to run
@@ -63,7 +63,7 @@ It needs Node 22 or newer, python3 and Google Chrome (set `CHROME_PATH` if Chrom
 | `schema/snapshot.schema.json` | JSON Schema for sprint snapshots and backlog snapshot | Only with the exporter and skill, in the same pass |
 | `fixtures/sample_snapshot.json` | Small sprint sample incl. edge cases (no tester, unknown status, null points) | Only to add edge cases |
 | `index.html`, `backlog.html`, `dashboard.css`, `dashboard.js`, `sprint.js`, `backlog.js` | The app (static files) | Yes, following `SPEC.md` |
-| `scripts/run_acceptance.js` | Automated acceptance run (204 checks in headless Chrome); see "How to test" below | Only together with `SPEC.md` / `ACCEPTANCE.md` |
+| `scripts/run_acceptance.js` | Automated acceptance checks in headless Chrome; see "How to test" below | Only together with `SPEC.md` / `ACCEPTANCE.md` |
 | `SPEC.md` | What to build: pages, metrics, filters, design | Yes |
 | `DATA_CONTRACT.md` | Field rules, null/status handling, calculations | Yes |
 | `ACCEPTANCE.md` | Definition of done and checks | Yes |

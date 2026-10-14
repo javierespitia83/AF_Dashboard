@@ -121,6 +121,7 @@ const kpi = t => [...document.querySelectorAll('.kpi')].find(k => T(k.querySelec
 const rowsOf = t => [...tile(t).querySelectorAll('.tile-body .rowbtn')];
 const clickEl = (el, o={}) => el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, ctrlKey: !!o.ctrl, metaKey: !!o.meta, shiftKey: !!o.shift}));
 const clickRow = (t, name, o) => { const r = rowsOf(t).find(r => T(r.querySelector('.person, .name')) === name); if(!r) throw new Error('row not found: '+t+' / '+name); clickEl(r, o); };
+const clickContribution = (dim, name, o) => { const b=[...tile('Team Contribution').querySelectorAll('[data-key]')].find(x=>x.dataset.key===dim+':'+name); if(!b) throw new Error('contribution cell not found: '+dim+' / '+name); clickEl(b,o); };
 const clickCell = (t, rowName, colName, o) => { const tl = tile(t); const hdr=[...tl.querySelectorAll('thead th')].map(T); const ci = hdr.indexOf(colName); const tr=[...tl.querySelectorAll('tbody tr')].find(tr => T(tr.querySelector('th'))===rowName); if(!tr) throw new Error('matrix row not found '+rowName); const td = tr.querySelectorAll('td')[ci-1]; const b = td && td.querySelector('button'); if(!b) throw new Error('cell not clickable '+rowName+'/'+colName); clickEl(b, o); };
 const clickReset = () => clickEl(document.querySelector('.resetall'));
 const clickTagX = i => clickEl(document.querySelectorAll('.tag .tag-x')[i]);
@@ -151,12 +152,13 @@ return { sub: T(b.querySelector('.sub')), empty: emp ? T(emp) : null, has: !!s, 
 `;
 const READ_SPRINT = `
 const c = readCommon();
-const status = {}, statusSel = [], statusDim = [];
-rowsOf('Tickets by status').forEach(r => { const n=T(r.querySelector('.name')); const [i,pp]=T(r.querySelector('.pair')).split(' / '); status[n]=[+i,+pp]; if(r.classList.contains('sel')) statusSel.push(n); if(r.classList.contains('dim')) statusDim.push(n); });
-const people = t => { const o={}, sel=[], dim=[]; rowsOf(t).forEach(r=>{ const n=T(r.querySelector('.person')); o[n]=[...r.querySelectorAll('.n')].map(x=>+T(x)); if(r.classList.contains('sel')) sel.push(n); if(r.classList.contains('dim')) dim.push(n); }); return {o, sel, dim, order:Object.keys(o)}; };
+const status = {}, statusRaw = {}, statusSel = [], statusDim = [];
+rowsOf('Tickets by status').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); status[n]=[parseInt(i,10),parseInt(pp,10)]; statusRaw[n]=raw; if(r.classList.contains('sel')) statusSel.push(n); if(r.classList.contains('dim')) statusDim.push(n); });
+const contribution = () => { const rows=[...tile('Team Contribution').querySelectorAll('.contribution-row')]; return rows.map(r=>({name:T(r.querySelector('.contribution-name')), assignee:+T(r.querySelector('[data-key^="assignee:"]')), tester:+T(r.querySelector('[data-key^="tester:"]')), total:T(r.querySelector('.contribution-total')), nameSelected:r.querySelector('.contribution-name').classList.contains('selected'), nameDimmed:r.querySelector('.contribution-name').classList.contains('dimmed')})); };
 const det = tile('Ticket detail'); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
 const statusFoot = T(tile('Tickets by status').querySelector('.tile-foot'));
-return Object.assign(c, { status, statusSel, statusDim, assignee: people('Work by assignee'), tester: people('Work by tester'), matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), assignee: emptyIn('Work by assignee'), tester: emptyIn('Work by tester'), matrix: emptyIn('Assignee x tester')}, statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
+const cf=tile('Team Contribution').querySelector('.tile-foot .totalrow');
+return Object.assign(c, { status, statusRaw, statusSel, statusDim, contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: T(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: [...tile('Team Contribution').querySelector('.colhead.contribution-grid').children].map(T), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
 `;
 
 // ---------- independent sprint model ----------
@@ -164,9 +166,9 @@ const BN = ['To Do/Open', 'In Progress', 'In Review', 'Done', 'Other'];
 const bucket = s => ({ 'To Do': 0, 'Open': 0, 'In Progress': 1, 'In Review': 2, 'Done': 3 }[s] ?? 4);
 const pt = v => typeof v === 'number' ? v : 0;
 const grpName = v => (v == null || String(v).trim() === '' || v === 'Unassigned') ? 'Unassigned' : v;
-const SKEY = { status: t => BN[bucket(t.status)], assignee: t => grpName(t.owner), tester: t => grpName(t.tester), fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
-const newF = () => ({ status: new Set(), assignee: new Set(), tester: new Set(), fix: new Set(), parent: new Set() });
-const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || f[d].has(keyMap[d](t))) && (!pred || pred(t)));
+const SKEY = { status: t => BN[bucket(t.status)], assignee: t => grpName(t.owner), tester: t => grpName(t.tester), contributor: t => null, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
+const newF = () => ({ status: new Set(), assignee: new Set(), tester: new Set(), contributor: new Set(), fix: new Set(), parent: new Set() });
+const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || (d === 'contributor' ? (f[d].has(grpName(t.owner)) || f[d].has(grpName(t.tester))) : f[d].has(keyMap[d](t)))) && (!pred || pred(t)));
 const group = (rows, kf) => { const m = {}; rows.forEach(t => { const k = kf(t); (m[k] = m[k] || { i: 0, p: 0 }); m[k].i++; m[k].p += pt(t.points); }); return m; };
 const sumP = rows => rows.reduce((a, t) => a + pt(t.points), 0);
 
@@ -208,9 +210,11 @@ function expectSprint(S, f, ctx = CTX) {
     midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
     String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
   const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
-  const people = (dim) => { const g = group(applyF(S, f, SKEY, [dim]), SKEY[dim]); const o = {}; Object.keys(g).forEach(k => o[k] = [g[k].i, g[k].p]); return o; };
+  const cBase = applyF(S, f, SKEY, ['assignee', 'tester', 'contributor']);
+  const contrib = {}; cBase.forEach(t => { [SKEY.assignee(t), SKEY.tester(t)].forEach(n => { const r=contrib[n]||(contrib[n]={assignee:0,tester:0,keys:new Map()}); if(SKEY.assignee(t)===n) r.assignee++; if(SKEY.tester(t)===n) r.tester++; r.keys.set(t.ticket,t); }); });
+  Object.keys(contrib).forEach(n => { const r=contrib[n], u=[...r.keys.values()]; r.total=`${u.length} W.I | ${sumP(u)} SP`; });
   const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {}; mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
-  return { kpiValues: kp, active, all, status: stG, stBase, assignee: people('assignee'), tester: people('tester'), matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
+  return { kpiValues: kp, active, all, status: stG, stBase, contribution: contrib, cBase, matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
 }
 
 async function verifySprint(p, S, f, label, ctx = CTX) {
@@ -218,7 +222,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
   if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
   if (!e.active && d.kpis[0].hint !== 'tickets in the sprint') errs.push(['kpi hint', d.kpis[0].hint]);
-  if (d.kpis.length !== 7 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
+  if (d.kpis.length !== 7 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
   if (d.kpis[6].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[6].hint, e.kpiHints.cycle]);
   if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
   if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
@@ -265,20 +269,18 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
         if (bd.bodyOv !== 'hidden') errs.push(['chart overflow', bd.bodyOv]);
       } } }
   if (e.stBase.length) {
-    BN.forEach(n => { const g = e.status[n] || { i: 0, p: 0 }; const got = d.status[n]; if (got === undefined) { if (n !== 'Other' || g.i) errs.push(['status row missing', n]); } else if (got[0] !== g.i || got[1] !== g.p) errs.push(['status', n, got, [g.i, g.p]]); });
-    if (d.statusFoot.replace(/\s+/g, '') !== `Total${e.stBase.length}/${sumP(e.stBase)}`) errs.push(['status total', d.statusFoot]);
+    BN.forEach(n => { const g = e.status[n] || { i: 0, p: 0 }; const got = d.status[n]; if (got === undefined) { if (n !== 'Other' || g.i) errs.push(['status row missing', n]); } else { if (got[0] !== g.i || got[1] !== g.p) errs.push(['status', n, got, [g.i, g.p]]); if(d.statusRaw[n]!==`${g.i} W.I | ${g.p} SP`) errs.push(['status metric format',n,d.statusRaw[n]]); } });
+    if (d.statusFoot.replace(/\s+/g, '') !== `Total${e.stBase.length}W.I|${sumP(e.stBase)}SP`) errs.push(['status total', d.statusFoot]);
   } else if (!d.empties.status) errs.push(['status empty-state missing']);
-  for (const [dim, key] of [['assignee', 'assignee'], ['tester', 'tester']]) {
-    const exp = e[dim]; const got = d[dim];
-    if (Object.keys(exp).length === 0) { if (!d.empties[dim]) errs.push([dim + ' empty-state missing']); continue; }
-    const gotMap = {}; Object.keys(got.o).forEach(k => gotMap[k] = [got.o[k][0], got.o[k][1]]);
-    if (!eq(Object.keys(gotMap).sort(), Object.keys(exp).sort())) errs.push([dim + ' people set', Object.keys(gotMap).length, Object.keys(exp).length]);
-    else Object.keys(exp).forEach(k => { if (!eq(gotMap[k], exp[k])) errs.push([dim, k, gotMap[k], exp[k]]); });
-    const sorted = Object.keys(exp).sort((a, b) => exp[b][1] - exp[a][1] || a.localeCompare(b));
-    if (!eq(got.order, sorted)) errs.push([dim + ' order', got.order.slice(0, 4), sorted.slice(0, 4)]);
-    const want = [...f[key]].filter(v => exp[v]).sort(); if (!eq([...got.sel].sort(), want)) errs.push([dim + ' selected', got.sel, want]);
-    if (f[key].size) { const others = got.order.filter(n => !f[key].has(n)); if (!others.every(n => got.dim.includes(n))) errs.push([dim + ' unselected not dimmed']); }
-    else if (got.dim.length) errs.push([dim + ' dimmed with no selection']);
+  const cExp=e.contribution, cGot=d.contribution, cNames=Object.keys(cExp).sort((a,b)=>cExp[b].keys.size-cExp[a].keys.size||a.localeCompare(b));
+  if (!cNames.length) { if (!d.empties.contribution) errs.push(['Team Contribution empty-state missing']); }
+  else {
+    if (!eq(cGot.map(r=>r.name),cNames)) errs.push(['Team Contribution row order',cGot.map(r=>r.name),cNames]);
+    cNames.forEach((n,i)=>{const x=cExp[n],g=cGot[i]; if(!g||g.assignee!==x.assignee||g.tester!==x.tester||g.total!==x.total) errs.push(['Team Contribution row',n,g,x]); if(g&&(g.nameSelected!==f.contributor.has(n)||g.nameDimmed!==!!f.contributor.size&&!f.contributor.has(n))) errs.push(['Team Contribution name selection',n]);});
+    if(!eq(d.contributionHeaders,['Name','Assignee W.I','Tester W.I','Total W.I | SP'])) errs.push(['Team Contribution headers',d.contributionHeaders]);
+    if(d.contributionNote!=='Assignee and Tester work item counts can overlap. Story points are shared and count once.') errs.push(['Team Contribution note',d.contributionNote]);
+    const ao=group(e.cBase,SKEY.assignee),te=group(e.cBase,SKEY.tester);
+    if(!eq(d.contributionFoot,['Total',String(Object.values(ao).reduce((s,r)=>s+r.i,0)),String(Object.values(te).reduce((s,r)=>s+r.i,0)),`${e.cBase.length} W.I | ${sumP(e.cBase)} SP`])) errs.push(['Team Contribution total row',d.contributionFoot]);
   }
   { const mexp = e.matrix; const mg = d.matrix.o; const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(c => out[r + '|' + c] = o[r][c])); return out; };
     const a = flat(mg), b = flat(mexp);
@@ -287,7 +289,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
   if (d.detailSub !== `${e.all.length} of ${S.length} work items`) errs.push(['detail sub', d.detailSub]);
   if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
-  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ status: 'Status', assignee: 'Assignee', tester: 'Tester', fix: 'Fix version', parent: 'Parent' })[dim] + ': ' + v)));
+  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ status: 'Status', assignee: 'Assignee', tester: 'Tester', contributor: 'Team member', fix: 'Fix version', parent: 'Parent' })[dim] + ': ' + v)));
   if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
   if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
   if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
@@ -429,15 +431,15 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
   const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
-  const noTesterKpi = await run(p, `const k=kpi('No tester'); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
-  check('No tester KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
-  await run(p, `clickEl(kpi('No tester'))`);
+  const noTesterKpi = await run(p, `const k=kpi('No tester & Not Dev to Test'); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
+  check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
+  await run(p, `clickEl(kpi('No tester & Not Dev to Test'))`);
   let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
   const resetEnabled = await run(p, `return !document.querySelector('.resetall').disabled`);
-  check('Click No tester filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
+  check('Click No tester & Not Dev to Test filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
   await run(p, `clickReset()`);
   lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  const noTesterSelected = await run(p, `return kpi('No tester').classList.contains('selected')`);
+  const noTesterSelected = await run(p, `return kpi('No tester & Not Dev to Test').classList.contains('selected')`);
   check('Reset all clears the KPI filter and restores the lower section', lowerKeys.length === S.length && !noTesterSelected, lowerKeys.length);
   const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
   await run(p, `clickEl(kpi('Carried over'))`);
@@ -447,43 +449,50 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   await verifySprint(p, S, f, 'KPI filters clear on second click');
   const L = await run(p, layoutJs);
   check('Layout 1920x1080: no page scroll (width and height)', L.sh <= L.ih && L.sw <= L.iw, L);
-  check('Layout 1920x1080: 7 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 13 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
+  check('Layout 1920x1080: 7 KPI + 3 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 12 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
   check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 40px of the footer)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
-  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(7, 11).map(t => t.h)).size === 1 && new Set(L.tiles.slice(11, 13).map(t => t.h)).size === 1 && L.tiles[11].w + L.tiles[12].w + 10 >= L.iw - 30 && L.tiles[12].w >= 440 && L.tiles[12].w <= 0.32 * L.iw, L.tiles.slice(7));
-  const rowRatio = L.tiles[7].h / L.tiles[11].h;
+  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(7, 10).map(t => t.h)).size === 1 && new Set(L.tiles.slice(10, 12).map(t => t.h)).size === 1 && L.tiles[10].w + L.tiles[11].w + 10 >= L.iw - 30 && L.tiles[11].w >= 440 && L.tiles[11].w <= 0.32 * L.iw, L.tiles.slice(7));
+  const rowRatio = L.tiles[7].h / L.tiles[10].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Work by assignee, Work by tester; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(7).map(t => t.title), ['Burndown', 'Tickets by status', 'Work by assignee', 'Work by tester', 'Ticket detail', 'Assignee x tester']) && L.tiles[8].w >= 250, L.tiles.slice(7).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(7).map(t => t.title), ['Burndown', 'Tickets by status', 'Team Contribution', 'Ticket detail', 'Assignee x tester']) && L.tiles[8].w >= 250, L.tiles.slice(7).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
-  const st = await run(p, `const out={}; for (const [k,t] of [['assignee','Work by assignee'],['detail','Ticket detail'],['matrix','Assignee x tester']]) { const b=tile(t).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile('Work by assignee').querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile('Work by assignee').getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
-  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Current situation width and horizontal scroll, Total line pinned', st.assignee.scrolls && st.assignee.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 340 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
+  const st = await run(p, `const out={}; for (const [k,t] of [['contribution','Team Contribution'],['detail','Ticket detail'],['matrix','Assignee x tester']]) { const b=tile(t).querySelector('.tile-body'); const th=tile(t).querySelector('.colhead.contribution-grid')||b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile('Team Contribution').querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile('Team Contribution').getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
+  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Current situation width and horizontal scroll, Total line pinned', st.contribution.scrolls && st.contribution.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 340 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
 
   const owners = Object.keys(group(S, SKEY.assignee)).sort((a, b) => group(S, SKEY.assignee)[b].p - group(S, SKEY.assignee)[a].p || a.localeCompare(b));
   const pick = owners[2], pick2 = owners[5], pick3 = owners[1];
   // click an assignee
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick)})`); f.assignee = new Set([pick]);
-  await verifySprint(p, S, f, `Click assignee "${pick}": KPIs, status, tester, matrix, detail all filtered; assignee tile highlights/dims`);
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick)})`); f.assignee = new Set();
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); f.assignee = new Set([pick]);
+  await verifySprint(p, S, f, `Click Assignee W.I "${pick}": filters ticket detail and other tiles`);
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); f.assignee = new Set();
   await verifySprint(p, S, f, 'Click the same assignee again: cleared');
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick)})`); await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick2)})`); f.assignee = new Set([pick2]);
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); await run(p, `clickContribution('assignee', ${JSON.stringify(pick2)})`); f.assignee = new Set([pick2]);
   await verifySprint(p, S, f, 'Plain click on another assignee replaces the selection');
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick3)}, {ctrl:true})`); f.assignee.add(pick3);
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick3)}, {ctrl:true})`); f.assignee.add(pick3);
   await verifySprint(p, S, f, 'Ctrl+click adds a second assignee (OR within dimension)');
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick3)}, {meta:true})`); f.assignee.delete(pick3);
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick3)}, {meta:true})`); f.assignee.delete(pick3);
   await verifySprint(p, S, f, 'Cmd+click toggles a value off');
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(pick)}, {shift:true})`); f.assignee.add(pick);
+  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)}, {shift:true})`); f.assignee.add(pick);
   await verifySprint(p, S, f, 'Shift+click also multi-selects');
   await run(p, `clickReset()`); f = newF();
   await verifySprint(p, S, f, 'Reset all clears everything; Reset is disabled again');
+  const member=Object.keys(expectSprint(S,newF()).contribution).find(n=>S.some(t=>grpName(t.owner)===n&&grpName(t.tester)===n))||Object.keys(expectSprint(S,newF()).contribution)[0];
+  await run(p, `clickContribution('contributor', ${JSON.stringify(member)})`); f.contributor=new Set([member]);
+  await verifySprint(p,S,f,`Click Team Contribution name "${member}": ticket detail includes assignee OR tester matches`);
+  check('Team member filter directly matches owner or tester',eq(expectSprint(S,f).all.map(t=>t.ticket).sort(),S.filter(t=>grpName(t.owner)===member||grpName(t.tester)===member).map(t=>t.ticket).sort()));
+  await run(p,`clickReset()`); f=newF(); await verifySprint(p,S,f,'Reset all clears Team member filter');
 
   // AND across dimensions
   await run(p, `clickRow('Tickets by status', 'In Review')`); f.status = new Set(['In Review']);
   await verifySprint(p, S, f, 'Click status "In Review"');
-  await run(p, `clickRow('Work by tester', 'Unassigned')`); f.tester = new Set(['Unassigned']);
+  await run(p, `clickContribution('tester', 'Unassigned')`); f.tester = new Set(['Unassigned']);
   await verifySprint(p, S, f, 'Click tester "Unassigned" on top: In Review tickets with no tester (AND)');
   const exp1 = expectSprint(S, f);
   check('That combination equals the In Review tickets without a tester (direct count)', exp1.all.length === S.filter(t => t.status === 'In Review' && t.tester == null).length, exp1.all.length);
-  await run(p, `clickRow('Tickets by status', 'Done', {ctrl:true})`); f.status.add('Done');
-  await verifySprint(p, S, f, 'Ctrl+click adds Done: status OR, still AND tester');
+  await run(p, `clickRow('Tickets by status', 'Done')`); f.status.add('Done');
+  await verifySprint(p, S, f, 'Plain click adds Done: status OR, still AND tester');
+  await run(p, `clickRow('Tickets by status', 'In Review')`); f.status.delete('In Review');
+  await verifySprint(p, S, f, 'Plain click clears one selected status while retaining the other');
   await run(p, `clickTagX(0)`); const firstTag = [...f.status][0]; f.status.delete(firstTag);
   await verifySprint(p, S, f, 'Tag × removes only that one value');
   await run(p, `clickReset()`); f = newF();
@@ -514,14 +523,14 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   if (zero) {
     await run(p, `clickRow('Tickets by status', ${JSON.stringify(zero[0])})`); await run(p, `setSel(${JSON.stringify(zero[1])}, ${JSON.stringify(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
     const z = await verifySprint(p, S, f, `Zero results (${zero[0]} + ${zero[2]} ${zero[3]}): KPIs 0, empty-state in tiles and table, no errors`);
-    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === 'No work items match these filters. Remove a tag or use Reset all.' && z.d.empties.assignee === z.d.detailEmpty, z.d.detailEmpty);
+    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === 'No work items match these filters. Remove a tag or use Reset all.' && z.d.empties.contribution === z.d.detailEmpty, z.d.detailEmpty);
     await run(p, `clickReset()`); f = newF();
   } else check('Zero results case available in data', false, 'no empty combination');
   // scroll position kept
-  await run(p, `tile('Work by assignee').querySelector('.tile-body').scrollTop = 150`);
+  await run(p, `tile('Team Contribution').querySelector('.tile-body').scrollTop = 150`);
   const rowName = owners[Math.min(9, owners.length - 1)];
-  await run(p, `clickRow('Work by assignee', ${JSON.stringify(rowName)})`); f.assignee = new Set([rowName]);
-  const kept = await run(p, `return tile('Work by assignee').querySelector('.tile-body').scrollTop`);
+  await run(p, `clickContribution('contributor', ${JSON.stringify(rowName)})`); f.contributor = new Set([rowName]);
+  const kept = await run(p, `return tile('Team Contribution').querySelector('.tile-body').scrollTop`);
   check('Scroll position inside a tile is kept when a filter changes', kept >= 100, kept);
   await run(p, `clickReset()`); f = newF();
   // keyboard
@@ -551,7 +560,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
   { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth, inDetail: tile('Ticket detail').contains(a)} : null`); }
     check('Jira links: Tab reaches a link and it shows a visible focus outline', li && li.outline !== 'none' && parseFloat(li.w) >= 2, li); }
-  check('Labels: "Story points on owned tickets", "Points on tickets they test", overlap note', await run(p, `const t=document.body.innerText; return t.includes('Story points on owned tickets') && t.includes('Points on tickets they test') && t.includes('overlap by design') && t.includes('counts each ticket once')`));
+  check('Team Contribution wording: combined title, Jira role subtitle, explicit headers and shared-points note', await run(p, `const t=tile('Team Contribution'); return !!t && T(t.querySelector('.sub'))==='Work Items (W.I) by Jira role' && [...t.querySelector('.colhead.contribution-grid').children].map(T).join('|')==='Name|Assignee W.I|Tester W.I|Total W.I | SP' && T(t.querySelector('.footnote'))==='Assignee and Tester work item counts can overlap. Story points are shared and count once.' && !T(t).includes('Total W.I counts each ticket once')`));
   check('Sprint: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
@@ -701,9 +710,9 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint || null, today: FJ.refreshedAt, thr: 2 }; let ff = newF();
   await verifySprint(p, F, ff, 'Fixture: all tiles consistent (Other bucket, Unassigned merge, null points, burndown, new KPIs)', FCTX);
   const fd = await run(p, READ_SPRINT);
-  { const fe = expectSprint(F, newF(), FCTX), un = fe.tester['Unassigned'];
-    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${sumP(F)}); null testers merge into one Unassigned row (${un[0]} / ${un[1]})`, fd.status['Other'] && fd.status['Other'][0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}/${sumP(F)}` && fd.tester.o['Unassigned'] && fd.tester.o['Unassigned'][0] === un[0] && fd.tester.o['Unassigned'][1] === un[1] && Object.keys(fd.tester.o).filter(k => k === 'Unassigned').length === 1, fd.tester.o); }
-  check('Fixture: literal owner "Unassigned" is one Unassigned row; null points show "—" in detail; Blocked text in detail', await run(p, `const hdr=[...tile('Ticket detail').querySelectorAll('thead th')].map(T); const rows=[...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return rowsOf('Work by assignee').filter(x=>T(x.querySelector('.person'))==='Unassigned').length===1 && r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`));
+  { const fe = expectSprint(F, newF(), FCTX), un = fe.contribution['Unassigned'];
+    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${sumP(F)}); null role names merge into Unassigned`, fd.status['Other'] && fd.status['Other'][0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${sumP(F)}SP` && un && fd.contribution.some(r=>r.name==='Unassigned'), {un, rows:fd.contribution.map(r=>r.name)}); }
+  check('Fixture: literal owner "Unassigned" is one Team Contribution row; null points show "—" in detail; Blocked text in detail', await run(p, `const hdr=[...tile('Ticket detail').querySelectorAll('thead th')].map(T); const rows=[...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return tile('Team Contribution').querySelectorAll('.contribution-name').length === [...new Set([...tile('Team Contribution').querySelectorAll('.contribution-name')].map(T))].length && [...tile('Team Contribution').querySelectorAll('.contribution-name')].filter(x=>T(x)==='Unassigned').length===1 && r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`));
   await run(p, `clickRow('Tickets by status', 'Other')`); ff.status = new Set(['Other']);
   await verifySprint(p, F, ff, 'Fixture: clicking the Other status filters to the Blocked ticket', FCTX);
   await run(p, `clickReset()`);
@@ -753,7 +762,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     await verifySprint(p, BURN_T, ff2, 'Hand-made sprint, status Done selected: scope and both lines recomputed for the filtered set', BCTX);
     const bd2 = await run(p, READ_BD), k2 = await run(p, READ_SPRINT);
     check('Hand-made sprint, Done only: scope 13 on every day, remaining [9,4,1,1], ideal starts at 13, no markers, mid-sprint 0, carried over unchanged (3)', eq(bd2.days.slice(0, 4).map(d => d.remaining), [9, 4, 1, 1]) && bd2.days[0].ideal === 13 && bd2.added.length === 0 && k2.kpis[3].value === '0' && k2.kpis[4].value === '3', { r: bd2.days.map(d => d.remaining), k: k2.kpis.map(x => x.value) });
-    await run(p, `clickReset()`); await run(p, `clickRow('Work by assignee', 'Bob')`); const ff3 = newF(); ff3.assignee = new Set(['Bob']);
+    await run(p, `clickReset()`); await run(p, `clickContribution('assignee', 'Bob')`); const ff3 = newF(); ff3.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, ff3, 'Hand-made sprint, assignee Bob selected: burndown and KPIs follow the filter', BCTX);
     check('Hand-made sprint: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
@@ -782,7 +791,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
       check('Removed: clicking the red triangle opens "Removed Sep. 24, 2026" listing exactly APP-950 and APP-951 (status at removal, assignee), aria-pressed true, no filter changed', r.open && r.head.startsWith('Removed Sep. 24, 2026') && r.head.includes('2 tickets, 5 points') && eq(r.rows, [['APP-950', 'gone one', '3', 'In Progress', 'Ann'], ['APP-951', 'gone two', '2', 'To Do', 'Bob']]) && r.pressed === 'true' && r.tags === 0, r); }
     await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
     check('Removed: Escape closes the panel', !(await run(p, PANEL2)).open);
-    await run(p, `clickRow('Work by assignee', 'Bob')`); const fb = newF(); fb.assignee = new Set(['Bob']);
+    await run(p, `clickContribution('assignee', 'Bob')`); const fb = newF(); fb.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, fb, 'Removed, assignee Bob selected: the removed ticket of another assignee drops out, the scope and markers follow the filter', RCTX);
     { const b2 = await run(p, READ_BD); check('Removed, Bob only: scope [5,7,5,5,7,7,7] and one removal marker (APP-951, 2 points)', eq(b2.days.map(d => d.scope), [5, 7, 5, 5, 7, 7, 7]) && eq(b2.removed.map(r => [r.date, r.count, r.points]), [['2026-09-24', 1, 2]]), { s: b2.days.map(d => d.scope), r: b2.removed }); }
     check('Removed: no console errors', p.logs.length === 0, p.logs); }

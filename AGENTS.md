@@ -59,7 +59,7 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 - English only for UI text, comments, and file names.
 - Show real names (team-only tool). Add a visible "Internal — team only" note to each page footer.
-- Keep UI wording to the labels fixed in `SPEC.md` (for example "Story points on owned tickets", "Points on tickets they test").
+- Keep UI wording to the labels fixed in `SPEC.md` (including the combined "Team Contribution" table and `N W.I | P SP` metric format).
 - Prefer small, clearly named functions: load, normalize, aggregate, render. Keep aggregation separate from rendering so the numbers can be checked.
 - When you change behavior, update `SPEC.md` / `DATA_CONTRACT.md` and add a line to `DECISIONS.md` in the same pass.
 
