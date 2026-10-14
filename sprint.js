@@ -478,7 +478,7 @@
           el('span', { text: fmt(byTester.totals.itemsTotal) }),
           el('span', { class: 'contribution-total', text: base.length + ' W.I | ' + fmt(AF.sum(base, 'points')) + ' SP' })
         ]));
-        tContribution.foot.appendChild(el('p', { class: 'footnote', text: 'Assignee and Tester work item counts can overlap. Total W.I counts each ticket once; story points are shared and count once.' }));
+        tContribution.foot.appendChild(el('p', { class: 'footnote', text: 'Assignee and Tester work item counts can overlap. Story points are shared and count once.' }));
       });
     }
 
