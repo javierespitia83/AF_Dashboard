@@ -10,7 +10,7 @@ Decisions, interpretations, and open questions for the dashboard. Add new entrie
 | D2 | Source of truth is `03_Team_Enablement/daily_tracker.xlsx`: `Daily` sheet for the sprint page, `Backlog Prioritized` sheet for the backlog page. The web app never reads Excel. |
 | D3 | Export is manual: `python3 05_Automation/export_dashboard_snapshots.py` (skill: `06_Skills/af-dashboard-snapshot-export.md`). Outputs `07_Dashboard/sprint.json` and `backlog.json`. The app reads only those. |
 | D4 | Latest snapshot only. No history in v1. |
-| D5 | Story points are one number per ticket (dev + test together). Assignee and tester views intentionally overlap; the sprint total counts each ticket once. Labels: "Story points on owned tickets" and "Points on tickets they test". |
+| D5 | Story points are one number per ticket (dev + test together). Assignee and tester role counts intentionally overlap; the sprint total counts each ticket once. The original separate role-tile labels were superseded by Team Contribution (D55). |
 | D6 | Null rules: points numeric or null (blank shows `—`, counts as 0); empty tester shows `Unassigned`; empty parent, epic, fix version, risk, cluster, and days show `—`; never invent values; preserve ticket keys and names exactly. |
 | D7 | Statuses: To Do, Open, In Progress, In Review, Done. Original status preserved in JSON; `Open` may display as `To Do`; unknown statuses show as **Other** and are never removed. |
 | D8 | Runtime: `python3 -m http.server`, Chromium-based browser (VS Code). `file://` is **not** required. Works offline once snapshots exist. |
@@ -19,15 +19,15 @@ Decisions, interpretations, and open questions for the dashboard. Add new entrie
 | D10a | Backlog page uses the `Backlog Prioritized` sheet as exported. No new ranking algorithm. Analysis and filtering only, no Jira write-back. |
 | D10b | Light mode only. Compact layout, equal-width comparison cards, clear separation between work items and story points. Status bar colours: To Do/Open sky blue, In Progress blue, In Review green, Done gray. Sticky table headers, visible scrolling. (Layout parts superseded 2026-10-01 by D23; colours still apply.) |
 
-## 2. My interpretations (D13 confirmed; please confirm or correct the rest)
+## 2. Interpretations and settled design decisions
 
-These are where the answers were silent or ambiguous. The docs follow these until you say otherwise.
+These record resolved choices and defaults where the original answers were silent or ambiguous.
 
 | # | Interpretation | Where it shows up |
 |---|---|---|
 | D11 | **Updated 2026-10-01 (Carlos):** DoR search accepts prefixes. `miss`, `missi`, `missing` filter DoR = Missing; the same for Weak and Ready. When the query is a DoR prefix it filters by DoR and does not text-match. Any other text matches ticket, summary, epic, cluster, risk. | SPEC §6.4, DATA_CONTRACT §7 |
 | D12 | "Tickets needing refinement" = DoR `Weak` or `Missing`. `Needs Splitting` is shown as a separate count, not folded in. | SPEC §6.2, DATA_CONTRACT §6 |
-| D13 | **Confirmed by Carlos 2026-10-01:** the assignee and tester stacked bars show two bars per person, one sized by work items and one by story points, both coloured by status. Work items and story points stay visibly separate. | SPEC §5.3 |
+| D13 | **Superseded by D55 (2026-10-14):** originally, separate assignee and tester tiles used stacked bars for work items and story points. |
 | D14 | The sprint ticket detail table has no filters or search in v1 (filters were specified only for the two role tables and the backlog). | SPEC §5.4 **Superseded 2026-10-01 by D30.** |
 | D15 | The project has two palettes (docx family: navy `#1f3a5f`, teal `#2a9d8f`; tracker: navy `#1E2761`, status fills). For the web UI chrome I use the docx-family navy and teal, the tracker's status fills for DoR, and your sky blue / blue / green / gray for status bars. | SPEC §8 |
 | D16 | "Which tickets are being tested?" has no dedicated metric in the spec. It is answered by the tester table (status chips, e.g. In Review only) and the detail table's Tester and Status columns. | SPEC §5.3–5.4 |
@@ -98,8 +98,17 @@ These are where the answers were silent or ambiguous. The docs follow these unti
 |---|---|---|
 | Q1 | ~~Should ticket keys link to Jira?~~ Resolved 2026-10-01: yes, ticket keys and keys inside Parent, Linked work items, Epic and Related / cluster (D33, D34). | Links. |
 | Q2 | Should the sprint detail table get a search box? | No (D14). |
-| Q3 | ~~Confirm D13 (two bars per person).~~ Resolved: two bars (D13). | Two bars. |
+| Q3 | ~~Confirm D13 (two bars per person).~~ Superseded by the unified Team Contribution table (D55). | Unified table (D55). |
 | Q4 | Should the backlog page also show `Created` and `Quick Check Comment`? | Not shown. |
+
+| D55 | **Replace the two role tiles with one Team Contribution table.** Requested by Carlos, 2026-10-14: show Name, Assignee W.I, Tester W.I, and Total W.I \| SP, with unique points shown as `N W.I \| P SP` in the total column. Each role value remains a filter control for its dimension; clicking a name applies a Team member OR filter across assignee and tester and updates Ticket detail. Total W.I counts each unique ticket once per person, with unique points shown in the same `N W.I \| P SP` format; role counts can overlap, while the final Total row displays the sprint-wide unique work item count and points only in the Total W.I \| SP column. The combined table excludes Assignee, Tester and Team member filters when choosing visible rows. | SPEC §6.1–6.2; DATA_CONTRACT §6 |
+| D57 | **Status counts use explicit units.** Requested by Carlos, 2026-10-14: replace the ambiguous `N / P` display with `N W.I \| P SP` in each status row and total, and label the column `Work items \| Story points`. | SPEC §6.2; DATA_CONTRACT §6 |
+| D58 | **Team Contribution total uses the same explicit W.I and SP format.** Requested by Carlos, 2026-10-14: the final column and its Total row show `N W.I \| P SP`, with header `Total W.I \| SP`. | SPEC §6.2; DATA_CONTRACT §6 |
+| D59 | **Status row highlights contain the full metric label.** Fixed 2026-10-14: widen the work-items/story-points value column so `N W.I \| P SP` stays inside the clickable row and its selection highlight. | SPEC §6.2; ACCEPTANCE §3 |
+| D60 | **Status filters toggle independently with ordinary clicks.** Requested by Carlos, 2026-10-14: each status row click adds or removes that status, allowing multi-select without Ctrl, Cmd or Shift. | SPEC §5; ACCEPTANCE §3 |
+| D61 | ~~**Give Team Contribution more width on the sprint main row.** Requested by Carlos, 2026-10-14: use a 1.5 : 0.9 : 3 Burndown / Tickets by status / Team Contribution ratio, keeping the status tile at least 250 px wide.~~ Superseded by D62. | SPEC §6.1; ACCEPTANCE §3 |
+| D62 | **Rebalance the sprint main row toward Burndown and Tickets by status.** Clarified by Carlos, 2026-10-14, superseding D61: use a 2.2 : 1.3 : 1.9 ratio for Burndown / Tickets by status / Team Contribution so the first two tiles have enough room and Team Contribution does not dominate. | SPEC §6.1; ACCEPTANCE §3 |
+| D63 | **Clarify Team Contribution's unique total note.** Requested by Carlos, 2026-10-14: remove the sentence "Total W.I counts each ticket once" from the note; keep only the role-overlap and shared-story-point explanation. | SPEC §6.2; ACCEPTANCE §3 |
 
 None of these blocks implementation.
 
@@ -128,9 +137,18 @@ None of these blocks implementation.
 | 2026-10-06 | Sprint KPI filters count as active filters for the filter bar. Reset all clears the KPI filter as well as the regular dashboard selections. |
 | 2026-10-07 | The sprint Ticket detail table's last column now displays `currentSituation` (short status and next step), with a 300 px minimum width. `blocker` remains in the export but is no longer read by the app; `actionOwner` and `followUp` are removed from the exported schema. |
 | 2026-10-07 | Sprint Ticket detail width adjustment: Owner is capped at 150 px and wraps; Current situation minimum width increased from 300 px to 350 px, with horizontal scrolling inside the table tile. |
-| 2026-10-06 | Sprint KPI display order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Avg cycle time. |
-| 2026-10-07 | Sprint KPI filters appear as removable `KPI: <name>` tags in the shared filter bar. “No tester” treats null, blank, missing and literal `Unassigned` tester values consistently, excluding exact `Dev to Test`. The burndown uses exported `Added to Sprint` dates without approximation labels; older snapshots may not preserve whether a legacy date was approximate. Burndown y-axis maximum is the largest daily scope, including days before removals. |
+| 2026-10-06 | Sprint KPI display order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester & Not Dev to Test, Avg cycle time. |
+| 2026-10-07 | Sprint KPI filters appear as removable `KPI: <name>` tags in the shared filter bar. “No tester & Not Dev to Test” treats null, blank, missing and literal `Unassigned` tester values consistently, excluding exact `Dev to Test`. The burndown uses exported `Added to Sprint` dates without approximation labels; older snapshots may not preserve whether a legacy date was approximate. Burndown y-axis maximum is the largest daily scope, including days before removals. |
 | 2026-10-07 | Superseding the earlier Owner-width cap: Owner and Tester cells in Ticket detail have automatic widths and wrap names at spaces; no fixed Owner width. |
 | 2026-10-07 | Status cells in Ticket detail also wrap at spaces with an automatic width, using the same rule as Owner and Tester. |
 | 2026-10-08 | D54: the sprint page uses `sprints.json` as the allowlist/manifest for selecting active and closed sprint snapshots. The active id is the default; `?sprint=<id>` selects by manifest id, and selector changes use `history.replaceState`. Snapshot loads are cached per page session; changing sprint resets filters. If the manifest is missing or invalid, the page falls back to `sprint.json`. Closed sprints are shown at sprint end without a live Today marker. |
 | 2026-10-08 | Ticket detail now shows a `Dev to Test` column immediately after Tester. It displays `Yes` only when the exact classification is present; otherwise `—`. |
+| 2026-10-14 | Status count values now show explicit units as `N W.I \| P SP`; the header reads “Work items \| Story points”. |
+| 2026-10-14 | Team Contribution totals now use `N W.I \| P SP` in the final column and Total row. |
+| 2026-10-14 | Expanded status row value space so the full W.I/SP text remains within the selected row highlight. |
+| 2026-10-14 | Status row clicks now toggle each status independently without requiring modifier keys. |
+| 2026-10-14 | Main row rebalanced to 1.5 : 0.9 : 3 to give Team Contribution more width (superseded by the corrected ratio below). |
+| 2026-10-14 | Following Carlos's clarification, superseded D61 with a 2.2 : 1.3 : 1.9 ratio to give Burndown and Tickets by status more room. |
+| 2026-10-14 | Renamed the sprint KPI from “No tester” to “No tester & Not Dev to Test”; the underlying eligibility rule is unchanged. |
+| 2026-10-14 | Replaced separate assignee and tester tiles with a unified Team Contribution table; role values filter independently and names filter tickets where the person is assignee or tester. Total W.I counts unique tickets and shows unique story points in the `N W.I \| P SP` format; the final row shows role work item counts and unique sprint W.I with unique SP in the final cell. |
+| 2026-10-14 | Removed "Total W.I counts each ticket once" from the Team Contribution note; the unique total remains explicit in the table behavior and number format. |

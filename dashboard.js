@@ -150,7 +150,8 @@
         var active = Object.keys(sel).filter(function (k) { return !ex[k] && sel[k].size > 0; });
         return tickets.filter(function (t) {
           for (var i = 0; i < active.length; i++) {
-            if (!sel[active[i]].has(dims[active[i]].get(t))) return false;
+            var dim = dims[active[i]];
+            if (typeof dim.matches === 'function' ? !dim.matches(t, sel[active[i]]) : !sel[active[i]].has(dim.get(t))) return false;
           }
           return !(search.pred && !search.pred(t));
         });

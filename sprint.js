@@ -151,6 +151,7 @@
       status: { label: 'Status', get: function (t) { return AF.BUCKETS[AF.bucketOf(t.status)]; } },
       assignee: { label: 'Assignee', get: function (t) { return AF.personName(t.owner); } },
       tester: { label: 'Tester', get: function (t) { return AF.personName(t.tester); } },
+      contributor: { label: 'Team member', matches: function (t, selected) { return selected.has(AF.personName(t.owner)) || selected.has(AF.personName(t.tester)); } },
       fix: { label: 'Fix version', get: function (t) { return AF.isBlank(t.fixVersion) ? NONE : String(t.fixVersion); } },
       parent: { label: 'Parent', get: function (t) { return AF.isBlank(t.parent) ? NONE : String(t.parent); } }
     });
@@ -165,16 +166,14 @@
       return { root: el('section', { class: 'tile kpi ' + kind }, [el('div', { class: 'label', text: label }), value, hint]), value: value, hint: hint };
     }
     var kItems = kpi('items', 'Work items'), kPoints = kpi('points', 'Story points');
-    var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester');
+    var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester & Not Dev to Test');
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
     kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
     kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
     tBurn.body.classList.add('chart');
     var tStatus = AF.tile({ title: 'Tickets by status', sub: 'Click a status to filter' });
-    var tAssignee = AF.tile({ title: 'Work by assignee', sub: 'Story points on owned tickets' });
-    var tTester = AF.tile({ title: 'Work by tester', sub: 'Points on tickets they test' });
-    tTester.head.appendChild(el('p', { class: 'sub', text: 'Assignee and tester views overlap by design. The sprint total counts each ticket once.' }));
+    var tContribution = AF.tile({ title: 'Team Contribution', sub: 'Work Items (W.I) by Jira role' });
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
     var lowerFilter = null;
@@ -220,7 +219,7 @@
     store.tags = function () {
       var tags = baseTags();
       if (lowerFilter) {
-        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester' };
+        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test' };
         tags.push({ dim: '__kpi', label: 'KPI', value: labels[lowerFilter] || lowerFilter });
       }
       return tags;
@@ -250,7 +249,7 @@
     };
 
     app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kCycle.root]));
-    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tAssignee.root, tTester.root]));
+    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tContribution.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
     // ---- filter bar controls (Fix version, Parent) ----
@@ -401,7 +400,7 @@
     }
 
     function pair(items, points) {
-      return el('span', { class: 'pair' }, [String(items), el('span', { class: 'sep', text: ' / ' }), fmt(points)]);
+      return el('span', { class: 'pair' }, [String(items) + ' W.I', el('span', { class: 'sep', text: ' | ' }), fmt(points) + ' SP']);
     }
 
     function renderStatus() {
@@ -412,14 +411,14 @@
         if (!base.length) { tStatus.body.appendChild(AF.emptyState(EMPTY)); return; }
         tStatus.colhead.className = 'colhead status-grid';
         tStatus.colhead.appendChild(el('span', { text: 'Status' }));
-        tStatus.colhead.appendChild(el('span', { class: 'span2', text: 'Work items / Story points' }));
+        tStatus.colhead.appendChild(el('span', { class: 'span2', text: 'Work items | Story points' }));
         visible.forEach(function (b) {
           var name = AF.BUCKETS[b], selected = s.has(name);
           var share = tot[b].items / base.length * 100;
           tStatus.body.appendChild(AF.rowButton({
             key: 'status:' + name, cls: 'status-grid tall' + (tot[b].items === 0 ? ' zero' : ''), selected: selected, dimmed: any && !selected,
             title: name + ': ' + tot[b].items + ' work items, ' + fmt(tot[b].points) + ' story points',
-            onclick: function (m) { store.click('status', name, m); }
+            onclick: function () { store.click('status', name, true); }
           }, [
             el('span', { class: 'name' }, [AF.statusDot(b), name]),
             el('div', { class: 'bar-track' }, [el('div', { class: 'bar', style: 'width:' + share.toFixed(2) + '%' }, [
@@ -434,40 +433,52 @@
       });
     }
 
-    function renderPeople(t, dim, keyFn, personLabel) {
-      var base = store.apply(tickets, dim);
-      var agg = AF.aggregateBy(base, keyFn);
-      var s = store.sel[dim], any = s.size > 0;
-      AF.rebuild(t, function () {
-        if (!agg.rows.length) { t.body.appendChild(AF.emptyState(EMPTY)); return; }
-        t.colhead.className = 'colhead people-grid';
-        [personLabel, 'Work items', 'Story points'].forEach(function (h) { t.colhead.appendChild(el('span', { text: h })); });
-        var maxI = Math.max.apply(null, agg.rows.map(function (r) { return r.itemsTotal; }));
-        var maxP = Math.max.apply(null, agg.rows.map(function (r) { return r.pointsTotal; }));
-        function metric(r, key, scale, totalKey, unit) {
-          var segs = AF.BUCKETS.map(function (name, b) {
-            return { bucket: b, value: r[key][b], title: name + ': ' + fmt(r[key][b]) + ' ' + unit };
-          });
-          return el('div', { class: 'bar-cell' }, [AF.stackedBar(segs, r[totalKey], scale), el('span', { class: 'n', text: fmt(r[totalKey]) })]);
-        }
-        agg.rows.forEach(function (r) {
-          var selected = s.has(r.name);
-          t.body.appendChild(AF.rowButton({
-            key: dim + ':' + r.name, cls: 'people-grid', selected: selected, dimmed: any && !selected,
-            title: r.name + ': ' + r.itemsTotal + ' work items, ' + fmt(r.pointsTotal) + ' story points',
-            onclick: function (m) { store.click(dim, r.name, m); }
-          }, [
-            el('span', { class: 'person', text: r.name }),
-            metric(r, 'items', maxI, 'itemsTotal', 'work items'),
-            metric(r, 'points', maxP, 'pointsTotal', 'story points')
+    function renderContributions() {
+      var base = store.apply(tickets, ['assignee', 'tester', 'contributor']);
+      var byOwner = AF.aggregateBy(base, owner);
+      var byTester = AF.aggregateBy(base, tester);
+      var ownerRows = new Map(byOwner.rows.map(function (r) { return [r.name, r]; }));
+      var testerRows = new Map(byTester.rows.map(function (r) { return [r.name, r]; }));
+      var names = Array.from(new Set(Array.from(ownerRows.keys()).concat(Array.from(testerRows.keys()))));
+      var rows = names.map(function (name) {
+        var a = ownerRows.get(name), t = testerRows.get(name);
+        var ownerTickets = base.filter(function (ticket) { return owner(ticket) === name; });
+        var testerTickets = base.filter(function (ticket) { return tester(ticket) === name; });
+        var uniqueTickets = new Map();
+        ownerTickets.concat(testerTickets).forEach(function (ticket) { uniqueTickets.set(ticket.ticket, ticket); });
+        var unique = Array.from(uniqueTickets.values());
+        var assigneeItems = ownerTickets.length, testerItems = testerTickets.length;
+        return { name: name, assigneeItems: assigneeItems, testerItems: testerItems,
+          totalPoints: AF.sum(unique, 'points'), workItems: unique.length };
+      }).sort(function (a, b) { return b.workItems - a.workItems || a.name.localeCompare(b.name); });
+      var ownerSelected = store.sel.assignee, testerSelected = store.sel.tester;
+      AF.rebuild(tContribution, function () {
+        if (!rows.length) { tContribution.body.appendChild(AF.emptyState(EMPTY)); return; }
+        tContribution.colhead.className = 'contribution-grid';
+        [['Name', 'name'], ['Assignee W.I', 'assignee'], ['Tester W.I', 'tester'], ['Total W.I | SP', 'total']].forEach(function (col) {
+          tContribution.colhead.appendChild(el('span', { text: col[0] }));
+        });
+        rows.forEach(function (row) {
+          var roleCell = function (dim, value, selected, any) {
+            var cell = el('button', { type: 'button', 'data-key': dim + ':' + row.name, class: 'contribution-value' + (selected ? ' selected' : '') + (any && !selected ? ' dimmed' : ''),
+              'aria-pressed': selected ? 'true' : 'false', title: 'Filter ' + (dim === 'assignee' ? 'Assignee' : 'Tester') + ': ' + row.name,
+              onclick: function (event) { store.click(dim, row.name, event.ctrlKey || event.metaKey || event.shiftKey); } }, [fmt(value)]);
+            return cell;
+          };
+          var ownerSelectedRow = ownerSelected.has(row.name), testerSelectedRow = testerSelected.has(row.name);
+          tContribution.body.appendChild(el('div', { class: 'contribution-grid contribution-row' }, [
+            el('button', { type: 'button', 'data-key': 'contributor:' + row.name, class: 'contribution-name' + (store.sel.contributor.has(row.name) ? ' selected' : '') + (store.sel.contributor.size && !store.sel.contributor.has(row.name) ? ' dimmed' : ''), 'aria-pressed': store.sel.contributor.has(row.name) ? 'true' : 'false', title: 'Show tickets where ' + row.name + ' is assignee or tester', onclick: function (event) { store.click('contributor', row.name, event.ctrlKey || event.metaKey || event.shiftKey); } }, [row.name]),
+            roleCell('assignee', row.assigneeItems, ownerSelectedRow, ownerSelected.size > 0),
+            roleCell('tester', row.testerItems, testerSelectedRow, testerSelected.size > 0),
+            el('span', { class: 'contribution-total', text: row.workItems + ' W.I | ' + fmt(row.totalPoints) + ' SP' })
           ]));
         });
-        function total(n) {
-          return el('div', { class: 'bar-cell' }, [el('div', { class: 'bar-track', style: 'visibility:hidden' }), el('span', { class: 'n', text: fmt(n) })]);
-        }
-        t.foot.appendChild(el('div', { class: 'people-grid totalrow' }, [
-          el('span', { text: 'Total' }), total(agg.totals.itemsTotal), total(agg.totals.pointsTotal)
+        tContribution.foot.appendChild(el('div', { class: 'contribution-grid totalrow' }, [
+          el('span', { text: 'Total' }), el('span', { text: fmt(byOwner.totals.itemsTotal) }),
+          el('span', { text: fmt(byTester.totals.itemsTotal) }),
+          el('span', { class: 'contribution-total', text: base.length + ' W.I | ' + fmt(AF.sum(base, 'points')) + ' SP' })
         ]));
+        tContribution.foot.appendChild(el('p', { class: 'footnote', text: 'Assignee and Tester work item counts can overlap. Story points are shared and count once.' }));
       });
     }
 
@@ -497,7 +508,7 @@
       { label: 'Current situation', cls: 'wrap current-situation', render: function (t) { return AF.show(t.currentSituation); } }
     ];
     function renderDetail(f) {
-      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester and not Dev to Test' };
+      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test' };
       tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items' +
         (lowerFilter ? ' · ' + filterLabels[lowerFilter] + ' (click KPI again to clear)' : '');
       AF.rebuild(tDetail, function () {
@@ -517,8 +528,7 @@
       renderKpis(f);
       renderBurndown(f);
       renderStatus();
-      renderPeople(tAssignee, 'assignee', owner, 'Assignee');
-      renderPeople(tTester, 'tester', tester, 'Tester');
+      renderContributions();
       renderLower();
       updateBar();
       syncCtl(fixCtl, 'fix');
