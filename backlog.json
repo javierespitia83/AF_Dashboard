@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-13",
-  "exportedAt": "2026-10-13T23:46:32+00:00",
+  "refreshedAt": "2026-10-14",
+  "exportedAt": "2026-10-14T11:49:44+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -401,9 +401,9 @@
       "dor": "Missing",
       "points": null,
       "needsSplitting": null,
-      "days": 160,
+      "days": 0,
       "epic": null,
-      "risk": "The description is still the empty tech-writer template, with no content, no AC, no estimate and no linked dev story.",
+      "risk": "The description is still the empty tech-writer template, with no content, no AC, no estimate and no linked dev story. Moved to In Progress on 10/13-14 (docs work started).",
       "quickCheck": "Hi, this ticket still has only the default doc template, with every section empty. Can the assigned tech writer fill in the customer benefit, the pages affected or proposed, any limitations, and specific acceptance criteria? Please also add a story point estimate and link the dev story it documents. It has been Open since May, so please also confirm it is still needed. Thanks!",
       "cluster": null,
       "created": "2026-05-06"

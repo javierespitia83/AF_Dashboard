@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-13",
-  "exportedAt": "2026-10-13T23:46:32+00:00",
+  "refreshedAt": "2026-10-14",
+  "exportedAt": "2026-10-14T11:49:44+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -40,7 +40,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Review. Alan says all 9 visual QA points are fixed. Pavan found some test cases not automated and missing TestRail IDs. Alan to check them and mark any not needed.",
+      "currentSituation": "In Review. Alan updated the test cases on 10/13 after Pavan flagged ones not yet automated or missing TestRail IDs. Pavan to re-check the tests.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -86,7 +86,7 @@
     {
       "ticket": "APP-3033",
       "owner": "Alan Le",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Poornima Srikantesh",
       "classifications": null,
       "points": 2,
@@ -97,7 +97,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "currentSituation": "Open; no comments yet.",
+      "currentSituation": "In Progress; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -553,7 +553,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Sysadmin — Organization details page (unblocks Classic Manager retirement)",
-      "currentSituation": "In Progress, moved back from In Review 10/13. PR #6004 open. AI test plan generated 10/8. Tester changed to Pavan V. Carried over after it could not be verified last sprint.",
+      "currentSituation": "In Progress, moved back from In Review on 10/13. Pavan asked Kyle on 10/14 to review the test cases for PR #6004. Kyle to review test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
