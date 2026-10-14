@@ -142,6 +142,19 @@
         "tester": "Pavan V",
         "fixVersion": "4.46",
         "parent": "APP-193 – Notification dropdown navigation to notification center"
+      },
+      {
+        "ticket": "APP-3106",
+        "removedDate": "2026-10-12",
+        "points": 1,
+        "addedDate": "2026-10-07",
+        "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
+        "status": "In Review",
+        "owner": null,
+        "tester": null,
+        "fixVersion": "4.46",
+        "parent": "APP-142 – UI tech debt",
+        "note": "Moved straight to sprint 12176 on 2026-10-12 (before 12119 closed); counted as carried over (direct) in 12176."
       }
     ],
     "state": "closed",
@@ -1590,25 +1603,6 @@
       "currentSituation": "Done 9/24. Designer now loads pipelines for projects with a very large number of items; on 10/4 Saikiran asked for a customer-facing RCA document.",
       "blocker": null,
       "demoOrSpike": "No",
-      "discussed": "No"
-    },
-    {
-      "ticket": "APP-3106",
-      "owner": null,
-      "status": "In Review",
-      "tester": null,
-      "classifications": "Dev to Test",
-      "points": 1,
-      "parent": "APP-142 – UI tech debt",
-      "linkedWorkItems": null,
-      "fixVersion": "4.46",
-      "doneDate": null,
-      "addedDate": "2026-10-07",
-      "cycleTime": null,
-      "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "currentSituation": "In Review; PR #6040 open since 10/7, no assignee or reviewer in Jira. Awaiting reply from Guannan to Carlos's 10/9 question (owner, reviewer, carry over to 4.46).",
-      "blocker": null,
-      "demoOrSpike": null,
       "discussed": "No"
     }
   ]
