@@ -109,6 +109,7 @@ These record resolved choices and defaults where the original answers were silen
 | D61 | ~~**Give Team Contribution more width on the sprint main row.** Requested by Carlos, 2026-10-14: use a 1.5 : 0.9 : 3 Burndown / Tickets by status / Team Contribution ratio, keeping the status tile at least 250 px wide.~~ Superseded by D62. | SPEC §6.1; ACCEPTANCE §3 |
 | D62 | **Rebalance the sprint main row toward Burndown and Tickets by status.** Clarified by Carlos, 2026-10-14, superseding D61: use a 2.2 : 1.3 : 1.9 ratio for Burndown / Tickets by status / Team Contribution so the first two tiles have enough room and Team Contribution does not dominate. | SPEC §6.1; ACCEPTANCE §3 |
 | D63 | **Clarify Team Contribution's unique total note.** Requested by Carlos, 2026-10-14: remove the sentence "Total W.I counts each ticket once" from the note; keep only the role-overlap and shared-story-point explanation. | SPEC §6.2; ACCEPTANCE §3 |
+| D64 | **Rename the sprint detail note column to "Last sync update".** Requested by Carlos, 2026-10-14: make clear the text is from the latest snapshot sync and may not include subsequent Jira changes. | SPEC §6.2; DATA_CONTRACT §2; ACCEPTANCE §3 |
 
 None of these blocks implementation.
 
@@ -136,7 +137,7 @@ None of these blocks implementation.
 | 2026-10-06 | Sprint dashboard layout adjustment: transfer 15% of the desktop main row's former height to the lower row. Grid weights changed from 1.35:1 to 1.1475:1.2025, preserving the total available height. |
 | 2026-10-06 | Sprint KPI filters count as active filters for the filter bar. Reset all clears the KPI filter as well as the regular dashboard selections. |
 | 2026-10-07 | The sprint Ticket detail table's last column now displays `currentSituation` (short status and next step), with a 300 px minimum width. `blocker` remains in the export but is no longer read by the app; `actionOwner` and `followUp` are removed from the exported schema. |
-| 2026-10-07 | Sprint Ticket detail width adjustment: Owner is capped at 150 px and wraps; Current situation minimum width increased from 300 px to 350 px, with horizontal scrolling inside the table tile. |
+| 2026-10-07 | Sprint Ticket detail width adjustment: Owner is capped at 150 px and wraps; Last sync update minimum width increased from 300 px to 350 px, with horizontal scrolling inside the table tile. |
 | 2026-10-06 | Sprint KPI display order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester & Not Dev to Test, Avg cycle time. |
 | 2026-10-07 | Sprint KPI filters appear as removable `KPI: <name>` tags in the shared filter bar. “No tester & Not Dev to Test” treats null, blank, missing and literal `Unassigned` tester values consistently, excluding exact `Dev to Test`. The burndown uses exported `Added to Sprint` dates without approximation labels; older snapshots may not preserve whether a legacy date was approximate. Burndown y-axis maximum is the largest daily scope, including days before removals. |
 | 2026-10-07 | Superseding the earlier Owner-width cap: Owner and Tester cells in Ticket detail have automatic widths and wrap names at spaces; no fixed Owner width. |
@@ -152,3 +153,4 @@ None of these blocks implementation.
 | 2026-10-14 | Renamed the sprint KPI from “No tester” to “No tester & Not Dev to Test”; the underlying eligibility rule is unchanged. |
 | 2026-10-14 | Replaced separate assignee and tester tiles with a unified Team Contribution table; role values filter independently and names filter tickets where the person is assignee or tester. Total W.I counts unique tickets and shows unique story points in the `N W.I \| P SP` format; the final row shows role work item counts and unique sprint W.I with unique SP in the final cell. |
 | 2026-10-14 | Removed "Total W.I counts each ticket once" from the Team Contribution note; the unique total remains explicit in the table behavior and number format. |
+| 2026-10-14 | Renamed the sprint detail column "Current situation" to "Last sync update" to clarify that snapshot notes may not include changes made afterward. |

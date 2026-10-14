@@ -39,7 +39,7 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 | `addedDate` | string (date) or null | `YYYY-MM-DD`: when the ticket entered the sprint. **Two different origins the JSON does not distinguish** (§2a). | `—` |
 | `cycleTime` | integer or null | Days from start of work to Done. Only populated when `status` is `Done`; `null` for every other ticket by design. | `—` |
 | `summary` | string or null | Exact Jira `summary` of the ticket (not reworded; since 2026-10-07 the workbook column is `Summary`) | `—` |
-| `currentSituation` | string or null | Short status plus next step, up to about 200 characters; shown in the last column of the sprint Ticket detail table | `—` |
+| `currentSituation` | string or null | Short status plus next step, up to about 200 characters; shown under “Last sync update”. It reflects the snapshot's captured note and may omit changes made after that snapshot | `—` |
 | `blocker` | string or null | Blocker / risk retained in the export for now; the app does not read it | `—` |
 | `demoOrSpike` | string or null | `Candidate` (flagged to present), `Presented` (already shown), `No` (reviewed, nothing to present) or null. Renamed from `demo` on 2026-10-07; the app does not read it yet | `—` |
 | `lastComment` | string or null | **Planned (2026-10-07), not exported yet:** latest Jira comment as `<author> · <date>: <text>`, trimmed to about 300 characters, filled by the Jira sync | `—` |

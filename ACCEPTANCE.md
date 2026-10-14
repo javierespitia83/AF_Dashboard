@@ -37,7 +37,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] The board fills the viewport: tiles reach the right edge with equal gutters; no max-width cap; no large empty areas. On the sprint main row, Burndown and Tickets by status have enough room for their charts, bars, labels and values; Team Contribution fits its four columns without dominating the row; Tickets by status remains at least 250 px wide.
 - [ ] Sprint: KPI strip with seven tiles (work items, story points, done, No tester & Not Dev to Test, avg cycle time, added mid-sprint, carried over); main row with three tiles (burndown, status, Team Contribution); lower row with the ticket table and the assignee x tester grid. Backlog: KPI strip with five tiles; main row with five tiles; table below.
 - [ ] At dashboard sizes, the sprint main/lower row heights use a 1.1475:1.2025 ratio, transferring 15% of the former main-row height to the lower row; total board height stays within the viewport.
-- [ ] Long tile bodies (Team Contribution, matrix, detail and backlog tables) scroll inside the tile with a visible scrollbar; headers stay sticky; Total lines stay pinned. The sprint detail table scrolls horizontally when its columns exceed the tile width; Owner, Tester and Status cells wrap at spaces with automatic widths, Dev to Test follows the exact classification, and Current situation is at least 340 px wide.
+- [ ] Long tile bodies (Team Contribution, matrix, detail and backlog tables) scroll inside the tile with a visible scrollbar; headers stay sticky; Total lines stay pinned. The sprint detail table scrolls horizontally when its columns exceed the tile width; Owner, Tester and Status cells wrap at spaces with automatic widths, Dev to Test follows the exact classification, and Last sync update is at least 340 px wide.
 - [ ] Layout also works with no page scroll at 1440 x 900 and 1536 x 864.
 - [ ] Below 1366 wide or 760 high the page falls back to a scrolling layout: no element extends beyond the viewport outside the tile scroll areas, no page-level horizontal scroll, tiles stack (checked at 1280 x 720, 1024 x 768, 800 x 900 and 480 x 900).
 
@@ -49,6 +49,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Detail table: one row per ticket in tracker order, exact keys and names; empty values show `—`, empty tester shows `Unassigned`; status shows the original text; the header shows "n of N".
 - [ ] Detail table displays the exact `Dev to Test` classification as Yes, otherwise `—`.
 - [ ] Team Contribution subtitle is "Work Items (W.I) by Jira role"; headers are Name, Assignee W.I, Tester W.I and Total W.I | SP; note reads "Assignee and Tester work item counts can overlap. Story points are shared and count once." and does not include the removed wording "Total W.I counts each ticket once".
+- [ ] Sprint detail's final column is labeled "Last sync update"; document it as the note captured by the snapshot, which may not include changes made later.
 - [ ] Tickets by status displays `N W.I | P SP` with units in each row and total; repeated plain clicks toggle multiple status filters without Ctrl/Cmd, and clicking an already-selected status removes only that status.
 - [ ] Selecting each clickable KPI filter adds a removable `KPI: <name>` tag; removing that tag clears only the KPI filter and preserves regular dashboard filters.
 
@@ -101,7 +102,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 **Jira links**
 - [ ] Every Ticket cell in both tables is a link whose text is the key and whose `href` is exactly `https://mysnaplogic.atlassian.net/browse/<KEY>`, with `target="_blank"` and `rel` containing `noopener`.
 - [ ] In the Parent and Linked work items cells (sprint) and the Epic and Related / cluster cells (backlog), every key is its own link with the right `href`, the cell's text is identical to the data (nothing lost, separators and dashes kept), and cells without a key contain no link.
-- [ ] Summary, Current situation and Risk / open question cells contain no links.
+- [ ] Summary, Last sync update and Risk / open question cells contain no links.
 - [ ] Clicking a link does not change any filter, tag, KPI or tile.
 - [ ] With odd data (HTML in a cell, `javascript:` text, lower-case or incomplete keys) only valid keys become links, no extra elements are created, and every `href` starts with the Jira address.
 - [ ] The Jira address appears once in the app source (one constant); loading a page still makes no request except to localhost.
