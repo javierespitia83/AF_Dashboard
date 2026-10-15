@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-15",
-  "exportedAt": "2026-10-15T14:56:36+00:00",
+  "exportedAt": "2026-10-15T15:53:28+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -40,7 +40,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Review. Alan updated the test gaps on 10/14 (some steps stay manual) and the automation PR merged into the feature branch the same day; Pavan's 10/14 list had 7 cases on APP-556 still missing automation. APP-556 and APP-2719 ship in a single combined PR, and Mario offered to review any new UI. Pavan to re-check the test gaps.",
+      "currentSituation": "In Review. Alan updated the test gaps on 10/14 and the automation PR merged into the feature branch. Pavan asked Alan on 10/15 to attach the test results, which are not in the PR. APP-556 and APP-2719 ship in one combined PR. Alan to attach the test results.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -67,7 +67,7 @@
     {
       "ticket": "APP-2883",
       "owner": "Alan Le",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Poornima Srikantesh",
       "classifications": null,
       "points": 5,
@@ -78,7 +78,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Monitor loses filters in infrastructure node view",
-      "currentSituation": "In Progress since 10/15 (was Open); no comments on the ticket yet.",
+      "currentSituation": "In Review since 10/15 (was In Progress). PR #6067 (ClientApps) created 10/15.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -97,7 +97,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "currentSituation": "In Progress. Alan is investigating it (10/14) after addressing Pavan's comments on APP-556. Poornima noted on 10/14 that test cases will be written once a PR or more fix details are available, and she has not reproduced the issue on the dev pod.",
+      "currentSituation": "In Progress. Alan could not reproduce it on dev (10/15) and asked Eric Fertig to record a video. Poornima said on 10/14 that test cases will be written once a PR or more fix details exist. Eric to record a video.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -933,7 +933,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "currentSituation": "In Progress. PR #7166 created 10/15. The existing lockout can't be reused for an admin lock, so a new attribute is needed. Salim to set up a meeting with Guannan and Barbora to update the ACs; Pavan asked Salim on 10/14 to review the test cases.",
+      "currentSituation": "In Progress. PR #7166 created 10/15. Salim noted on 10/15 that the existing lockout isn't fully suitable for an admin lock, so those changes were added to this ticket's scope after talking with Guannan. Pavan asked Salim on 10/14 to review the test cases. Salim to review them.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -971,7 +971,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "currentSituation": "In Progress. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review and say if anything is missing. Vlad to review the test cases.",
+      "currentSituation": "In Progress. PR #7167 created 10/15 against develop. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review them. Vlad to review the test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
