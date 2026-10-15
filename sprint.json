@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-15",
-  "exportedAt": "2026-10-15T15:53:28+00:00",
+  "exportedAt": "2026-10-15T16:59:34+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -60,6 +60,25 @@
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
       "currentSituation": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. It ships in one combined PR with APP-556, so both must be ready before merge. Pavan reported 3 test cases still without automation (10/14). Alan to complete the missing automation.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-2744",
+      "owner": "Alan Le",
+      "status": "Open",
+      "tester": null,
+      "classifications": "Dev to Test",
+      "points": null,
+      "parent": "APP-2742 – Shared Data Layer Package (@sl/data-layer)",
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-15",
+      "cycleTime": null,
+      "summary": "Init: create packages/data-layer (unblocks PM rewrite)",
+      "currentSituation": "Open. Alan moved it into the sprint on 10/15 (scaffold of the @sl/data-layer package; blocks Project Manager rewrite Milestone 1). No tester or story points yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -458,7 +477,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "currentSituation": "In Review; PR #6040 open since 10/7. Kyle offered at the 10/14 daily to review it. Kyle to review; Guannan to move it forward after. GitHub's automation adds the reviewer but does not assign the PR, so reviews can be missed; Vishal will look at changing it to assign.",
+      "currentSituation": "In Review. PR #6040 (ClientApps) merged into develop on 10/15 after Kyle offered at the 10/14 daily to review it. Guannan to move the ticket forward. GitHub's automation adds the reviewer but does not assign the PR, so reviews can be missed; Vishal will look at changing it to assign.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -922,7 +941,7 @@
     {
       "ticket": "APP-2970",
       "owner": "Salim Abdul",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Pavan V",
       "classifications": null,
       "points": 3,
@@ -933,7 +952,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "currentSituation": "In Progress. PR #7166 created 10/15. Salim noted on 10/15 that the existing lockout isn't fully suitable for an admin lock, so those changes were added to this ticket's scope after talking with Guannan. Pavan asked Salim on 10/14 to review the test cases. Salim to review them.",
+      "currentSituation": "In Review since 10/15. PR #7166 created 10/15. Salim noted on 10/15 that the existing lockout isn't fully suitable for an admin lock, so those changes were added to this ticket's scope after talking with Guannan. Pavan asked Salim on 10/14 to review the test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -960,7 +979,7 @@
     {
       "ticket": "APP-3010",
       "owner": "Vlad Storona",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Bornali Nath",
       "classifications": null,
       "points": 3,
@@ -971,7 +990,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "currentSituation": "In Progress. PR #7167 created 10/15 against develop. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review them. Vlad to review the test cases.",
+      "currentSituation": "In Review since 10/15. PR #7167 created 10/15 against develop. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review them.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
