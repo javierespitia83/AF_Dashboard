@@ -52,7 +52,7 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Do not touch
 
-- `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/08__Dashboard_Archive/` — an older, separate attempt. Read-only reference at most; do not copy its code in without telling Carlos.
+- `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/07_Dashboard_Archive/` — an older, separate attempt. Read-only reference at most; do not copy its code in without telling Carlos.
 - `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` — only the tracker skills edit it.
 
 ## Conventions

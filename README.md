@@ -12,7 +12,7 @@ Team-only, local dashboard for the App Foundation Agile Pilot (Jira project `APP
 | Documentation (this folder's `.md` files) | Done |
 | Web pages: `index.html` (sprint), `backlog.html` (backlog), `dashboard.css`, `dashboard.js`, `sprint.js`, `backlog.js` | v2 (BI-style, cross-filtering) built 2026-10-01; checks to run are in `ACCEPTANCE.md`; what was verified is in the `DECISIONS.md` log |
 
-An earlier, separate attempt is archived in `AF_Snaplogic/08__Dashboard_Archive/`. It is not part of this build.
+An earlier, separate attempt is archived in `AF_Snaplogic/07_Dashboard_Archive/`. It is not part of this build.
 
 ## Pages
 
@@ -41,7 +41,7 @@ The sprint page reads `sprints.json` and only the selected snapshot from its man
    ```
 3. Reload the page in the browser.
 
-The export is manual, read-only, and keeps only the latest snapshot (no history). Full behavior: `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`.
+The export is manual, read-only, and writes the active latest snapshot (sprint.json, backlog.json); history lives in sprints.json and snapshots/ (frozen at sprint close, see DECISIONS). Full behavior: `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`.
 
 ## How to test
 

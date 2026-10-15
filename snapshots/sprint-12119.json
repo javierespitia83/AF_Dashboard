@@ -175,7 +175,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 17,
       "summary": "Notification dropdown navigation to notification center",
-      "currentSituation": "Done 10/9. Pavan approved; PR #6008 merged and moved to Done.",
+      "lastSyncUpdate": "Done 10/9. Pavan approved; PR #6008 merged and moved to Done.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -194,7 +194,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 17,
       "summary": "[Monitor][UI] Display LTTB for network charts.",
-      "currentSituation": "Done 10/9. Bornali's tests passed; PR #6006 merged to develop.",
+      "lastSyncUpdate": "Done 10/9. Bornali's tests passed; PR #6006 merged to develop.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -213,7 +213,7 @@
       "addedDate": "2026-09-23",
       "cycleTime": 1,
       "summary": "File Reader - File reference becomes blank after deploying the pipeline through Jenkins or importing it manually",
-      "currentSituation": "Done 9/24. Anumeha verified on Canary that the file reference no longer goes blank after deploy; tracked against PSWAT-2704.",
+      "lastSyncUpdate": "Done 9/24. Anumeha verified on Canary that the file reference no longer goes blank after deploy; tracked against PSWAT-2704.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -232,7 +232,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 1,
       "summary": "Monitor — Snap Usage report API test cases",
-      "currentSituation": "Done 9/23. Carried over from the previous sprint; API test cases completed.",
+      "lastSyncUpdate": "Done 9/23. Carried over from the previous sprint; API test cases completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -251,7 +251,7 @@
       "addedDate": "2026-09-23",
       "cycleTime": 5,
       "summary": "QA Task : Fix Playwright tests for Canvas Oauth and Migration",
-      "currentSituation": "Done 9/28. QA task: Playwright tests for Canvas OAuth and Migration fixed.",
+      "lastSyncUpdate": "Done 9/28. QA task: Playwright tests for Canvas OAuth and Migration fixed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -270,7 +270,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 2,
       "summary": "QA Task: Regression Analysis for Sep 25",
-      "currentSituation": "Done 9/30. QA task: regression analysis for Sep 25 completed.",
+      "lastSyncUpdate": "Done 9/30. QA task: regression analysis for Sep 25 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -289,7 +289,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 2,
       "summary": "QA Task : 4.45.2.0 Manual Regression",
-      "currentSituation": "Done 9/30. QA task: manual regression for 4.45.2.0 completed.",
+      "lastSyncUpdate": "Done 9/30. QA task: manual regression for 4.45.2.0 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -308,7 +308,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": 1,
       "summary": "QA Task : UAT Regression Analysis Oct 02",
-      "currentSituation": "Done 10/6. QA task: UAT regression analysis (Oct 02) completed.",
+      "lastSyncUpdate": "Done 10/6. QA task: UAT regression analysis (Oct 02) completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -327,7 +327,7 @@
       "addedDate": "2026-10-09",
       "cycleTime": 0,
       "summary": "QA Task : UAT and UAT EMEA Regression Analysis Oct 8",
-      "currentSituation": "Not discussed yet.",
+      "lastSyncUpdate": "Not discussed yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -346,7 +346,7 @@
       "addedDate": "2026-10-09",
       "cycleTime": 0,
       "summary": "QA Task: Set up CP Nightly Run",
-      "currentSituation": "Not discussed yet.",
+      "lastSyncUpdate": "Not discussed yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -365,7 +365,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 16,
       "summary": "[Admin Manager] [Create User Account] \"create a project for user\" option is not working as expected",
-      "currentSituation": "Done 10/8. Anumeha verified it on canary; Artem merged PR #6031 to develop.",
+      "lastSyncUpdate": "Done 10/8. Anumeha verified it on canary; Artem merged PR #6031 to develop.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -384,7 +384,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 3,
       "summary": "Add org_name to all motd entries",
-      "currentSituation": "Done 10/1. Dev-to-test; PR merged adding org_name to all motd entries (backend half; the UI ticket covers the rest).",
+      "lastSyncUpdate": "Done 10/1. Dev-to-test; PR merged adding org_name to all motd entries (backend half; the UI ticket covers the rest).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -403,7 +403,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 8,
       "summary": "[Shadow PLAT-15090 Review] Metadata Update snap not setting pipeline field correctly",
-      "currentSituation": "Done 10/2. Closed because the PLAT team took full ownership of the related ticket (Artem).",
+      "lastSyncUpdate": "Done 10/2. Closed because the PLAT team took full ownership of the related ticket (Artem).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -422,7 +422,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 3,
       "summary": "Unable to Migrate a task from one org to another through metadata snap",
-      "currentSituation": "Done 10/1. Fix for migrating a task between orgs via the metadata snap, in the Snap v4 repo; deployed to the pigeon pod and demoed 10/6 (Artem).",
+      "lastSyncUpdate": "Done 10/1. Fix for migrating a task between orgs via the metadata snap, in the Snap v4 repo; deployed to the pigeon pod and demoed 10/6 (Artem).",
       "blocker": "SNAP v4 repo change needs a different test path (SNAP deployment, ~2hr) than standard Canary/PR build; not yet confirmed how to test. Post-code-freeze merge needs approval.",
       "demoOrSpike": "Presented",
       "discussed": "No"
@@ -441,7 +441,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 17,
       "summary": "restyle pipeline version dialog",
-      "currentSituation": "Poornima, back from PTO, picked up testing again on 10/8 and will continue.",
+      "lastSyncUpdate": "Poornima, back from PTO, picked up testing again on 10/8 and will continue.",
       "blocker": null,
       "demoOrSpike": "Presented",
       "discussed": "Yes"
@@ -460,7 +460,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 15,
       "summary": "Designer note is not resizable",
-      "currentSituation": "Done 10/7. Anumeha completed testing and reviewed the automated tests; PR merged.",
+      "lastSyncUpdate": "Done 10/7. Anumeha completed testing and reviewed the automated tests; PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -479,7 +479,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "[UI] - Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": "Done 9/24. Validate button now uses the value typed in the field; Poornima verified positive and negative scenarios.",
+      "lastSyncUpdate": "Done 9/24. Validate button now uses the value typed in the field; Poornima verified positive and negative scenarios.",
       "blocker": "Missing formal AC (Poornima, 9/22); GitHub provider bug (event object passed as git_host) not yet fixed; 4 of 5 providers untested.",
       "demoOrSpike": "No",
       "discussed": "No"
@@ -498,7 +498,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": 3,
       "summary": "Unable to select Global Shared on Copy/Move Dialog",
-      "currentSituation": "Pavan verified on branch 10/9. Only seen in one UAT org; no merge to main before release, patch via triage if needed. Poornima to tell Kalpana if a known-issue note is needed.",
+      "lastSyncUpdate": "Pavan verified on branch 10/9. Only seen in one UAT org; no merge to main before release, patch via triage if needed. Poornima to tell Kalpana if a known-issue note is needed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -517,7 +517,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 17,
       "summary": "QA Task: Backlog Automation",
-      "currentSituation": "Automated tests in PR #779 await review; Bornali expects Done by 10/9 once the dry run passes and it merges. Awaiting reply from Bornali to Carlos's 10/7 question.",
+      "lastSyncUpdate": "Automated tests in PR #779 await review; Bornali expects Done by 10/9 once the dry run passes and it merges. Awaiting reply from Bornali to Carlos's 10/7 question.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -536,7 +536,7 @@
       "addedDate": "2026-09-23",
       "cycleTime": 2,
       "summary": "QA Task : Playwright CP Github Fixes",
-      "currentSituation": "Done 9/25. QA task: Playwright CP GitHub fixes completed.",
+      "lastSyncUpdate": "Done 9/25. QA task: Playwright CP GitHub fixes completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -555,7 +555,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 0,
       "summary": "QA Task: Regression Analysis for Sep 25",
-      "currentSituation": "Done 9/28. QA task: regression analysis for Sep 25 completed.",
+      "lastSyncUpdate": "Done 9/28. QA task: regression analysis for Sep 25 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -574,7 +574,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 1,
       "summary": "QA Task : 4.45.2.0 Manual Regression",
-      "currentSituation": "Done 9/29. QA task: manual regression for 4.45.2.0 completed.",
+      "lastSyncUpdate": "Done 9/29. QA task: manual regression for 4.45.2.0 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -593,7 +593,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": 0,
       "summary": "QA Task: UAT Regression Analysis October 2",
-      "currentSituation": "Done 10/6. QA task: UAT regression analysis (Oct 2) completed.",
+      "lastSyncUpdate": "Done 10/6. QA task: UAT regression analysis (Oct 2) completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -612,7 +612,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": 1,
       "summary": "QA Task: Set up Studio Nightly Run",
-      "currentSituation": "Done 10/7 (Bornali Nath).",
+      "lastSyncUpdate": "Done 10/7 (Bornali Nath).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -631,7 +631,7 @@
       "addedDate": "2026-10-09",
       "cycleTime": 0,
       "summary": "QA Task : UAT and UAT EMEA Regression Analysis",
-      "currentSituation": "Done 10/9; created and closed the same day (mid-sprint QA task).",
+      "lastSyncUpdate": "Done 10/9; created and closed the same day (mid-sprint QA task).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -650,7 +650,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": 10,
       "summary": "Allow tasks (incl. trigger tasks) to select a pipeline from other project folder",
-      "currentSituation": "Anumeha logged defects. Picker now lists pipelines org-wide with no search (slow API, per Guannan); requirements unclear. Derek to set a session with Danilo and Poornima.",
+      "lastSyncUpdate": "Anumeha logged defects. Picker now lists pipelines org-wide with no search (slow API, per Guannan); requirements unclear. Derek to set a session with Danilo and Poornima.",
       "blocker": "Requirements gap on cross-project pipeline search.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -669,7 +669,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "Save button should not be clickable when disabled",
-      "currentSituation": "Done 9/24. Poornima verified the Save button fix with auto validate on and off.",
+      "lastSyncUpdate": "Done 9/24. Poornima verified the Save button fix with auto validate on and off.",
       "blocker": null,
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -688,7 +688,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 13,
       "summary": "Monitor — org-wide Account Usage report (from Classic Manager account stats)",
-      "currentSituation": "Done 10/5. Anumeha's QA-reviewed test cases merged into the exp_app-2785 branch; Guannan proceeded with automation.",
+      "lastSyncUpdate": "Done 10/5. Anumeha's QA-reviewed test cases merged into the exp_app-2785 branch; Guannan proceeded with automation.",
       "blocker": "Sheet has no per-row Reference/ID; Canary pod run failed, retry pending.",
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -707,7 +707,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": 6,
       "summary": "Snaplex icon in the toolbar is unclickable while a long-running pipeline is executing",
-      "currentSituation": "Done 10/7. Small visual bug; Anumeha verified on Stage (develop build) and it works as expected.",
+      "lastSyncUpdate": "Done 10/7. Small visual bug; Anumeha verified on Stage (develop build) and it works as expected.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -726,7 +726,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 8,
       "summary": "[SPIKE] Ability for an Admin to lock/unlock users as well as resend new user invitation email in admin manager",
-      "currentSituation": "Done 9/30. Spike finished: epic APP-2957 refined into stories (APP-2968, 2969, 3010, 3011 and others); outcome posted in the ticket.",
+      "lastSyncUpdate": "Done 9/30. Spike finished: epic APP-2957 refined into stories (APP-2968, 2969, 3010, 3011 and others); outcome posted in the ticket.",
       "blocker": null,
       "demoOrSpike": "Presented",
       "discussed": "No"
@@ -745,7 +745,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "Some buttons broken in Admin manager page",
-      "currentSituation": "Done 9/24. Poornima verified the Admin Manager buttons work on build 4.45.2.0_staging.",
+      "lastSyncUpdate": "Done 9/24. Poornima verified the Admin Manager buttons work on build 4.45.2.0_staging.",
       "blocker": "Unassigned ticket.",
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -764,7 +764,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 3,
       "summary": "App Settings and RunTime Arrchive Doc Link is broken",
-      "currentSituation": "Done 9/25. Pavan verified the fixed doc link on Canary.",
+      "lastSyncUpdate": "Done 9/25. Pavan verified the fixed doc link on Canary.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -783,7 +783,7 @@
       "addedDate": "2026-09-25",
       "cycleTime": 11,
       "summary": "[SPIKE] Research implementation details for AF (including UX) and PlatCore",
-      "currentSituation": "Done 10/6. Spike closed; Mario Rojas asked follow-up questions on 10/6 (what counts as a missed run).",
+      "lastSyncUpdate": "Done 10/6. Spike closed; Mario Rojas asked follow-up questions on 10/6 (what counts as a missed run).",
       "blocker": null,
       "demoOrSpike": "Presented",
       "discussed": "No"
@@ -802,7 +802,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": 8,
       "summary": "Snaps in restricted class id is displayed in asset palette",
-      "currentSituation": "Bornali finished testing and added test cases; Guannan to implement the automated test (if not done) and merge.",
+      "lastSyncUpdate": "Bornali finished testing and added test cases; Guannan to implement the automated test (if not done) and merge.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -821,7 +821,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 7,
       "summary": "\"Download\" report action in \"Asset Catalog\" is timing out",
-      "currentSituation": "Done 9/29. Fix is done; it rolls out to production with the UI release on 10/14 (Indrajeet, 10/7).",
+      "lastSyncUpdate": "Done 9/29. Fix is done; it rolls out to production with the UI release on 10/14 (Indrajeet, 10/7).",
       "blocker": null,
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -840,7 +840,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 6,
       "summary": "[UATUS] Prepare ADM Service for two new runtime shards",
-      "currentSituation": "Done 9/28. ADM Service prepared for two new runtime shards; PR merged. Unblocks the Atlas to Mongo migration.",
+      "lastSyncUpdate": "Done 9/28. ADM Service prepared for two new runtime shards; PR merged. Unblocks the Atlas to Mongo migration.",
       "blocker": "This blocks the Atlas→Mongo Community Edition migration.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -859,7 +859,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 5,
       "summary": "[Asset Catalog] V4 catalog CSV export returns 403 for non-admin users (tasks/pipelines)",
-      "currentSituation": "Done 9/29. V4 catalog CSV export 403 for non-admin users fixed; PR merged.",
+      "lastSyncUpdate": "Done 9/29. V4 catalog CSV export 403 for non-admin users fixed; PR merged.",
       "blocker": null,
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -878,7 +878,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 15,
       "summary": "[Asset Catalog] Pipeline hourly OM table: partition by execution_date + bucket(org_snode_id, 50)",
-      "currentSituation": "Done 10/9. Deployed to UAT and closed; goes to production with 4.45.2 on 10/14.",
+      "lastSyncUpdate": "Done 10/9. Deployed to UAT and closed; goes to production with 4.45.2 on 10/14.",
       "blocker": "Token expiration on US/production pods until Friday.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -897,7 +897,7 @@
       "addedDate": "2026-09-25",
       "cycleTime": 3,
       "summary": "[UATEU] Prepare ADM Service for a new runtime shard",
-      "currentSituation": "Done 9/28. ADM Service prepared for a new runtime shard (1 pt, cross-team); PR merged.",
+      "lastSyncUpdate": "Done 9/28. ADM Service prepared for a new runtime shard (1 pt, cross-team); PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -916,7 +916,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": 3,
       "summary": "[adm-e2e] Migrate all UI tests using playwright to ClientApps Phase 1",
-      "currentSituation": "Split: Phase 1 here (3 pts), the rest in APP-3118. Phase 1 expected before the sprint closes; otherwise Backlog (Prioritized).",
+      "lastSyncUpdate": "Split: Phase 1 here (3 pts), the rest in APP-3118. Phase 1 expected before the sprint closes; otherwise Backlog (Prioritized).",
       "blocker": "Hard to split; may carry over.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -935,7 +935,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 14,
       "summary": "[Docs][APP] Metrics not displayed correctly when time frame selected as last week / for a period in the calendar",
-      "currentSituation": "Done 10/6. Docs ticket; content is live in the October release notes (John Brinckwirth).",
+      "lastSyncUpdate": "Done 10/6. Docs ticket; content is live in the October release notes (John Brinckwirth).",
       "blocker": "Tester Poornima out until Wed.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -954,7 +954,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 1,
       "summary": "[TechDebt] Upgrade TanStack Query v4 → v5",
-      "currentSituation": "Done 9/23. TanStack Query v4 to v5 upgrade; PR merged.",
+      "lastSyncUpdate": "Done 9/23. TanStack Query v4 to v5 upgrade; PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -973,7 +973,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 13,
       "summary": "Lint FormEngine",
-      "currentSituation": "Done 10/5. FormEngine lint; dev-to-test, PR merged.",
+      "lastSyncUpdate": "Done 10/5. FormEngine lint; dev-to-test, PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -992,7 +992,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "Doc links for Import and Export Project to be updated",
-      "currentSituation": "Done 9/24. Doc links for Import/Export Project updated; PR merged.",
+      "lastSyncUpdate": "Done 9/24. Doc links for Import/Export Project updated; PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1011,7 +1011,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 8,
       "summary": "Don't upload source maps to DataDog",
-      "currentSituation": "Done 10/6. Source maps no longer uploaded to DataDog; PR merged.",
+      "lastSyncUpdate": "Done 10/6. Source maps no longer uploaded to DataDog; PR merged.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1030,7 +1030,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 0,
       "summary": "[Monitor][API Metrics] Column header text should ellipsize and keep the sort arrow visible when the column is narrow",
-      "currentSituation": "Done 9/24. Column header ellipsis fix; Anumeha verified on Canary.",
+      "lastSyncUpdate": "Done 9/24. Column header ellipsis fix; Anumeha verified on Canary.",
       "blocker": null,
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -1049,7 +1049,7 @@
       "addedDate": "2026-09-23",
       "cycleTime": 2,
       "summary": "QA Task : Playwright CP Fixes",
-      "currentSituation": "Done 9/25. QA task: Playwright CP fixes completed.",
+      "lastSyncUpdate": "Done 9/25. QA task: Playwright CP fixes completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1068,7 +1068,7 @@
       "addedDate": "2026-09-27",
       "cycleTime": 2,
       "summary": "QA Task: Regression Analysis for Sep 25",
-      "currentSituation": "Done 9/29. QA task: regression analysis for Sep 25 completed.",
+      "lastSyncUpdate": "Done 9/29. QA task: regression analysis for Sep 25 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1087,7 +1087,7 @@
       "addedDate": "2026-09-27",
       "cycleTime": 2,
       "summary": "QA Task : 4.45.2.0 Manual Regression Analysis",
-      "currentSituation": "Done 9/29. QA task: 4.45.2.0 manual regression analysis completed.",
+      "lastSyncUpdate": "Done 9/29. QA task: 4.45.2.0 manual regression analysis completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1106,7 +1106,7 @@
       "addedDate": "2026-09-28",
       "cycleTime": 6,
       "summary": "QA Task : Studio Playwright Fixes",
-      "currentSituation": "Done 10/4. QA task: Studio Playwright fixes completed.",
+      "lastSyncUpdate": "Done 10/4. QA task: Studio Playwright fixes completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1125,7 +1125,7 @@
       "addedDate": "2026-10-04",
       "cycleTime": 3,
       "summary": "QA Task : UAT Regression Analysis Oct 02",
-      "currentSituation": "Done 10/7. QA task: UAT regression analysis (Oct 02) completed.",
+      "lastSyncUpdate": "Done 10/7. QA task: UAT regression analysis (Oct 02) completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1144,7 +1144,7 @@
       "addedDate": "2026-10-08",
       "cycleTime": 1,
       "summary": "QA Task : Optimize Git related automated Testcases",
-      "currentSituation": "Back to In Progress on 10/9, now 3 pts (Derek asked for points in the 10/8 daily). Pavan expected to finish the Git refactor by 10/9.",
+      "lastSyncUpdate": "Back to In Progress on 10/9, now 3 pts (Derek asked for points in the 10/8 daily). Pavan expected to finish the Git refactor by 10/9.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1163,7 +1163,7 @@
       "addedDate": "2026-10-09",
       "cycleTime": 0,
       "summary": "QA Task : UAT  and UAT EMEA Regression Analysis  Oct 8",
-      "currentSituation": "Not discussed yet.",
+      "lastSyncUpdate": "Not discussed yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1182,7 +1182,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": 6,
       "summary": "iris_pipeline_search throwing 500 error on UAT",
-      "currentSituation": "Fix PR merged on 10/9 (sl-app-launcher-gitops #5218); Poornima asked Pavan to test it.",
+      "lastSyncUpdate": "Fix PR merged on 10/9 (sl-app-launcher-gitops #5218); Poornima asked Pavan to test it.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1201,7 +1201,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 9,
       "summary": "Regression Analysis for Sep 25",
-      "currentSituation": "Done 10/1. QA task: regression analysis for Sep 25 completed.",
+      "lastSyncUpdate": "Done 10/1. QA task: regression analysis for Sep 25 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1220,7 +1220,7 @@
       "addedDate": "2026-09-23",
       "cycleTime": 0,
       "summary": "Fixing Failed tests",
-      "currentSituation": "Done 9/23. QA task: failed tests fixed.",
+      "lastSyncUpdate": "Done 9/23. QA task: failed tests fixed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1239,7 +1239,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 4,
       "summary": "Test migration and related tasks, regression run",
-      "currentSituation": "Done 9/28. Migration tests and related tasks, regression run completed.",
+      "lastSyncUpdate": "Done 9/28. Migration tests and related tasks, regression run completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1258,7 +1258,7 @@
       "addedDate": "2026-09-24",
       "cycleTime": 0,
       "summary": "SSO config help for snapGPT team",
-      "currentSituation": "Done 9/24. SSO configuration help for the snapGPT team completed.",
+      "lastSyncUpdate": "Done 9/24. SSO configuration help for the snapGPT team completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1277,7 +1277,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": 0,
       "summary": "Updating CP tests for copy move",
-      "currentSituation": "Done 9/29. CP tests for copy/move updated.",
+      "lastSyncUpdate": "Done 9/29. CP tests for copy/move updated.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1296,7 +1296,7 @@
       "addedDate": "2026-09-29",
       "cycleTime": 2,
       "summary": "Manual testing for Studio, CP in 4.45.2.0",
-      "currentSituation": "Done 10/1. Manual testing for Studio and CP in 4.45.2.0 completed.",
+      "lastSyncUpdate": "Done 10/1. Manual testing for Studio and CP in 4.45.2.0 completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1315,7 +1315,7 @@
       "addedDate": "2026-10-09",
       "cycleTime": 0,
       "summary": "QA regression analysis for UAT",
-      "currentSituation": "Done 10/9; created and closed the same day (mid-sprint recurring QA task).",
+      "lastSyncUpdate": "Done 10/9; created and closed the same day (mid-sprint recurring QA task).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1334,7 +1334,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": 6,
       "summary": "Checkout from git fails with error indicating the branch is not found",
-      "currentSituation": "Done 10/7. Fix ships after the November release because it is a Controlplane change (Salim, 10/7).",
+      "lastSyncUpdate": "Done 10/7. Fix ships after the November release because it is a Controlplane change (Salim, 10/7).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1353,7 +1353,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 1,
       "summary": "National Broadband Ireland is using the EMEA control plane and has to authorize GitHub at least once a day",
-      "currentSituation": "Done 9/23. National Broadband Ireland no longer needs to re-authorize; customer is monitoring (Atul Pande, 9/24).",
+      "lastSyncUpdate": "Done 9/23. National Broadband Ireland no longer needs to re-authorize; customer is monitoring (Atul Pande, 9/24).",
       "blocker": null,
       "demoOrSpike": "No",
       "discussed": "No"
@@ -1372,7 +1372,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 15,
       "summary": "After Git Checkout all pipelines in project are changing to Tracked Modified Locally",
-      "currentSituation": "Done 10/7. Pavan verified on the develop branch that pipelines no longer switch to Tracked mode after Git checkout.",
+      "lastSyncUpdate": "Done 10/7. Pavan verified on the develop branch that pipelines no longer switch to Tracked mode after Git checkout.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1391,7 +1391,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 3,
       "summary": "Connection with GHES does not fetch the branches - GHE Cloud data residency support",
-      "currentSituation": "Done 9/25. GHES / GHE Cloud connection fetches branches; demoed in sprint review and Pavan verified on Canary. Better UI deferred to a separate ticket.",
+      "lastSyncUpdate": "Done 9/25. GHES / GHE Cloud connection fetches branches; demoed in sprint review and Pavan verified on Canary. Better UI deferred to a separate ticket.",
       "blocker": "No official data-residency test instance yet (only Salim's personal, ~17 days left); QA hasn't started; commitment tied to a near-term release code freeze.",
       "demoOrSpike": "Presented",
       "discussed": "No"
@@ -1410,7 +1410,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 14,
       "summary": "Deprecated Snaplex version alerts are not seen in the Monitor",
-      "currentSituation": "Done 10/6. Deprecated Snaplex version alerts now show in Monitor; Anumeha verified on Stage.",
+      "lastSyncUpdate": "Done 10/6. Deprecated Snaplex version alerts now show in Monitor; Anumeha verified on Stage.",
       "blocker": "No environment available to test — Canary reserved for October release; needs DevLab or similar.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -1429,7 +1429,7 @@
       "addedDate": "2026-10-06",
       "cycleTime": 3,
       "summary": "Configure git providers for e2e testing",
-      "currentSituation": "All Git providers set up except Bitbucket: Bitbucket Server needs a new license only Platform can apply. Salim to open a ticket; Bitbucket likely moves to next sprint.",
+      "lastSyncUpdate": "All Git providers set up except Bitbucket: Bitbucket Server needs a new license only Platform can apply. Salim to open a ticket; Bitbucket likely moves to next sprint.",
       "blocker": "Bitbucket license change needs Platform team.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1448,7 +1448,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 7,
       "summary": "CP test setup - cp test sync, github workflow setup",
-      "currentSituation": "Done 9/29. CP test setup (mark 2) completed.",
+      "lastSyncUpdate": "Done 9/29. CP test setup (mark 2) completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1467,7 +1467,7 @@
       "addedDate": "2026-10-05",
       "cycleTime": 4,
       "summary": "Test automation - infra setup and qaforge parity",
-      "currentSituation": "Resized to 3 pts. Per Shardul, expected Done today; otherwise it goes to Backlog (Prioritized).",
+      "lastSyncUpdate": "Resized to 3 pts. Per Shardul, expected Done today; otherwise it goes to Backlog (Prioritized).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1486,7 +1486,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 3,
       "summary": "Not getting Emails when Asset is restored from recycle bin",
-      "currentSituation": "Done 9/25. Asset restore notification emails fixed; Pavan verified on Canary and Vlad demoed it 10/6.",
+      "lastSyncUpdate": "Done 9/25. Asset restore notification emails fixed; Pavan verified on Canary and Vlad demoed it 10/6.",
       "blocker": null,
       "demoOrSpike": "Presented",
       "discussed": "No"
@@ -1505,7 +1505,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 1,
       "summary": "Metrics not displayed correctly when time frame selected as last week / for a period in the calendar",
-      "currentSituation": "Done 9/23. Metrics for last-week time frame fixed; Poornima's follow-up variant resolved (Vlad).",
+      "lastSyncUpdate": "Done 9/23. Metrics for last-week time frame fixed; Poornima's follow-up variant resolved (Vlad).",
       "blocker": "A new bug variant was found in QA last sprint — confirm whether it's fixed.",
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -1524,7 +1524,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": "Done 9/24. Git server hostname health check fixed, paired with APP-2939; PR merged.",
+      "lastSyncUpdate": "Done 9/24. Git server hostname health check fixed, paired with APP-2939; PR merged.",
       "blocker": null,
       "demoOrSpike": "No",
       "discussed": "No"
@@ -1543,7 +1543,7 @@
       "addedDate": "2026-10-01",
       "cycleTime": 5,
       "summary": "BYOK S3 bucket creation api returns error 403",
-      "currentSituation": "Done 10/6. BYOK S3 bucket 403 fixed; Bornali tested on Stage.",
+      "lastSyncUpdate": "Done 10/6. BYOK S3 bucket 403 fixed; Bornali tested on Stage.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1562,7 +1562,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 16,
       "summary": "File download from Project Manager retrieves stale browser-cached file instead of updated data",
-      "currentSituation": "Done 10/8. Pavan verified the fix on develop (build develop_35796).",
+      "lastSyncUpdate": "Done 10/8. Pavan verified the fix on develop (build develop_35796).",
       "blocker": "Waiting for Canary deployment of the feature branch.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1581,7 +1581,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 16,
       "summary": "JellyRoll 2.0: Add Stepper (wizard step indicator) component",
-      "currentSituation": "Done 10/8. Wenhan merged the PR into develop and moved the ticket to Done; Fix Version is 4.46.",
+      "lastSyncUpdate": "Done 10/8. Wenhan merged the PR into develop and moved the ticket to Done; Fix Version is 4.46.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1600,7 +1600,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 2,
       "summary": "Designer unable to load pipelines for projects containing a very large number of assets(files)",
-      "currentSituation": "Done 9/24. Designer now loads pipelines for projects with a very large number of items; on 10/4 Saikiran asked for a customer-facing RCA document.",
+      "lastSyncUpdate": "Done 9/24. Designer now loads pipelines for projects with a very large number of items; on 10/4 Saikiran asked for a customer-facing RCA document.",
       "blocker": null,
       "demoOrSpike": "No",
       "discussed": "No"
