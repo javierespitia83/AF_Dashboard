@@ -20,7 +20,7 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 - `exportedAt` is an optional RFC 3339 timestamp with the exporter machine's UTC offset. Convert it to the viewing browser's local timezone before displaying its date, time and UTC offset; older snapshots without it show `refreshedAt` only.
 - `tickets` may be an empty array (show an empty state, not an error).
 - Order of `tickets` is the sheet's row order. Preserve it unless a feature says otherwise.
-- Latest snapshot only. No history.
+- sprint.json and backlog.json hold the latest snapshot; closed sprints are frozen in snapshots/sprint-<id>.json and listed in sprints.json (written at sprint close, not by the exporter).
 
 ## 2. `sprint.json` ticket fields (schema definition `sprintTicket`)
 
@@ -39,7 +39,7 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 | `addedDate` | string (date) or null | `YYYY-MM-DD`: when the ticket entered the sprint. **Two different origins the JSON does not distinguish** (§2a). | `—` |
 | `cycleTime` | integer or null | Days from start of work to Done. Only populated when `status` is `Done`; `null` for every other ticket by design. | `—` |
 | `summary` | string or null | Exact Jira `summary` of the ticket (not reworded; since 2026-10-07 the workbook column is `Summary`) | `—` |
-| `currentSituation` | string or null | Short status plus next step, up to about 200 characters; shown under “Last sync update”. It reflects the snapshot's captured note and may omit changes made after that snapshot | `—` |
+| `lastSyncUpdate` | string or null | Short status plus next step, up to about 200 characters; shown under “Last sync update”. It reflects the snapshot's captured note and may omit changes made after that snapshot | `—` |
 | `blocker` | string or null | Blocker / risk retained in the export for now; the app does not read it | `—` |
 | `demoOrSpike` | string or null | `Candidate` (flagged to present), `Presented` (already shown), `No` (reviewed, nothing to present) or null. Renamed from `demo` on 2026-10-07; the app does not read it yet | `—` |
 | `lastComment` | string or null | **Planned (2026-10-07), not exported yet:** latest Jira comment as `<author> · <date>: <text>`, trimmed to about 300 characters, filled by the Jira sync | `—` |

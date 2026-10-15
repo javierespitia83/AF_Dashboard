@@ -298,7 +298,7 @@
           ],
           "description": "Exact Jira summary, preserved verbatim; not a plain-language rewrite."
         },
-        "currentSituation": {
+        "lastSyncUpdate": {
           "type": [
             "string",
             "null"

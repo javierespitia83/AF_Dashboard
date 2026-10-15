@@ -56,7 +56,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal ",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -75,7 +75,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -94,7 +94,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 2,
       "summary": "CP playwright tests review",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -113,7 +113,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 2,
       "summary": "QA Task: Regression Analysis",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -132,7 +132,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": 5,
       "summary": "Fixing Playwright control plane tests",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -151,7 +151,7 @@
       "addedDate": "2026-09-21",
       "cycleTime": 1,
       "summary": "QA Task: Regression Analysis for CP and Studio for Sept 18",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -170,7 +170,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": null,
       "summary": "Monitor — Snap Usage report API test cases",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -189,7 +189,7 @@
       "addedDate": "2026-09-11",
       "cycleTime": 11,
       "summary": "Git Operations icon is not visible for git integrated projects after the upgrade",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -208,7 +208,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": null,
       "summary": "[UI] - Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -227,7 +227,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 2,
       "summary": "CP playwright test review",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -246,7 +246,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 2,
       "summary": "Github Backlog Automation",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -265,7 +265,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": null,
       "summary": "QA Task: Backlog Automation",
-      "currentSituation": "Not finished in this sprint (In Progress at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
+      "lastSyncUpdate": "Not finished in this sprint (In Progress at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -284,7 +284,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": 4,
       "summary": "QA Task: Regression Update",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -303,7 +303,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": 5,
       "summary": "QA Task : Fix Playwright tests",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -322,7 +322,7 @@
       "addedDate": "2026-09-21",
       "cycleTime": 0,
       "summary": "QA Task: Regression Analysis for September 18",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -341,7 +341,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": 3,
       "summary": "Tooltip on validate button",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -360,7 +360,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 12,
       "summary": "Monitor — Snap Usage report (from Classic Manager snap stats)",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -379,7 +379,7 @@
       "addedDate": "2026-09-11",
       "cycleTime": 4,
       "summary": "Hide AutoSync snappack/snap from asset palette",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -398,7 +398,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": 3,
       "summary": "Migrated API from APIM to APIM 3.0 is not visible in Monitor when filter on Project",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -417,7 +417,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 0,
       "summary": "[Asset Catalog] Enable live LOB classfiication for snaplogic orgs",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -436,7 +436,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 1,
       "summary": "[TechDebt]Auto-deploy new versions of ADM apps to tahoev2",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -455,7 +455,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 7,
       "summary": "custom idle timeout not working",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -474,7 +474,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 1,
       "summary": "[Tech Debt] Upgrade dbtplex",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -493,7 +493,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 8,
       "summary": "[Asset catalog] Review partitioning strategy for gold tables",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -512,7 +512,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 6,
       "summary": "[Asset Catalog] Upgrade dbt pipelines to include new models",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -531,7 +531,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 12,
       "summary": "[Asset Catalog] Consume API metrics and create models in dbt",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -550,7 +550,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 1,
       "summary": "Snaplex pushout does not save table settings",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -569,7 +569,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": null,
       "summary": "[TechDebt] Upgrade React 18.3 → 19 workspace-wide",
-      "currentSituation": "Not finished in this sprint (To Do at close); moved to sprint 12119 on 9/16. Still In Progress in sprint 12119 as of 10/8.",
+      "lastSyncUpdate": "Not finished in this sprint (To Do at close); moved to sprint 12119 on 9/16. Still In Progress in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -588,7 +588,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": null,
       "summary": "[TechDebt] Upgrade TanStack Query v4 → v5",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/17. Done on 9/23 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/17. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -607,7 +607,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 1,
       "summary": "Enable and migrate formEngine test suites",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -626,7 +626,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 1,
       "summary": "Fix onClickAcceptSelcted typo",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -645,7 +645,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 1,
       "summary": "Run the Designer tests in CI, and fix the failures blocking that",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -664,7 +664,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 3,
       "summary": "[UX / Design] Git integration selector and setup for GHEC with data residency",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -683,7 +683,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 0,
       "summary": "UX decision: menu selector for GHEC with data residency (support for APP-2797)",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -702,7 +702,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 2,
       "summary": "CP playwright tests review",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -721,7 +721,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": 0,
       "summary": "QA Task: Regression Analysis",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -740,7 +740,7 @@
       "addedDate": "2026-09-17",
       "cycleTime": 5,
       "summary": "QA Task : Fix Playwright tests",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -759,7 +759,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 0,
       "summary": "QA Task: Regression Analysis for CP and Studio for Sept 18",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -778,7 +778,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 2,
       "summary": "CP playwright test review",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -797,7 +797,7 @@
       "addedDate": "2026-09-15",
       "cycleTime": 2,
       "summary": "QA Task: Regression Analysis",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -816,7 +816,7 @@
       "addedDate": "2026-09-21",
       "cycleTime": 0,
       "summary": "Fixing Playwright control plane tests",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -835,7 +835,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 9,
       "summary": "500 error while loading the .expr file to project in manager",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -854,7 +854,7 @@
       "addedDate": "2026-06-24",
       "cycleTime": 77,
       "summary": "Read-only user receives empty payload when accessing pipeline execution APIs ",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -873,7 +873,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 9,
       "summary": "GitHub Operations taking long time impacting performance",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -892,7 +892,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 7,
       "summary": "Git Status is not getting updated to \"Tracked, Modified Remotely\" after updating the assets in Github Remotely",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -911,7 +911,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Connection with GHES does not fetch the branches - GHE Cloud data residency support",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -930,7 +930,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 1,
       "summary": "Asset Catalog account search does not display dsamin_unix account",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -949,7 +949,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 6,
       "summary": "Mock apis for Studio UI tests",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -968,7 +968,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 2,
       "summary": "The OpenLineage API is returning an HTTP 500 Internal Server Error when requesting page 7 of the lineage results.",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -987,7 +987,7 @@
       "addedDate": "2026-09-16",
       "cycleTime": 6,
       "summary": "Move CP playwright tests to clientapps",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1006,7 +1006,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Not getting Emails when Asset is restored from recycle bin ",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1025,7 +1025,7 @@
       "addedDate": "2026-09-14",
       "cycleTime": null,
       "summary": "Metrics not displayed correctly when time frame selected as last week / for a period in the calendar",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1044,7 +1044,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 6,
       "summary": "Index specification in ensure indexes for the snodes collection not matching mongo",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1063,7 +1063,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 13,
       "summary": "Activity logs showing wrong timestamps for Password reset activity",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1082,7 +1082,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": null,
       "summary": "Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
-      "currentSituation": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
+      "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1101,7 +1101,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 13,
       "summary": "Unable to read Task.",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1120,7 +1120,7 @@
       "addedDate": "2026-08-21",
       "cycleTime": 21,
       "summary": "[Intermittent issue] Creating ultra tasks with same alias does not throw error",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1139,7 +1139,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add FieldShell and migrate TextInput to the Inputs/Field spec",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1158,7 +1158,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add Textarea component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1177,7 +1177,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add Number component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1196,7 +1196,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add Password component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1215,7 +1215,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add SearchField component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1234,7 +1234,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add DatePicker component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1253,7 +1253,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add FileUpload component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1272,7 +1272,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "JellyRoll 2.0: Add Select component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1291,7 +1291,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "Add JellyRoll 2.0 MultiSelect component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1310,7 +1310,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "Add JellyRoll 2.0 Combobox component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1329,7 +1329,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "Add JellyRoll 2.0 TreeSelect component",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1348,7 +1348,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 5,
       "summary": "Add JellyRoll 2.0 FormRow and FormSection components",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1367,7 +1367,7 @@
       "addedDate": "2026-09-11",
       "cycleTime": 3,
       "summary": "Asset Palette search box: conform the group-by control to the field-anatomy rail exception",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1386,7 +1386,7 @@
       "addedDate": "2026-09-09",
       "cycleTime": 9,
       "summary": "[MCP Servers][New API Metrics] Incorrect dates are highlighted in the adjacent month when selecting a custom date range.",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1405,7 +1405,7 @@
       "addedDate": "2026-09-10",
       "cycleTime": 4,
       "summary": "JellyRoll 2.0: Add Modal and ConfirmModal components",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null
@@ -1424,7 +1424,7 @@
       "addedDate": "2026-09-21",
       "cycleTime": 0,
       "summary": "QA Task: Regression Analysis for Sep 18",
-      "currentSituation": null,
+      "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
       "discussed": null

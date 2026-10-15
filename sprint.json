@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-15",
-  "exportedAt": "2026-10-15T18:48:31+00:00",
+  "exportedAt": "2026-10-15T20:21:15+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -40,7 +40,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Progress. On 10/15 Pavan asked Alan to attach test results (not in the PR) and Poornima asked for canary results plus new Designer tests; Shardul to help gate tests behind the flag. Alan to attach results.",
+      "lastSyncUpdate": "In Progress. On 10/15 Pavan asked Alan to attach test results (not in the PR) and Poornima asked for canary results plus new Designer tests; Shardul to help gate tests behind the flag. Alan to attach results.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -59,7 +59,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "currentSituation": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. It ships in one combined PR with APP-556, so both must be ready before merge. Pavan reported 3 test cases still without automation (10/14). Alan to complete the missing automation.",
+      "lastSyncUpdate": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. It ships in one combined PR with APP-556, so both must be ready before merge. Pavan reported 3 test cases still without automation (10/14). Alan to complete the missing automation.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -78,7 +78,7 @@
       "addedDate": "2026-10-15",
       "cycleTime": null,
       "summary": "Init: create packages/data-layer (unblocks PM rewrite)",
-      "currentSituation": "Open. Alan moved it into the sprint on 10/15 (scaffold of the @sl/data-layer package; blocks Project Manager rewrite Milestone 1). No tester or story points yet.",
+      "lastSyncUpdate": "Open. Alan moved it into the sprint on 10/15 (scaffold of the @sl/data-layer package; blocks Project Manager rewrite Milestone 1). No tester or story points yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -97,7 +97,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Monitor loses filters in infrastructure node view",
-      "currentSituation": "In Review since 10/15 (was In Progress). PR #6067 (ClientApps) created 10/15.",
+      "lastSyncUpdate": "In Review since 10/15 (was In Progress). PR #6067 (ClientApps) created 10/15.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -116,7 +116,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "currentSituation": "In Progress. Alan could not reproduce it on dev (10/15) and asked Eric Fertig to record a video. Poornima said on 10/14 that test cases will be written once a PR or more fix details exist. Eric to record a video.",
+      "lastSyncUpdate": "In Progress. Alan could not reproduce it on dev (10/15) and asked Eric Fertig to record a video. Poornima said on 10/14 that test cases will be written once a PR or more fix details exist. Eric to record a video.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -135,7 +135,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task: Canary Automation Regression Analysis for CP and Studio week 1 , release 4.46",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -154,7 +154,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "Regression Fixes for CP and Studio for 4.46 release",
-      "currentSituation": "Open. Anumeha said on 10/13 she is working on the Control Plane and Studio regression fixes. Anumeha to move it to In Progress.",
+      "lastSyncUpdate": "Open. Anumeha said on 10/13 she is working on the Control Plane and Studio regression fixes. Anumeha to move it to In Progress.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -173,7 +173,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Automate Oauth Test cases into grafana",
-      "currentSituation": "In Progress. Anumeha is automating OAuth test cases into Grafana (test cases added 10/13).",
+      "lastSyncUpdate": "In Progress. Anumeha is automating OAuth test cases into Grafana (test cases added 10/13).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -192,7 +192,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Backlog automation for CP and Studio",
-      "currentSituation": "In Progress. Anumeha is working on backlog automation for Studio and Control Plane.",
+      "lastSyncUpdate": "In Progress. Anumeha is working on backlog automation for Studio and Control Plane.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -211,7 +211,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "currentSituation": "In Review. Anumeha verified the fix on Stage 10/6. PR #7077 was already reviewed (Platform) and Artem is addressing the requested changes (daily 10/14). Artem is on PTO 10/19 to 10/30. Artem to address the changes before then.",
+      "lastSyncUpdate": "In Review. Anumeha verified the fix on Stage 10/6. PR #7077 was already reviewed (Platform) and Artem is addressing the requested changes (daily 10/14). Artem is on PTO 10/19 to 10/30. Artem to address the changes before then.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -230,7 +230,7 @@
       "addedDate": null,
       "cycleTime": 2,
       "summary": "Metadata update snap removed pipeline/plex mapping.",
-      "currentSituation": "Done 10/14. Artem closed it because the issue is no longer reproducible, probably fixed in another ticket.",
+      "lastSyncUpdate": "Done 10/14. Artem closed it because the issue is no longer reproducible, probably fixed in another ticket.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -249,7 +249,7 @@
       "addedDate": null,
       "cycleTime": 1,
       "summary": "[ELT] Fix ELT daily regression run",
-      "currentSituation": "Done 10/13. ELT daily regression run fixed.",
+      "lastSyncUpdate": "Done 10/13. ELT daily regression run fixed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -268,7 +268,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Display locked & invited account indicator in Admin Manager",
-      "currentSituation": "In Progress. PR #6069 created 10/15. Barbora reviewed Pavan's test cases (remove test #6 and Suspended refs in #8); Playwright tests written but unverifiable until the backend is on canary. Pavan to update test cases.",
+      "lastSyncUpdate": "In Progress. PR #6069 created 10/15. Barbora reviewed Pavan's test cases (remove test #6 and Suspended refs in #8); Playwright tests written but unverifiable until the backend is on canary. Pavan to update test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -287,7 +287,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "currentSituation": "In Progress. Mario posted the admin-actions design 10/13; AI test plan posted 10/14 and awaiting review. Fix version 4.46. Tester is Pavan V.",
+      "lastSyncUpdate": "In Progress. Mario posted the admin-actions design 10/13; AI test plan posted 10/14 and awaiting review. Fix version 4.46. Tester is Pavan V.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -306,7 +306,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[UI] Add \"missed\" option in the dropdown for task email notification.",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -325,7 +325,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Include locked_out_by, lockout_start_time, and password_last_updated in user settings API response",
-      "currentSituation": "In Review. PR #7161 created 10/14. On 10/15 Barbora reviewed Pavan's test cases: ticket only adds fields to the API response (no UI or write logic). Pavan to test.",
+      "lastSyncUpdate": "In Review. PR #7161 created 10/14. On 10/15 Barbora reviewed Pavan's test cases: ticket only adds fields to the API response (no UI or write logic). Pavan to test.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -344,7 +344,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "Install Appcues code snippet on Canary pod for evaluation purposes",
-      "currentSituation": "Open. Barbora sized it at 1-2 pts: add a script tag and identify call, like the Userpilot integration (APP-2555), with no backend changes. On 10/13 Vishal asked Barbora to confirm the effort; the docs team wants to evaluate Appcues on Canary.",
+      "lastSyncUpdate": "Open. Barbora sized it at 1-2 pts: add a script tag and identify call, like the Userpilot integration (APP-2555), with no backend changes. On 10/13 Vishal asked Barbora to confirm the effort; the docs team wants to evaluate Appcues on Canary.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -363,7 +363,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task: Canary Automation Regression Analysis for CP and Studio week 1 , release 4.46",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -382,7 +382,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": 3,
       "summary": "Regression Fixes for Studio for 4.46 release",
-      "currentSituation": "Done 10/15. Regression fixes for Studio (4.46); scope narrowed from CP and Studio to Studio and points reduced from 3 to 1. The 7 GitHub test cases pending an automation decision were to get their own task.",
+      "lastSyncUpdate": "Done 10/15. Regression fixes for Studio (4.46); scope narrowed from CP and Studio to Studio and points reduced from 3 to 1. The 7 GitHub test cases pending an automation decision were to get their own task.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -401,7 +401,7 @@
       "addedDate": "2026-10-15",
       "cycleTime": 0,
       "summary": "QA Task: Merge Github DeAunthentication Related test cases in Testrail",
-      "currentSituation": "Done 10/15. Bornali added and closed this QA task the same day (merge GitHub de-authentication test cases in TestRail, 1 point, fix version 4.46).",
+      "lastSyncUpdate": "Done 10/15. Bornali added and closed this QA task the same day (merge GitHub de-authentication test cases in TestRail, 1 point, fix version 4.46).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -420,7 +420,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Asset search in Project Manager and Classic manager now search for all assets by default",
-      "currentSituation": "Open (reopened 8/14). Frank verified the issue no longer happens, updated the customer (no response yet) and is OK closing it. At the 10/14 daily Derek said it lives outside the sprint while he triages, so the sprint and the tester are being removed. Derek to decide on closing.",
+      "lastSyncUpdate": "Open (reopened 8/14). Frank verified the issue no longer happens, updated the customer (no response yet) and is OK closing it. At the 10/14 daily Derek said it lives outside the sprint while he triages, so the sprint and the tester are being removed. Derek to decide on closing.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -439,7 +439,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Account type Conversion through admin manager is missing",
-      "currentSituation": "Open (reopened 9/9). Guannan said account-type conversion was dropped by an old design decision and can be revisited. IKEA expects it. Vinoth still waiting on an update. At the 10/14 daily Derek said it lives outside the sprint while he triages, so the sprint and the tester are being removed.",
+      "lastSyncUpdate": "Open (reopened 9/9). Guannan said account-type conversion was dropped by an old design decision and can be revisited. IKEA expects it. Vinoth still waiting on an update. At the 10/14 daily Derek said it lives outside the sprint while he triages, so the sprint and the tester are being removed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -458,7 +458,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Add a created by in manager -> users for service accounts",
-      "currentSituation": "To Do; Mario asked whether 'Created by' should be a Users table column or only on the detail page. Guannan said detail-page-only fits one story.",
+      "lastSyncUpdate": "To Do; Mario asked whether 'Created by' should be a Users table column or only on the detail page. Guannan said detail-page-only fits one story.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -477,7 +477,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "currentSituation": "In Review. PR #6040 (ClientApps) merged into develop on 10/15 after Kyle offered at the 10/14 daily to review it. Guannan to move the ticket forward. GitHub's automation adds the reviewer but does not assign the PR, so reviews can be missed; Vishal will look at changing it to assign.",
+      "lastSyncUpdate": "In Review. PR #6040 (ClientApps) merged into develop on 10/15 after Kyle offered at the 10/14 daily to review it. Guannan to move the ticket forward. GitHub's automation adds the reviewer but does not assign the PR, so reviews can be missed; Vishal will look at changing it to assign.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -496,7 +496,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Fix dependabot alert from github",
-      "currentSituation": "In Progress since 10/14 (was Open). PR #6042 for the Dependabot alert fix was created 10/7; no other comments on the ticket.",
+      "lastSyncUpdate": "In Progress since 10/14 (was Open). PR #6042 for the Dependabot alert fix was created 10/7; no other comments on the ticket.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -515,7 +515,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Add search to pipeline selection in task dialog",
-      "currentSituation": "In Review since 10/14. PR #6057 opened 10/13; Anumeha added test cases and Guannan implemented them in the PR on 10/14. Anumeha to check the PR.",
+      "lastSyncUpdate": "In Review since 10/14. PR #6057 opened 10/13; Anumeha added test cases and Guannan implemented them in the PR on 10/14. Anumeha to check the PR.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -534,7 +534,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Tech Debt] Clean up sl-trino-analytics",
-      "currentSituation": "Open; Vishal moved it to the backlog 9/16 because it couldn't be done that sprint. Now in the current sprint.",
+      "lastSyncUpdate": "Open; Vishal moved it to the backlog 9/16 because it couldn't be done that sprint. Now in the current sprint.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -553,7 +553,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend]Enrich Failure Email Notifications with Snap-Level Failure Details",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -572,7 +572,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "[adm-e2e] Migrate all UI tests using playwright to ClientApps Phase 2",
-      "currentSituation": "In Progress. Phase two of work closed last sprint (extended work), 5 points, no need to split. Indrajeet is continuing with no blockers.",
+      "lastSyncUpdate": "In Progress. Phase two of work closed last sprint (extended work), 5 points, no need to split. Indrajeet is continuing with no blockers.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -591,7 +591,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Sysadmin — Organization details page (unblocks Classic Manager retirement)",
-      "currentSituation": "In Review. Approved on 10/13; on 10/14 Kyle updated tests with Poornima, briefly moved it back to In Progress, then returned it to review. Poornima to confirm before Kyle merges. Pavan asked Kyle to review the test cases for PR #6004.",
+      "lastSyncUpdate": "In Review. Approved on 10/13; on 10/14 Kyle updated tests with Poornima, briefly moved it back to In Progress, then returned it to review. Poornima to confirm before Kyle merges. Pavan asked Kyle to review the test cases for PR #6004.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -610,7 +610,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Admin Manager UI action",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -629,7 +629,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Rewrite Designer in React",
-      "currentSituation": "In Progress; PR #6010 open, AI test plan generated 10/8 and needs review. Kyle to trigger regressions.",
+      "lastSyncUpdate": "In Progress; PR #6010 open, AI test plan generated 10/8 and needs review. Kyle to trigger regressions.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -648,7 +648,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "M1: Remove enzyme",
-      "currentSituation": "In Review; PR #6056 (remove enzyme, move remaining tests to RTL) opened 10/12 against develop by Kyle. Alan offered at the 10/14 daily to review it. Alan to review; Kyle to move it forward after. All three React-upgrade stories are Dev to Test; Kyle split the upgrade into an epic of 12 stories and this is the first, small one.",
+      "lastSyncUpdate": "In Review; PR #6056 (remove enzyme, move remaining tests to RTL) opened 10/12 against develop by Kyle. Alan offered at the 10/14 daily to review it. Alan to review; Kyle to move it forward after. All three React-upgrade stories are Dev to Test; Kyle split the upgrade into an epic of 12 stories and this is the first, small one.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -667,7 +667,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "M2: Replace removed React APIs in our code",
-      "currentSituation": "In Progress. Kyle confirmed it is a Dev to Test ticket (classification set 10/13).",
+      "lastSyncUpdate": "In Progress. Kyle confirmed it is a Dev to Test ticket (classification set 10/13).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -686,7 +686,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "M3: Small library bumps",
-      "currentSituation": "Open. Kyle confirmed it is a Dev to Test ticket (classification set 10/13).",
+      "lastSyncUpdate": "Open. Kyle confirmed it is a Dev to Test ticket (classification set 10/13).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -705,7 +705,7 @@
       "addedDate": "2026-10-14",
       "cycleTime": null,
       "summary": "[UX] Define supported sorting in Monitor",
-      "currentSituation": "Moved back to Open on 10/15. Mario proposed the UX view (Round 2, option F recommended) and wasn't sure of the next steps. Carlos to decide whether it goes to handoff or is closed.",
+      "lastSyncUpdate": "Moved back to Open on 10/15. Mario proposed the UX view (Round 2, option F recommended) and wasn't sure of the next steps. Carlos to decide whether it goes to handoff or is closed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -724,7 +724,7 @@
       "addedDate": "2026-10-14",
       "cycleTime": 1,
       "summary": "[UX] Explain Git setup failures and recovery",
-      "currentSituation": "Done 10/15. UX design for Git setup validation and recovery. Salim confirmed the API can check connectivity, permissions and repo/branch counts (limit 100) and pass errors to the UI.",
+      "lastSyncUpdate": "Done 10/15. UX design for Git setup validation and recovery. Salim confirmed the API can check connectivity, permissions and repo/branch counts (limit 100) and pass errors to the UI.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -743,7 +743,7 @@
       "addedDate": "2026-10-14",
       "cycleTime": 1,
       "summary": "[UX Research] Understand pipeline creation across Designer and SnapGPT",
-      "currentSituation": "Done 10/15. UX research on pipeline creation across Designer and SnapGPT. Mario said it is almost done, that where this work fits in the roadmap still needs a conversation, and that he will move the remaining measurable work to the backlog.",
+      "lastSyncUpdate": "Done 10/15. UX research on pipeline creation across Designer and SnapGPT. Mario said it is almost done, that where this work fits in the roadmap still needs a conversation, and that he will move the remaining measurable work to the backlog.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -762,7 +762,7 @@
       "addedDate": "2026-10-14",
       "cycleTime": null,
       "summary": "[UX Design] Redesign the Designer and SnapGPT experience",
-      "currentSituation": "Moved back to Open on 10/15. Design epic to redesign how Designer and SnapGPT work together. Added as a sprint exception; at the 10/14 daily Derek agreed this design work should be tracked for its impact on the team, noted story points are missing on one item, and said the Designer redesign should be taken offline and decided as a project. Derek and Mario to decide.",
+      "lastSyncUpdate": "Moved back to Open on 10/15. Design epic to redesign how Designer and SnapGPT work together. Added as a sprint exception; at the 10/14 daily Derek agreed this design work should be tracked for its impact on the team, noted story points are missing on one item, and said the Designer redesign should be taken offline and decided as a project. Derek and Mario to decide.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -781,7 +781,7 @@
       "addedDate": null,
       "cycleTime": 1,
       "summary": "[UX Research] Account lock and admin actions in Admin Manager",
-      "currentSituation": "Done 10/13. Research closed; the account lock and admin action decisions are in the APP-3074 lock handoff design.",
+      "lastSyncUpdate": "Done 10/13. Research closed; the account lock and admin action decisions are in the APP-3074 lock handoff design.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -800,7 +800,7 @@
       "addedDate": null,
       "cycleTime": 1,
       "summary": "[UX / Design] Account lock and admin actions in Admin Manager",
-      "currentSituation": "Done 10/13. Design for account lock and admin actions in Admin Manager delivered (handoff page shared by Mario Rojas).",
+      "lastSyncUpdate": "Done 10/13. Design for account lock and admin actions in Admin Manager delivered (handoff page shared by Mario Rojas).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -819,7 +819,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task : Studio And CP Regression Analysis - week1",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -838,7 +838,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task : Regression Fixes for CP and Studio for 4.46 release",
-      "currentSituation": "In Review since 10/15 (In Progress since 10/14). Control Plane and Studio regression fixes; the ticket description links QAForge PR #798.",
+      "lastSyncUpdate": "In Review since 10/15 (In Progress since 10/14). Control Plane and Studio regression fixes; the ticket description links QAForge PR #798.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -857,7 +857,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task : Backlog automation for CP and Studio",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -876,7 +876,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": 3,
       "summary": "QA Task : Optimize Git related automated Testcases",
-      "currentSituation": "Done 10/15. Pavan optimized the Git-related automated test cases: all 19 critical tests for every Git provider can run from code; GHEC and Bitbucket Data Center setup was still pending IT and Platform teams.",
+      "lastSyncUpdate": "Done 10/15. Pavan optimized the Git-related automated test cases: all 19 critical tests for every Git provider can run from code; GHEC and Bitbucket Data Center setup was still pending IT and Platform teams.",
       "blocker": "Same IT dependency as APP-1607: GHEC/GHES test instances unavailable.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -895,7 +895,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Regression Analysis for Oct16 regression run",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -914,7 +914,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Fixing flaky/auto failed tests",
-      "currentSituation": "In Progress. Poornima is fixing flaky and auto-failed tests (autofill) and found issues on Canary that she is analyzing.",
+      "lastSyncUpdate": "In Progress. Poornima is fixing flaky and auto-failed tests (autofill) and found issues on Canary that she is analyzing.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -933,7 +933,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Support linking to any repository directory across GitLab.com and GitLab self-managed for all operations.",
-      "currentSituation": "In Progress, started 10/13 by Salim, who works on it while waiting on clarification for the email-notification ticket. Only comment is from August: Indrajeet asked for more details. Git test runs depend on IT-provided instances (see risk).",
+      "lastSyncUpdate": "In Progress, started 10/13 by Salim, who works on it while waiting on clarification for the email-notification ticket. Only comment is from August: Indrajeet asked for more details. Git test runs depend on IT-provided instances (see risk).",
       "blocker": "GHEC data residency instance not ready and GHES license expired; IT ticket open. Does not block this release, but blocks Git test runs afterward.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -952,7 +952,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "currentSituation": "In Review since 10/15. PR #7166 created 10/15. Salim noted on 10/15 that the existing lockout isn't fully suitable for an admin lock, so those changes were added to this ticket's scope after talking with Guannan. Pavan asked Salim on 10/14 to review the test cases.",
+      "lastSyncUpdate": "In Review since 10/15. PR #7166 created 10/15. Salim noted on 10/15 that the existing lockout isn't fully suitable for an admin lock, so those changes were added to this ticket's scope after talking with Guannan. Pavan asked Salim on 10/14 to review the test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -971,7 +971,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend] Recovery Notifications",
-      "currentSituation": "Open; no comments yet.",
+      "lastSyncUpdate": "Open; no comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -990,7 +990,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "currentSituation": "In Review since 10/15. PR #7167 created 10/15 against develop. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review them.",
+      "lastSyncUpdate": "In Review since 10/15. PR #7167 created 10/15 against develop. AI test plan posted 10/14; Bornali attached test cases and asked Vlad to review them.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1009,7 +1009,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Cannot open account",
-      "currentSituation": "In Review. Verified on Canary; on 10/15 Anumeha shared the test-case sheet and ID and noted automation tests don't run in the canary pod. Vlad to review.",
+      "lastSyncUpdate": "In Review. Verified on Canary; on 10/15 Anumeha shared the test-case sheet and ID and noted automation tests don't run in the canary pod. Vlad to review.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1028,7 +1028,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend] Mechanism to notify user if schedule task misses",
-      "currentSituation": "Open; the only comment (9/21) just tags stakeholders, with no update. Reassigned to Vlad Storona 10/12.",
+      "lastSyncUpdate": "Open; the only comment (9/21) just tags stakeholders, with no update. Reassigned to Vlad Storona 10/12.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1047,7 +1047,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": 0,
       "summary": "JellyRoll 2.0: Align Slider with the updated spec (paired Number input, readout, width presets)",
-      "currentSituation": "Done 10/12. JellyRoll 2.0 Slider aligned with updated spec; PR #6050 merged to develop.",
+      "lastSyncUpdate": "Done 10/12. JellyRoll 2.0 Slider aligned with updated spec; PR #6050 merged to develop.",
       "blocker": null,
       "demoOrSpike": "Candidate",
       "discussed": "No"
@@ -1066,7 +1066,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 7,
       "summary": "[UX / Design] [UX] Monitor execution sorting: behavior and API constraints",
-      "currentSituation": "Done 9/29. Duplicate UX intake subtask of APP-2988; no separate design work.",
+      "lastSyncUpdate": "Done 9/29. Duplicate UX intake subtask of APP-2988; no separate design work.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1085,7 +1085,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 6,
       "summary": "[UX / Design] [UX] Git setup: early provider validation and recovery",
-      "currentSituation": "Done 9/28. Duplicate UX intake subtask of APP-2990; no separate design work.",
+      "lastSyncUpdate": "Done 9/28. Duplicate UX intake subtask of APP-2990; no separate design work.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1104,7 +1104,7 @@
       "addedDate": "2026-09-22",
       "cycleTime": 1,
       "summary": "[Duplicate intake] Research tracked in APP-2991",
-      "currentSituation": "Done 9/23. Duplicate intake subtask; research is tracked in APP-2991.",
+      "lastSyncUpdate": "Done 9/23. Duplicate intake subtask; research is tracked in APP-2991.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
