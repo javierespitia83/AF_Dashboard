@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-15",
-  "exportedAt": "2026-10-15T16:59:34+00:00",
+  "exportedAt": "2026-10-15T18:48:31+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1937,6 +1937,66 @@
       "quickCheck": "Hi @Anumeha Singh, this ticket has no description or acceptance criteria. Please add the manual regression scope you cover (components and test suites), the exit criteria, and how it differs from APP-3143 (Pavan). Thanks!",
       "cluster": null,
       "created": "2026-10-12"
+    },
+    {
+      "ticket": "APP-2216",
+      "summary": "[Admin Manager] Update Allowlist table",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Weak",
+      "points": 3,
+      "needsSplitting": null,
+      "days": 119,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": "Scope is a redesign (jellyroll table, immediate save, Jackie design) but no AC; related to APP-3104",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-06-18"
+    },
+    {
+      "ticket": "APP-3111",
+      "summary": "User removed from org while trying to create Service Account",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Weak",
+      "points": null,
+      "needsSplitting": null,
+      "days": 45,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": "Reproducible (Voya) but no AC or estimate",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-08-31"
+    },
+    {
+      "ticket": "APP-3112",
+      "summary": "\"Account Reference\" changes when copying a snap from one Org to another",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Weak",
+      "points": null,
+      "needsSplitting": null,
+      "days": 50,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": "Repro described; no AC or estimate",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-08-26"
+    },
+    {
+      "ticket": "APP-3170",
+      "summary": "SnapLogic Catalog Public API is returning an HTTP 500 Internal Server Error.",
+      "type": "Bug",
+      "priority": "Low",
+      "dor": "Weak",
+      "points": 1,
+      "needsSplitting": null,
+      "days": 15,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": "Customer (Intuit) report; no AC; cause not identified",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-09-30"
     }
   ]
 }

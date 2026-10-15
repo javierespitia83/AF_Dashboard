@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-15",
-  "exportedAt": "2026-10-15T16:59:34+00:00",
+  "exportedAt": "2026-10-15T18:48:31+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -29,7 +29,7 @@
     {
       "ticket": "APP-556",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "In Progress",
       "tester": "Pavan V",
       "classifications": "Customer Escalation",
       "points": 5,
@@ -40,7 +40,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "currentSituation": "In Review. Alan updated the test gaps on 10/14 and the automation PR merged into the feature branch. Pavan asked Alan on 10/15 to attach the test results, which are not in the PR. APP-556 and APP-2719 ship in one combined PR. Alan to attach the test results.",
+      "currentSituation": "In Progress. On 10/15 Pavan asked Alan to attach test results (not in the PR) and Poornima asked for canary results plus new Designer tests; Shardul to help gate tests behind the flag. Alan to attach results.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -268,7 +268,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Display locked & invited account indicator in Admin Manager",
-      "currentSituation": "In Progress. Pavan asked Barbora on 10/15 to review the test cases from the AI test plan (shared with APP-3067). Mario posted the final lock-indicator design 10/13. Barbora to review the test cases.",
+      "currentSituation": "In Progress. PR #6069 created 10/15. Barbora reviewed Pavan's test cases (remove test #6 and Suspended refs in #8); Playwright tests written but unverifiable until the backend is on canary. Pavan to update test cases.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -276,7 +276,7 @@
     {
       "ticket": "APP-2969",
       "owner": "Barbora Novakova",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Pavan V",
       "classifications": null,
       "points": 3,
@@ -287,7 +287,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "currentSituation": "Open, assigned to Barbora. Mario posted the admin-actions design 10/13. Fix version 4.46. AI test plan posted 10/14 and needs review. Tester is Pavan V.",
+      "currentSituation": "In Progress. Mario posted the admin-actions design 10/13; AI test plan posted 10/14 and awaiting review. Fix version 4.46. Tester is Pavan V.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -314,7 +314,7 @@
     {
       "ticket": "APP-3067",
       "owner": "Barbora Novakova",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": "Pavan V",
       "classifications": "Dev to Test",
       "points": 2,
@@ -325,7 +325,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Include locked_out_by, lockout_start_time, and password_last_updated in user settings API response",
-      "currentSituation": "In Progress since 10/12 (Barbora). PR #7161 created 10/14 against develop. Pavan asked Barbora on 10/15 to review the test cases from the AI test plan (shared with APP-2968). Barbora to review them.",
+      "currentSituation": "In Review. PR #7161 created 10/14. On 10/15 Barbora reviewed Pavan's test cases: ticket only adds fields to the API response (no UI or write logic). Pavan to test.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1009,7 +1009,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Cannot open account",
-      "currentSituation": "In Review. PR #6048 passed QA on Canary (build exp_APP-3086_35843). Barbora offered at the 10/14 daily to review the PR, the last step before merge; late on 10/14 Poornima asked Anumeha to review the test in the PR and provide the TestRail ID. Barbora to review; Vlad Storona to merge to develop.",
+      "currentSituation": "In Review. Verified on Canary; on 10/15 Anumeha shared the test-case sheet and ID and noted automation tests don't run in the canary pod. Vlad to review.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
