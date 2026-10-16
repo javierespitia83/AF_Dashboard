@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-16",
-  "exportedAt": "2026-10-16T14:09:42+00:00",
+  "exportedAt": "2026-10-16T14:32:37+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -552,7 +552,7 @@
       "doneDate": null,
       "addedDate": "2026-10-15",
       "cycleTime": null,
-      "summary": null,
+      "summary": "Task name is blank in designer page task create popup",
       "lastSyncUpdate": "Open. Poornima added this defect to the sprint on 10/15 and tagged Carlos (task name blank in the Designer create-task popup). Guannan He to fix; Anumeha Singh is tester.",
       "blocker": null,
       "demoOrSpike": null,
@@ -1008,7 +1008,7 @@
       "doneDate": null,
       "addedDate": "2026-10-15",
       "cycleTime": null,
-      "summary": null,
+      "summary": "502 error while logging into canary through SSO",
       "lastSyncUpdate": "Open; no comments yet. 502 error when logging into canary through SSO. Salim Abdul to pick it up.",
       "blocker": null,
       "demoOrSpike": null,
