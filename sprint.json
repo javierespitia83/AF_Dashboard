@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-16",
-  "exportedAt": "2026-10-16T14:32:37+00:00",
+  "exportedAt": "2026-10-16T16:05:41+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -9,7 +9,7 @@
     "endDate": "2026-10-23",
     "carriedOver": {
       "count": 9,
-      "percent": 15,
+      "percent": 14.8,
       "storyPoints": 27,
       "ticketKeys": [
         "APP-556",
@@ -23,7 +23,20 @@
         "APP-3086"
       ]
     },
-    "removed": []
+    "removed": [
+      {
+        "ticket": "APP-2744",
+        "removedDate": "2026-10-16",
+        "points": null,
+        "addedDate": "2026-10-15",
+        "summary": "Init: create packages/data-layer (unblocks PM rewrite)",
+        "status": "Open",
+        "owner": "Alan Le",
+        "tester": null,
+        "fixVersion": null,
+        "parent": "APP-2742 – Shared Data Layer Package (@sl/data-layer)"
+      }
+    ]
   },
   "tickets": [
     {
@@ -60,25 +73,6 @@
       "cycleTime": null,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
       "lastSyncUpdate": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. It ships in one combined PR with APP-556, so both must be ready before merge. Pavan reported 3 test cases still without automation (10/14). Alan to complete the missing automation.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
-    },
-    {
-      "ticket": "APP-2744",
-      "owner": "Alan Le",
-      "status": "Open",
-      "tester": null,
-      "classifications": "Dev to Test",
-      "points": null,
-      "parent": "APP-2742 – Shared Data Layer Package (@sl/data-layer)",
-      "linkedWorkItems": null,
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": "2026-10-15",
-      "cycleTime": null,
-      "summary": "Init: create packages/data-layer (unblocks PM rewrite)",
-      "lastSyncUpdate": "Open. Alan moved it into the sprint on 10/15 (scaffold of the @sl/data-layer package; blocks Project Manager rewrite Milestone 1). No tester or story points yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -122,6 +116,25 @@
       "discussed": "No"
     },
     {
+      "ticket": "APP-3112",
+      "owner": "Alan Le",
+      "status": "Open",
+      "tester": null,
+      "classifications": null,
+      "points": null,
+      "parent": "APP-55 – App Foundation PSWAT",
+      "linkedWorkItems": "DOC-3401 (relates to)",
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-16",
+      "cycleTime": null,
+      "summary": "\"Account Reference\" changes when copying a snap from one Org to another",
+      "lastSyncUpdate": "Open. Alan moved it into the sprint on 10/16 (bug, no story points or tester yet). Yoelvis Oses traced it on 10/2: paste carries the source-org account ref; fix is to remap by label on paste. Rob Vazzana asked Vishal for help on 10/15.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
       "ticket": "APP-3122",
       "owner": "Anumeha Singh",
       "status": "Open",
@@ -143,18 +156,18 @@
     {
       "ticket": "APP-3128",
       "owner": "Anumeha Singh",
-      "status": "Open",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "classifications": null,
       "points": null,
       "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-16",
       "addedDate": "2026-10-13",
-      "cycleTime": null,
+      "cycleTime": 3,
       "summary": "Regression Fixes for CP and Studio for 4.46 release",
-      "lastSyncUpdate": "Open. Anumeha said on 10/13 she is working on the Control Plane and Studio regression fixes. Anumeha to move it to In Progress.",
+      "lastSyncUpdate": "Done 10/16. Anumeha completed the Control Plane and Studio regression fixes work for the 4.46 release.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -162,18 +175,18 @@
     {
       "ticket": "APP-3130",
       "owner": "Anumeha Singh",
-      "status": "In Progress",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "classifications": null,
-      "points": 3,
+      "points": 2,
       "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
       "linkedWorkItems": null,
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-16",
       "addedDate": "2026-10-12",
-      "cycleTime": null,
+      "cycleTime": 4,
       "summary": "Automate Oauth Test cases into grafana",
-      "lastSyncUpdate": "In Progress. Anumeha is automating OAuth test cases into Grafana (test cases added 10/13).",
+      "lastSyncUpdate": "Done 10/16. Anumeha automated the OAuth test cases into Grafana (test cases added 10/13); story points adjusted from 3 to 2.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -181,18 +194,18 @@
     {
       "ticket": "APP-3132",
       "owner": "Anumeha Singh",
-      "status": "In Progress",
+      "status": "Done",
       "tester": "Anumeha Singh",
       "classifications": null,
       "points": 3,
       "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
       "linkedWorkItems": null,
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-16",
       "addedDate": "2026-10-12",
-      "cycleTime": null,
+      "cycleTime": 4,
       "summary": "Backlog automation for CP and Studio",
-      "lastSyncUpdate": "In Progress. Anumeha is working on backlog automation for Studio and Control Plane.",
+      "lastSyncUpdate": "Done 10/16. Anumeha completed the backlog automation for Studio and Control Plane.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -255,6 +268,25 @@
       "discussed": "No"
     },
     {
+      "ticket": "APP-3176",
+      "owner": "Artem Velykorodnyi",
+      "status": "Open",
+      "tester": "Pavan V",
+      "classifications": null,
+      "points": null,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": "4.46",
+      "doneDate": null,
+      "addedDate": "2026-10-16",
+      "cycleTime": null,
+      "summary": "Org name not displayed in motd",
+      "lastSyncUpdate": "Open; no comments yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
       "ticket": "APP-2968",
       "owner": "Barbora Novakova",
       "status": "In Progress",
@@ -268,7 +300,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Display locked & invited account indicator in Admin Manager",
-      "lastSyncUpdate": "In Progress. PR #6069 created 10/15. Barbora reviewed Pavan's test cases (remove test #6 and Suspended refs in #8); Playwright tests written but unverifiable until the backend is on canary. Pavan to update test cases.",
+      "lastSyncUpdate": "In Progress. PR #6069 created 10/15. 10/16: Pavan agreed to remove test #6 and the Suspended refs and combined the test cases with APP-3067. Pavan to update them; Playwright waits on the backend in canary.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -325,7 +357,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Include locked_out_by, lockout_start_time, and password_last_updated in user settings API response",
-      "lastSyncUpdate": "In Review. PR #7161 created 10/14. On 10/15 Barbora reviewed Pavan's test cases: ticket only adds fields to the API response (no UI or write logic). Pavan to test.",
+      "lastSyncUpdate": "In Review. PR #7161 created 10/14. 10/16: Pavan combined the test cases of APP-2968 and APP-3067 (linked tickets). Pavan to test; the ticket only adds fields to the API response.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -591,7 +623,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend]Enrich Failure Email Notifications with Snap-Level Failure Details",
-      "lastSyncUpdate": "Open; no comments yet.",
+      "lastSyncUpdate": "Open. On 10/16 Pavan asked Indrajeet to review the test cases. Indrajeet to review them.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -884,7 +916,7 @@
     {
       "ticket": "APP-3134",
       "owner": "Pavan V",
-      "status": "Open",
+      "status": "In Progress",
       "tester": "Pavan V",
       "classifications": null,
       "points": 3,
@@ -895,7 +927,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "QA Task : Backlog automation for CP and Studio",
-      "lastSyncUpdate": "Open; no comments yet.",
+      "lastSyncUpdate": "In Progress since 10/16. Pavan is working on this QA task for backlog automation for Control Plane and Studio.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1047,7 +1079,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "lastSyncUpdate": "In Review since 10/15. PR #7167 created 10/15 against develop. Bornali attached test cases; on 10/15 Poornima asked Vlad to add them to backend tests or Playwright (clientapps repo). Vlad to review and add them.",
+      "lastSyncUpdate": "In Review since 10/15. PR #7167. 10/16 Vlad answered Bornali's test cases: the API is internal for the UI (not public) and the cooldown requirement is not needed. Bornali to respond.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
