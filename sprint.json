@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-16",
-  "exportedAt": "2026-10-16T16:05:41+00:00",
+  "exportedAt": "2026-10-16T18:54:25+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -9,7 +9,7 @@
     "endDate": "2026-10-23",
     "carriedOver": {
       "count": 9,
-      "percent": 14.8,
+      "percent": 15.3,
       "storyPoints": 27,
       "ticketKeys": [
         "APP-556",
@@ -35,6 +35,30 @@
         "tester": null,
         "fixVersion": null,
         "parent": "APP-2742 – Shared Data Layer Package (@sl/data-layer)"
+      },
+      {
+        "ticket": "APP-2988",
+        "removedDate": "2026-10-16",
+        "points": 3,
+        "addedDate": "2026-10-14",
+        "summary": "[UX] Define supported sorting in Monitor",
+        "status": "Open",
+        "owner": "Mario Rojas",
+        "tester": null,
+        "fixVersion": null,
+        "parent": null
+      },
+      {
+        "ticket": "APP-2989",
+        "removedDate": "2026-10-16",
+        "points": null,
+        "addedDate": "2026-09-22",
+        "summary": "[UX / Design] [UX] Monitor execution sorting: behavior and API constraints",
+        "status": "Done",
+        "owner": null,
+        "tester": null,
+        "fixVersion": null,
+        "parent": "APP-2988 – [UX] Define supported sorting in Monitor"
       }
     ]
   },
@@ -110,7 +134,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "lastSyncUpdate": "In Progress. Alan could not reproduce it on dev (10/15) and asked Eric Fertig to record a video; AI test plan posted 10/15. Poornima said test cases follow once a PR or more fix details exist. Eric to record a video.",
+      "lastSyncUpdate": "In Progress. Alan could not reproduce it on dev (10/15); on 10/16 Eric Fertig attached the customer's video. Alan to review the video; Poornima's test cases wait for fix details.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -118,7 +142,7 @@
     {
       "ticket": "APP-3112",
       "owner": "Alan Le",
-      "status": "Open",
+      "status": "In Review",
       "tester": null,
       "classifications": null,
       "points": null,
@@ -129,7 +153,7 @@
       "addedDate": "2026-10-16",
       "cycleTime": null,
       "summary": "\"Account Reference\" changes when copying a snap from one Org to another",
-      "lastSyncUpdate": "Open. Alan moved it into the sprint on 10/16 (bug, no story points or tester yet). Yoelvis Oses traced it on 10/2: paste carries the source-org account ref; fix is to remap by label on paste. Rob Vazzana asked Vishal for help on 10/15.",
+      "lastSyncUpdate": "In Review since 10/16. Alan opened PR #6077 (ClientApps). Yoelvis traced it on 10/2: paste keeps the source-org account ref; fix is to remap by label. Customer escalation (Rob asked Vishal 10/15). Alan to get the PR reviewed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -159,7 +183,7 @@
       "status": "Done",
       "tester": "Anumeha Singh",
       "classifications": null,
-      "points": null,
+      "points": 3,
       "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
       "linkedWorkItems": null,
       "fixVersion": null,
@@ -517,18 +541,18 @@
     {
       "ticket": "APP-3106",
       "owner": "Guannan He",
-      "status": "In Review",
+      "status": "Done",
       "tester": null,
       "classifications": "Dev to Test",
       "points": 1,
       "parent": "APP-142 – UI tech debt",
       "linkedWorkItems": null,
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-16",
       "addedDate": "2026-10-12",
-      "cycleTime": null,
+      "cycleTime": 4,
       "summary": "remove old alert component in client/app and remove react-js-pagination from dependency",
-      "lastSyncUpdate": "In Review. PR #6040 (ClientApps) merged into develop on 10/15 after Kyle offered at the 10/14 daily to review it. Guannan to move the ticket forward. GitHub's automation adds the reviewer but does not assign the PR, so reviews can be missed; Vishal will look at changing it to assign.",
+      "lastSyncUpdate": "Done 10/16. PR #6040 (ClientApps) merged into develop 10/15 and Guannan moved it to Done. Vishal to look at making GitHub's automation assign PR reviewers.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -536,7 +560,7 @@
     {
       "ticket": "APP-3107",
       "owner": "Guannan He",
-      "status": "In Progress",
+      "status": "In Review",
       "tester": null,
       "classifications": "Dev to Test",
       "points": 2,
@@ -547,7 +571,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Fix dependabot alert from github",
-      "lastSyncUpdate": "In Progress since 10/14 (was Open). PR #6042 for the Dependabot alert fix was created 10/7; no other comments on the ticket.",
+      "lastSyncUpdate": "In Review since 10/16 (was In Progress). PR #6042 for the Dependabot alert fix was created 10/7; no new comments. Guannan to get the PR reviewed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -560,13 +584,13 @@
       "classifications": null,
       "points": 3,
       "parent": null,
-      "linkedWorkItems": null,
+      "linkedWorkItems": "APP-3177 (is connected to)",
       "fixVersion": "4.46",
       "doneDate": null,
       "addedDate": null,
       "cycleTime": null,
       "summary": "Add search to pipeline selection in task dialog",
-      "lastSyncUpdate": "In Review since 10/14. PR #6057 opened 10/13. On 10/16 Anumeha ran the automated tests (pass) and found one bug: a basic user with read-only or read/write permission can search and select a pipeline from a project that is not listed in the dropdown. Guannan to fix.",
+      "lastSyncUpdate": "In Review since 10/14. PR #6057. Anumeha's test found a bug: read-only users can search a pipeline from a project not listed. Guannan: search API limitation (perm_filter added in code); logged APP-3177 for 4.46/4.46.1.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -623,7 +647,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend]Enrich Failure Email Notifications with Snap-Level Failure Details",
-      "lastSyncUpdate": "Open. On 10/16 Pavan asked Indrajeet to review the test cases. Indrajeet to review them.",
+      "lastSyncUpdate": "Open. 10/16 Indrajeet reviewed Pavan's test plan, has open questions, and asked Derek and Vishal whether fix version 4.46 is right. Waiting on Derek and Vishal.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -757,25 +781,6 @@
       "cycleTime": null,
       "summary": "M3: Small library bumps",
       "lastSyncUpdate": "Open. Kyle confirmed it is a Dev to Test ticket (classification set 10/13).",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
-    },
-    {
-      "ticket": "APP-2988",
-      "owner": "Mario Rojas",
-      "status": "Open",
-      "tester": null,
-      "classifications": null,
-      "points": 3,
-      "parent": null,
-      "linkedWorkItems": "APP-1131 (relates to)",
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": "2026-10-14",
-      "cycleTime": null,
-      "summary": "[UX] Define supported sorting in Monitor",
-      "lastSyncUpdate": "Moved back to Open on 10/15. Mario proposed the UX view (Round 2, option F recommended) and wasn't sure of the next steps. Carlos to decide whether it goes to handoff or is closed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1022,7 +1027,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "lastSyncUpdate": "In Review since 10/15. PR #7166 created 10/15; scope now includes admin-lock changes. On 10/15 Poornima asked Salim to link the UI ticket for this backend change (tests go through the UI). Salim to link it.",
+      "lastSyncUpdate": "In Review since 10/15. PR #7166; scope now includes admin-lock changes. 10/16 Salim told Poornima there is no single UI ticket (all share the parent). Poornima to decide how to test it.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1047,25 +1052,6 @@
       "discussed": "No"
     },
     {
-      "ticket": "APP-3097",
-      "owner": "Shardul Sardesai",
-      "status": "Open",
-      "tester": "Anumeha Singh",
-      "classifications": null,
-      "points": 3,
-      "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
-      "linkedWorkItems": null,
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": null,
-      "cycleTime": null,
-      "summary": "[Backend] Recovery Notifications",
-      "lastSyncUpdate": "Open. AI test plan posted 10/16, shared with APP-3103 (same epic APP-2980), awaiting review (tester Anumeha Singh).",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
-    },
-    {
       "ticket": "APP-3010",
       "owner": "Vlad Storona",
       "status": "In Review",
@@ -1079,7 +1065,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Resend invitation email — Public API",
-      "lastSyncUpdate": "In Review since 10/15. PR #7167. 10/16 Vlad answered Bornali's test cases: the API is internal for the UI (not public) and the cooldown requirement is not needed. Bornali to respond.",
+      "lastSyncUpdate": "In Review since 10/15. PR #7167. 10/16 Vlad: it is an internal API for the UI and the cooldown requirement is not needed; Poornima asked him to update the title and description. Vlad to update them.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1142,25 +1128,6 @@
       "discussed": "No"
     },
     {
-      "ticket": "APP-2989",
-      "owner": null,
-      "status": "Done",
-      "tester": null,
-      "classifications": null,
-      "points": null,
-      "parent": "APP-2988 – [UX] Define supported sorting in Monitor",
-      "linkedWorkItems": null,
-      "fixVersion": null,
-      "doneDate": "2026-09-29",
-      "addedDate": "2026-09-22",
-      "cycleTime": 7,
-      "summary": "[UX / Design] [UX] Monitor execution sorting: behavior and API constraints",
-      "lastSyncUpdate": "Done 9/29. Duplicate UX intake subtask of APP-2988; no separate design work.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "No"
-    },
-    {
       "ticket": "APP-2992",
       "owner": null,
       "status": "Done",
@@ -1194,6 +1161,25 @@
       "cycleTime": 1,
       "summary": "[Duplicate intake] Research tracked in APP-2991",
       "lastSyncUpdate": "Done 9/23. Duplicate intake subtask; research is tracked in APP-2991.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3097",
+      "owner": null,
+      "status": "Open",
+      "tester": "Anumeha Singh",
+      "classifications": null,
+      "points": 3,
+      "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": null,
+      "cycleTime": null,
+      "summary": "[Backend] Recovery Notifications",
+      "lastSyncUpdate": "Open. AI test plan posted 10/16, shared with APP-3103 (same epic APP-2980), awaiting review (tester Anumeha Singh).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"

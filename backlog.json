@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-16",
-  "exportedAt": "2026-10-16T16:05:41+00:00",
+  "exportedAt": "2026-10-16T18:54:25+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -24,7 +24,7 @@
       "type": "Task",
       "priority": "High",
       "dor": "Weak",
-      "points": 1,
+      "points": 3,
       "needsSplitting": null,
       "days": 31,
       "epic": null,
@@ -1284,7 +1284,7 @@
       "type": "Story",
       "priority": "Medium",
       "dor": "Well-Formed",
-      "points": 1,
+      "points": null,
       "needsSplitting": null,
       "days": 51,
       "epic": "APP-142 – UI tech debt",
@@ -1389,7 +1389,7 @@
       "type": "Bug",
       "priority": "Medium",
       "dor": "Weak",
-      "points": 3,
+      "points": null,
       "needsSplitting": null,
       "days": 50,
       "epic": "APP-55 – App Foundation PSWAT",
@@ -1449,7 +1449,7 @@
       "type": "Bug",
       "priority": "Medium",
       "dor": "Well-Formed",
-      "points": 1,
+      "points": null,
       "needsSplitting": null,
       "days": 43,
       "epic": "APP-55 – App Foundation PSWAT",
@@ -1599,7 +1599,7 @@
       "type": "Epic",
       "priority": "High",
       "dor": "N/A (Epic)",
-      "points": 5,
+      "points": null,
       "needsSplitting": "Yes",
       "days": 30,
       "epic": "APP-2958 – Independent Organization Context per Browser Tab",
@@ -1622,6 +1622,21 @@
       "quickCheck": null,
       "cluster": "APP-2958",
       "created": "2026-09-21"
+    },
+    {
+      "ticket": "APP-2988",
+      "summary": "[UX] Define supported sorting in Monitor",
+      "type": "Task",
+      "priority": "High",
+      "dor": "Weak",
+      "points": 3,
+      "needsSplitting": null,
+      "days": 1,
+      "epic": null,
+      "risk": "Next step undecided (handoff or close); returned to backlog 10/16; not linked to an Epic",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-09-22"
     },
     {
       "ticket": "APP-3037",
@@ -1749,7 +1764,7 @@
       "type": "Bug",
       "priority": "Medium",
       "dor": "Well-Formed",
-      "points": 1,
+      "points": null,
       "needsSplitting": "Yes",
       "days": 11,
       "epic": null,
@@ -1772,21 +1787,6 @@
       "quickCheck": "Refinement Check — this ticket describes the CodeQL timeout and lists intended fixes, but it lacks reproduction steps and exact paths to exclude. Under-specified tickets are parked toward the bottom of the rank until refined; please add reproducible steps and define the exclusions so it can move back up in a future sweep. Thanks.",
       "cluster": null,
       "created": "2026-10-07"
-    },
-    {
-      "ticket": "APP-3111",
-      "summary": "User removed from org while trying to create Service Account",
-      "type": "Bug",
-      "priority": "High",
-      "dor": "Weak",
-      "points": 2,
-      "needsSplitting": null,
-      "days": 46,
-      "epic": "APP-55 – App Foundation PSWAT",
-      "risk": "Reproducible (Voya) but no AC or estimate",
-      "quickCheck": "Hi, this QA task has no description. Can the owner add the scope (which CP and Studio suites, which environment), the expected output, and the done criteria (for example, pass rate reached or failures triaged into tickets)? Please also confirm the Lowest priority is right for 4.46 release work. Thanks!",
-      "cluster": null,
-      "created": "2026-08-31"
     },
     {
       "ticket": "APP-3123",
@@ -1944,7 +1944,7 @@
       "type": "Task",
       "priority": "Lowest",
       "dor": "Missing",
-      "points": 5,
+      "points": null,
       "needsSplitting": null,
       "days": 4,
       "epic": "APP-3150 – Epic to track QA Activities for App Sprint 11-06",
@@ -1997,6 +1997,21 @@
       "quickCheck": null,
       "cluster": null,
       "created": "2026-09-30"
+    },
+    {
+      "ticket": "APP-3177",
+      "summary": "index/list_assets API should honor perm_filter for permission-scoped pipeline search",
+      "type": "Story",
+      "priority": "High",
+      "dor": "Weak",
+      "points": null,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": null,
+      "risk": "No estimate; follow-up from APP-3113 (planned for 4.46 or 4.46.1); not linked to an Epic",
+      "quickCheck": null,
+      "cluster": null,
+      "created": "2026-10-16"
     }
   ]
 }
