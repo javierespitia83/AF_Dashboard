@@ -858,6 +858,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     const conform = (obj, def) => { const errs = []; vNode(obj, Object.assign({}, schema, { properties: Object.assign({}, schema.properties, { tickets: { type: 'array' } }) }), 'root', errs); (obj.tickets || []).forEach((tk, i) => vNode(tk, schema.definitions[def], 'tickets[' + i + ']', errs)); return errs.slice(0, 4); };
     check('sprint.json conforms to the schema (keys, types, dates, sprint and carriedOver objects)', conform(J('sprint.json'), 'sprintTicket').length === 0, conform(J('sprint.json'), 'sprintTicket'));
     check('snapshots/sprint-4697.json conforms to the snapshot schema', conform(CLOSED, 'sprintTicket').length === 0, conform(CLOSED, 'sprintTicket'));
+    check('snapshots/sprint-12119.json conforms to the snapshot schema (closed-sprint state and completeDate allowed)', conform(J('snapshots/sprint-12119.json'), 'sprintTicket').length === 0, conform(J('snapshots/sprint-12119.json'), 'sprintTicket'));
     check('backlog.json conforms to the schema', conform(J('backlog.json'), 'backlogTicket').length === 0, conform(J('backlog.json'), 'backlogTicket'));
     check('fixtures/sample_snapshot.json conforms to the schema (with sprint.carriedOver and cycleTime)', conform(JSON.parse(fixtureTxt), 'sprintTicket').length === 0 && !!JSON.parse(fixtureTxt).sprint.carriedOver, conform(JSON.parse(fixtureTxt), 'sprintTicket'));
     const manifestSchema=J('schema/sprints.schema.json');

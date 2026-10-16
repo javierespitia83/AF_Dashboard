@@ -91,6 +91,19 @@
           ],
           "description": "Jira sprint name, e.g. 'APP Sprint 10-09-2026'."
         },
+        "state": {
+          "type": "string",
+          "enum": ["active", "closed"],
+          "description": "Optional. Written only in a frozen snapshot of a closed sprint (snapshots/sprint-<id>.json); absent in the live sprint.json."
+        },
+        "completeDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "Optional. YYYY-MM-DD the sprint was completed in Jira. Only in frozen snapshots of closed sprints."
+        },
         "startDate": {
           "type": [
             "string",

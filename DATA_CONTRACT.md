@@ -55,6 +55,8 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 | `name` | string or null | e.g. `APP Sprint 10-09-2026` |
 | `startDate` | string (date) or null | `YYYY-MM-DD`, America/Los_Angeles |
 | `endDate` | string (date) or null | `YYYY-MM-DD`; changes if the sprint is extended |
+| `state` | `active` or `closed`, optional | Only in a frozen snapshot of a closed sprint (`snapshots/sprint-<id>.json`); absent in the live `sprint.json` |
+| `completeDate` | string (date) or null, optional | `YYYY-MM-DD` the sprint was completed in Jira; only in frozen snapshots |
 | `carriedOver` | object or null | `{ "count": int or null, "percent": number 0 to 100 or null, "storyPoints": int or null, "ticketKeys"?: string[] }` |
 | `removed` | array, null or absent | **Optional (D52).** Tickets that were in the sprint and left it (moved to a later sprint or the backlog). One entry per ticket: `ticket` (key), `removedDate` (`YYYY-MM-DD`, required), and optional `points`, `addedDate` (when it entered the sprint; absent means from the start), `summary`, `status` (at removal), `owner`, `tester`, `fixVersion`, `parent`. Must come from the Jira changelog (Sprint field); the UI never infers it. Absent or `null` = not available (the burndown footnote says removals are not reflected); `[]` = nothing was removed. |
 
