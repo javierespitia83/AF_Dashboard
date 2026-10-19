@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-19",
-  "exportedAt": "2026-10-19T13:53:31+00:00",
+  "exportedAt": "2026-10-19T14:02:31+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -819,7 +819,7 @@
       "owner": "Mario Rojas",
       "status": "Done",
       "tester": null,
-      "classifications": null,
+      "classifications": "Dev to Test",
       "points": 3,
       "parent": "APP-2957 – 2026 Ability for an Admin to lock/unlock users as well as resend new user invitation email",
       "linkedWorkItems": "APP-3074 (blocks), APP-2967 (relates to)",
