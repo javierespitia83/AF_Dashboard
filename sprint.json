@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-19",
-  "exportedAt": "2026-10-19T15:50:35+00:00",
+  "exportedAt": "2026-10-19T15:53:26+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -296,7 +296,7 @@
     },
     {
       "ticket": "APP-2643",
-      "owner": "Carlos Espitia",
+      "owner": "Artem Velykorodnyi",
       "status": "In Review",
       "tester": "Anumeha Singh",
       "classifications": null,
