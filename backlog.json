@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-19",
-  "exportedAt": "2026-10-19T15:53:26+00:00",
+  "exportedAt": "2026-10-19T17:03:33+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -127,7 +127,7 @@
       "ticket": "APP-1131",
       "summary": "Not all columns are sortable in Pipeline executions section of Monitor",
       "type": "Story",
-      "priority": "High",
+      "priority": "Medium",
       "dor": "Well-Formed",
       "points": null,
       "needsSplitting": null,
@@ -812,21 +812,6 @@
       "quickCheck": null,
       "cluster": null,
       "created": "2026-06-18"
-    },
-    {
-      "ticket": "APP-2220",
-      "summary": "Asset search in Project Manager and Classic manager now search for all assets by default",
-      "type": "Bug",
-      "priority": "Highest",
-      "dor": "Weak",
-      "points": 8,
-      "needsSplitting": null,
-      "days": 66,
-      "epic": "APP-55 – App Foundation PSWAT",
-      "risk": "Customer report (AstraZeneca) with screenshot; no repro steps or acceptance criteria; timeout cause not identified; 8 pts, may need splitting once scoped",
-      "quickCheck": "Hi, this bug is clearly reported (asset search times out when it starts searching all assets by default) but it has no repro steps or acceptance criteria and the cause is not identified. Can the owner confirm the expected default behavior (blank search screen vs. all assets) and add repro steps and AC? Under-specified tickets get parked toward the bottom of the rank until refined. Thanks!",
-      "cluster": null,
-      "created": "2026-06-23"
     },
     {
       "ticket": "APP-2285",
@@ -2072,21 +2057,6 @@
       "quickCheck": null,
       "cluster": null,
       "created": "2026-10-16"
-    },
-    {
-      "ticket": "APP-3178",
-      "summary": "ActivityLog page does not load in Project Manager (Shared > Files > context menu > Activity Log)",
-      "type": "Bug",
-      "priority": "Low",
-      "dor": "Well-Formed",
-      "points": null,
-      "needsSplitting": null,
-      "days": 0,
-      "epic": null,
-      "risk": "Low priority although the page does not load at all; confirm severity with the reporter (Pavan V).",
-      "quickCheck": "Well-Formed from description alone: repro steps, expected vs actual result and build tag 4.46_rc_36017 are in the ticket description; no comments yet.",
-      "cluster": null,
-      "created": "2026-10-19"
     }
   ]
 }
