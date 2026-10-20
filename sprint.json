@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T11:46:20-05:00",
+  "exportedAt": "2026-10-20T17:50:20+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -127,6 +127,19 @@
         "tester": null,
         "fixVersion": "4.46",
         "parent": null
+      },
+      {
+        "ticket": "APP-3097",
+        "removedDate": "2026-10-20",
+        "points": 3,
+        "addedDate": "2026-10-06",
+        "summary": "[Backend] Recovery Notifications",
+        "status": "Open",
+        "type": null,
+        "owner": null,
+        "tester": "Anumeha Singh",
+        "fixVersion": null,
+        "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)"
       }
     ]
   },
@@ -146,10 +159,10 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "lastSyncUpdate": "In Review since 10/19 (was In Progress). Canary and local mock tests pass (10/19); Alan to attach/confirm the results.",
-      "blocker": null,
+      "lastSyncUpdate": "In Review. Alan Le needs a review of the settings modal; e2e tests pass and screenshots were added. Poornima Srikantesh: full regression needed (open/edit pipeline tests). Ships with APP-2719.",
+      "blocker": "Waiting for a code review; QA to run full regression.",
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2719",
@@ -209,7 +222,7 @@
       "lastSyncUpdate": "In Review since 10/19 (was In Progress). PR created 10/19 (ClientApps #6090 to 4.46_rc). Alan could not reproduce it on dev (10/15); Eric Fertig attached the customer's video 10/16; tests mostly passing per the 10/19 daily.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3112",
@@ -329,7 +342,7 @@
       "lastSyncUpdate": "In Review; PR changes are ready. Artem is on PTO; Salim offered to review/help. Carlos to coordinate. Tim reassignment remains pending.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2880",
@@ -389,7 +402,7 @@
       "lastSyncUpdate": "In Progress; UI verification is waiting on a change from Salim. Team to confirm the remaining change; test cases are linked with APP-3067.",
       "blocker": "Waiting for the change needed to complete UI verification; confirm which change remains.",
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2969",
@@ -406,8 +419,8 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "lastSyncUpdate": "In Progress; client-side UI work. Local tests run; team discussed expected Playwright/canary coverage.",
-      "blocker": null,
+      "lastSyncUpdate": "In Progress. Barbora Novakova is finishing the Playwright test (10/20 Daily); verification will wait until a related ticket from Salim Abdul is merged.",
+      "blocker": "Dependency: merge of a related ticket from Salim Abdul before verification.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -429,7 +442,7 @@
       "lastSyncUpdate": "Open; Guannan proposed replacing it in the sprint with APP-3177, since it depends on an API research task. Derek to research APP-3177 and discuss offline. No scope change was decided.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3067",
@@ -449,7 +462,7 @@
       "lastSyncUpdate": "Done 10/19. PR #7161 merged 10/19 (4.46_rc) and Barbora moved the ticket to Done after asking Pavan which status applied. 10/16 Pavan combined the test cases of APP-2968 and APP-3067 (linked tickets). The ticket only adds fields to the API response; no test result is recorded in Jira yet.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3166",
@@ -609,7 +622,7 @@
       "lastSyncUpdate": "Done 10/19. Add search to pipeline selection in task dialog: PR #6057 merged to 4.46_rc.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3171",
@@ -629,7 +642,7 @@
       "lastSyncUpdate": "Done 10/19. Task name blank in the task create popup: PR #6087 merged to 4.46_rc.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2906",
@@ -666,8 +679,8 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "[Backend]Enrich Failure Email Notifications with Snap-Level Failure Details",
-      "lastSyncUpdate": "Open; Indrajeet reported ~6% passing and questioned TestRail case IDs; Pavan earlier reported a passing linked run. Poornima to verify; scope answer pending.",
-      "blocker": "Needs verification of the TestRail case set/results and expected scope.",
+      "lastSyncUpdate": "Open. Waiting for Derek Fung's response; acceptance criteria and test plan may change. Derek to set up an offline conversation with Indrajeet Kane; fix version (4.46) decision pending.",
+      "blocker": "Awaiting response from Derek Fung on scope and acceptance criteria; TestRail case set verification pending.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -689,7 +702,7 @@
       "lastSyncUpdate": "In Review since 10/19 (was In Progress). UI tests can run locally and do not require TestRail/Canary. Indrajeet was to create a PR.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2781",
@@ -706,7 +719,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Sysadmin — Organization details page (unblocks Classic Manager retirement)",
-      "lastSyncUpdate": "In Review. Kyle tagged the tests and will merge when the build passes.",
+      "lastSyncUpdate": "In Review. Kyle Scheuerlein stated at the 10/20 Daily that he is merging it that morning, once the build passes.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -746,7 +759,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Rewrite Designer in React",
-      "lastSyncUpdate": "In Progress; Friday bug reported fixed. Kyle to add E2E tests; Poornima to assist with regression.",
+      "lastSyncUpdate": "In Progress. Kyle Scheuerlein is finishing the work (10/20 Daily); E2E tests to add and Poornima Srikantesh to assist with regression.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1029,7 +1042,7 @@
       "lastSyncUpdate": "In Review. PR #7184 created 10/20. Salim to share the IT ticket details for GHEC/GHES; Git test runs remain dependent on those instances.",
       "blocker": "GHEC data residency instance not ready and GHES license expired; IT ticket open. Does not block this release, but blocks Git test runs afterward.",
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2970",
@@ -1046,8 +1059,8 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "lastSyncUpdate": "In Review. Carlos requested reviewer availability from Jigish and urgency input from Salim/Barbora; awaiting their reply. Pavan to test after merge.",
-      "blocker": "Waiting for PR review/merge before testing.",
+      "lastSyncUpdate": "In Review. Platform Engineering (Jigish Patel) is looking for a reviewer (Jira 10/20, Daily); Carlos Espitia asked Salim Abdul for urgency input. Pavan V to test after merge.",
+      "blocker": "Dependency: Platform Engineering (Jigish Patel) for a PR reviewer; waiting for review/merge before testing.",
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -1066,10 +1079,10 @@
       "addedDate": "2026-10-15",
       "cycleTime": null,
       "summary": "502 error while logging into canary through SSO",
-      "lastSyncUpdate": "Open. Salim and Poornima to estimate development/testing effort and add story points.",
-      "blocker": null,
+      "lastSyncUpdate": "Open. Salim Abdul to investigate on 10/21; cause unclear (application vs. environment), also reproduces on stage pod. Poornima Srikantesh raised it as a release blocker for Scrum of Scrums. Estimate pending.",
+      "blocker": "Release blocker: owner of the cause not yet identified (CloudOps, Platform Engineering and App team contacted).",
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3010",
@@ -1129,7 +1142,7 @@
       "lastSyncUpdate": "In Progress. Shared test plan for APP-3103/APP-3097 was generated 10/16. Vlad to progress implementation; fit/sequencing remains open.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3114",
@@ -1192,26 +1205,6 @@
       "discussed": "No"
     },
     {
-      "ticket": "APP-3097",
-      "owner": null,
-      "status": "Open",
-      "type": "Story",
-      "tester": "Anumeha Singh",
-      "classifications": null,
-      "points": 3,
-      "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
-      "linkedWorkItems": null,
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": null,
-      "cycleTime": null,
-      "summary": "[Backend] Recovery Notifications",
-      "lastSyncUpdate": "Open; recovery-notification scope with APP-3103 discussed; fit/sequencing remains undecided. Derek noted the feature may need to be split if it cannot be completed in one sprint.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "Yes"
-    },
-    {
       "ticket": "APP-3178",
       "owner": "Guannan He",
       "status": "In Review",
@@ -1226,7 +1219,7 @@
       "addedDate": "2026-10-19",
       "cycleTime": null,
       "summary": "ActivityLog Page does not load in Project Manager",
-      "lastSyncUpdate": "In Review since 10/19. PR #6086 (ClientApps) created 10/19. 10/19 Poornima replied to Guannan that QA will test locally since it is a bigger change; some tests may need changes. Activity Log did not load from Project Manager Files; destination is a product question.",
+      "lastSyncUpdate": "In Review. PR #6086 approved (10/20 Daily). QA to test it locally and a few tests need updating (Poornima Srikantesh). Activity Log location (Project Manager vs. Monitor) still to confirm.",
       "blocker": "Confirm the intended Activity Log location in Project Manager vs. Monitor.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1249,7 +1242,7 @@
       "lastSyncUpdate": "Done 10/19. Defect found in regression: SSO login on the Canary pod loads indefinitely and fails with a 500 error. Bornali commented \"Duplicate\" and closed it 10/19. The ticket was moved from the APIM project (APIM-4710) and added to this sprint 10/19.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3183",
@@ -1266,10 +1259,10 @@
       "addedDate": "2026-10-19",
       "cycleTime": null,
       "summary": "[Regression][APIM] API Manager Create Task – pipeline picker lists all project spaces/APIs, and no pipeline can be selected within APIs (even within the same API)",
-      "lastSyncUpdate": "In Review since 10/19 (was In Progress). Regression bug in API Manager Create Task: pipeline picker lists all project spaces/APIs. 10/19 Guannan replied to Aysu that the list is searchable.",
+      "lastSyncUpdate": "In Review since 10/19. Mentioned in the 10/20 Daily as in review with QA to test; follows the 10/19 exchange between Guannan He and Aysu Ahmadli.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     }
   ]
 }
