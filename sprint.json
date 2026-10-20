@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T12:55:36+00:00",
+  "exportedAt": "2026-10-20T09:32:10-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -646,7 +646,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Tech Debt] Clean up sl-trino-analytics",
-      "lastSyncUpdate": "In Review since 10/19 (was In Progress). PR #198 (sl-trino-analytics) created 10/19. Moved to backlog on 9/16, now back in the current sprint.",
+      "lastSyncUpdate": "In Review. PR #198 created 10/19.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1173,7 +1173,7 @@
     },
     {
       "ticket": "APP-2994",
-      "owner": null,
+      "owner": "Mario Rojas",
       "status": "Done",
       "type": "Sub-task",
       "tester": null,
@@ -1260,7 +1260,7 @@
       "classifications": null,
       "points": 2,
       "parent": null,
-      "linkedWorkItems": null,
+      "linkedWorkItems": "APP-1710 (relates to)",
       "fixVersion": "4.46",
       "doneDate": null,
       "addedDate": "2026-10-19",
