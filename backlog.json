@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T09:32:10-05:00",
+  "exportedAt": "2026-10-20T11:46:20-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -401,7 +401,7 @@
       "dor": "Well-Formed",
       "points": 1,
       "needsSplitting": null,
-      "days": 167,
+      "days": 42,
       "epic": "APP-1713 – [Asset Catalog] Add Files and snappacks to asset catalog",
       "risk": null,
       "quickCheck": null,
