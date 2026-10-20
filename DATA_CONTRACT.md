@@ -29,6 +29,7 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 | `ticket` | string, never blank | Jira key, e.g. `APP-193` | (never null) |
 | `owner` | string or null | Assignee display name | `Unassigned` |
 | `status` | string or null | Original Jira status | `Other` bucket (see §5) |
+| `type` | string or null | Exact Jira issue type from `Daily`'s `Type` column (e.g. `Bug`, `Task`, `Sub-task`, `Story`); preserve unrecognized values | `—` |
 | `tester` | string or null | Tester display name (one person) | `Unassigned` |
 | `classifications` | string or null | Semicolon-space (`; `) joined classification values; the detail table's `Dev to Test` column shows `Yes` when this includes that exact value | `—` |
 | `points` | number or null | Story points (whole ticket, dev + test) | `—`; counts as 0 |
@@ -58,7 +59,7 @@ The Sprint selector defaults to `current`. A `?sprint=<id>` URL parameter is res
 | `state` | `active` or `closed`, optional | Only in a frozen snapshot of a closed sprint (`snapshots/sprint-<id>.json`); absent in the live `sprint.json` |
 | `completeDate` | string (date) or null, optional | `YYYY-MM-DD` the sprint was completed in Jira; only in frozen snapshots |
 | `carriedOver` | object or null | `{ "count": int or null, "percent": number 0 to 100 or null, "storyPoints": int or null, "ticketKeys"?: string[] }` |
-| `removed` | array, null or absent | **Optional (D52).** Tickets that were in the sprint and left it (moved to a later sprint or the backlog). One entry per ticket: `ticket` (key), `removedDate` (`YYYY-MM-DD`, required), and optional `points`, `addedDate` (when it entered the sprint; absent means from the start), `summary`, `status` (at removal), `owner`, `tester`, `fixVersion`, `parent`. Must come from the Jira changelog (Sprint field); the UI never infers it. Absent or `null` = not available (the burndown footnote says removals are not reflected); `[]` = nothing was removed. |
+| `removed` | array, null or absent | **Optional (D52).** Tickets that were in the sprint and left it (moved to a later sprint or the backlog). One entry per ticket: `ticket` (key), `removedDate` (`YYYY-MM-DD`, required), and optional `points`, `addedDate` (when it entered the sprint; absent means from the start), `summary`, `status` (at removal), `type`, `owner`, `tester`, `fixVersion`, `parent`. Must come from the Jira changelog (Sprint field); the UI never infers it. `type` is exact Jira issue type, nullable and optional for legacy removal rows. Absent or `null` = not available (the burndown footnote says removals are not reflected); `[]` = nothing was removed. |
 
 Rules the UI must respect:
 - In the sprint Ticket detail table, `Dev to Test` appears immediately after `Tester`; it shows `Yes` only when `classifications`, split on `"; "`, contains the exact `Dev to Test` value, and `—` otherwise. The `No tester` KPI uses the same exact-value rule when excluding tickets.
@@ -123,6 +124,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Page | Dimension | Value of a ticket |
 |---|---|---|
 | Sprint | Status | its bucket: `To Do/Open`, `In Progress`, `In Review`, `Done`, `Other` (§5) |
+| Sprint | Type | exact `type` value, or `—` when null |
 | Sprint | Assignee | `owner` (null, blank or `Unassigned` → `Unassigned`) |
 | Sprint | Tester | `tester` (null or blank → `Unassigned`) |
 | Sprint | Team member | OR match: `owner` or `tester` equals the selected person name, with missing values normalized to `Unassigned` |
@@ -148,6 +150,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Added mid-sprint | tickets with a non-null `addedDate` later than `startDate` + `MID_SPRINT_THRESHOLD_DAYS` days (ISO date comparison); the setting is `AF.config.midSprintThresholdDays` in `dashboard.js`, default 2; reports the count and the points |
 | Carried over | `sprint.carriedOver` as exported (not filtered, not recalculated): count, percent, story points |
 | Tickets by status | per bucket: `N W.I \| P SP`; bar length = bucket work items ÷ tile work items; Total row = tile totals |
+| Tickets by type | exact type value (null grouped as `—`): count and sum of points as `N W.I \| P SP`; rows sort by work item count descending then type; bar length = share of work items; Total row = tile totals. The tile excludes its own Type filter, and clicking a row filters by that exact type value. |
 | Team Contribution | union of assignee and tester person groups; clicking a name filters tickets where the person is assignee OR tester; Assignee W.I and Tester W.I are role-specific ticket counts and can overlap. Total W.I is the unique ticket union across either role, with the unique story points in the `N W.I \| P SP` format; sorted by Total W.I descending, then name. The pinned Total row shows role-specific work item counts and the unique sprint work item count plus unique story point sum only under Total W.I \| SP. |
 | Assignee x tester | cell = count of tickets with that assignee group and that tester group; rows and columns sorted by total work items descending, `Unassigned` tester column last |
 

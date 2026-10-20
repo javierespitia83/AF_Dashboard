@@ -34,8 +34,8 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 
 **Layout at 1920 x 1080**
 - [ ] No page-level scroll (document height does not exceed the viewport, no horizontal overflow) on both pages.
-- [ ] The board fills the viewport: tiles reach the right edge with equal gutters; no max-width cap; no large empty areas. On the sprint main row, Burndown and Tickets by status have enough room for their charts, bars, labels and values; Team Contribution fits its four columns without dominating the row; Tickets by status remains at least 250 px wide.
-- [ ] Sprint: KPI strip with seven tiles (work items, story points, done, No tester & Not Dev to Test, avg cycle time, added mid-sprint, carried over); main row with three tiles (burndown, status, Team Contribution); lower row with the ticket table and the assignee x tester grid. Backlog: KPI strip with five tiles; main row with five tiles; table below.
+- [ ] The board fills the viewport: tiles reach the right edge with equal gutters; no max-width cap; no large empty areas. On the sprint main row, Burndown, Tickets by status and Tickets by type have room for their content; Team Contribution fits its four columns; both status and type tiles remain at least 250 px wide.
+- [ ] Sprint: KPI strip with seven tiles (work items, story points, done, No tester & Not Dev to Test, avg cycle time, added mid-sprint, carried over); main row with four tiles (burndown, status, type, Team Contribution); lower row with the ticket table and the assignee x tester grid. Backlog: KPI strip with five tiles; main row with five tiles; table below.
 - [ ] At dashboard sizes, the sprint main/lower row heights use a 1.1475:1.2025 ratio, transferring 15% of the former main-row height to the lower row; total board height stays within the viewport.
 - [ ] Long tile bodies (Team Contribution, matrix, detail and backlog tables) scroll inside the tile with a visible scrollbar; headers stay sticky; Total lines stay pinned. The sprint detail table scrolls horizontally when its columns exceed the tile width; Owner, Tester and Status cells wrap at spaces with automatic widths, Dev to Test follows the exact classification, and Last sync update is at least 340 px wide.
 - [ ] Layout also works with no page scroll at 1440 x 900 and 1536 x 864.
@@ -51,6 +51,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Team Contribution subtitle is "Work Items (W.I) by Jira role"; headers are Name, Assignee W.I, Tester W.I and Total W.I | SP; note reads "Assignee and Tester work item counts can overlap. Story points are shared and count once." and does not include the removed wording "Total W.I counts each ticket once".
 - [ ] Sprint detail's final column is labeled "Last sync update"; document it as the note captured by the snapshot, which may not include changes made later.
 - [ ] Tickets by status displays `N W.I | P SP` with units in each row and total; repeated plain clicks toggle multiple status filters without Ctrl/Cmd, and clicking an already-selected status removes only that status.
+- [ ] Tickets by type displays exact Jira type values (unknown values preserved, missing type grouped as `—`) with `N W.I | P SP` in each row and a Total; rows sort by W.I descending then type; selecting a type filters other tiles while the type distribution excludes its own Type filter.
 - [ ] Selecting each clickable KPI filter adds a removable `KPI: <name>` tag; removing that tag clears only the KPI filter and preserves regular dashboard filters.
 
 **Numbers with no filter — backlog**

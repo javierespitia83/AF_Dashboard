@@ -9,6 +9,7 @@ A local, read-only dashboard that turns the tracker's two sheets into a fast, ex
 Questions it must answer, mostly by clicking:
 - Is the sprint progressing, and how much is done?
 - How many work items and story points are in each status?
+- How many work items and story points are in each Jira issue type?
 - Who owns the work, and who tests it?
 - Which tickets have no tester, and what status are they in?
 - Which backlog items are ready, weak, or missing for refinement, and how old are they?
@@ -38,7 +39,7 @@ States: while loading show "Loading…". A missing or invalid JSON file shows a 
 
 ## 5. Cross-filter model (applies to both pages)
 
-- **Dimensions.** Sprint: Status, Assignee, Tester, Team member, Fix version, Parent. Team member is the union of the ticket's Assignee and Tester values. Backlog: DoR, Priority, Type, Age (days in current status), Epic (§7.4), plus a text search. A selection per dimension is a set of values.
+- **Dimensions.** Sprint: Status, Type, Assignee, Tester, Team member, Fix version, Parent. Team member is the union of the ticket's Assignee and Tester values. Backlog: DoR, Priority, Type, Age (days in current status), Epic (§7.4), plus a text search. A selection per dimension is a set of values.
 - **Combining.** Several values in one dimension combine with OR; different dimensions combine with AND; the text search (backlog) is AND with everything.
 - **Click behavior** on a clickable element (a bar row, a person row, a matrix cell):
   - On status rows, every plain click toggles that status independently, so repeated clicks can select or clear several statuses without modifier keys. On other clickable elements, a plain click **selects only that value** in that dimension (replacing any other value in it).
@@ -54,7 +55,7 @@ States: while loading show "Loading…". A missing or invalid JSON file shows a 
 
 ## 6. Page 1 — Current sprint (`index.html`)
 
-Dimensions: Status, Assignee, Tester, Fix version, Parent. The filter bar also holds two selects, **Fix version** and **Parent** (options from the data, plus `(none)`). Choosing an option sets that dimension to one value; "All" clears it.
+Dimensions: Status, Type, Assignee, Tester, Fix version, Parent. The filter bar also holds two selects, **Fix version** and **Parent** (options from the data, plus `(none)`). Choosing an option sets that dimension to one value; "All" clears it.
 
 **Sprint selection:** when `sprints.json` is valid, show a keyboard-accessible native select labelled **Sprint** in the top bar. Default to the manifest entry whose id is `current`. Each option shows the sprint name and `(active)` or `(closed)`; do not repeat dates in the option label. A `?sprint=<id>` URL parameter selects that manifest entry; an unknown id shows a clear error while leaving the selector available. Changing the select updates the query parameter with `history.replaceState` and loads the selected snapshot without a full-page reload. Snapshot loads are cached in memory; changing sprints resets all filters. Never construct a path from the query parameter: resolve the id through the manifest and validate its relative file path. A missing or invalid manifest silently falls back to the existing `sprint.json` behavior and hides the selector.
 
@@ -64,10 +65,10 @@ For a `state: "closed"` sprint, mark the view with a high-contrast **HISTORICAL 
 
 ```
 KPI strip  [ Work items ][ Story points ][ Done ][ Added mid-sprint ][ Carried over ][ No tester & Not Dev to Test ][ Avg cycle time ]
-Main row   [ Burndown ][ Tickets by status ][ Team Contribution (Assignee W.I | Tester W.I | Total W.I | SP) ]
+Main row   [ Burndown ][ Tickets by status ][ Tickets by type ][ Team Contribution (Assignee W.I | Tester W.I | Total W.I | SP) ]
 Lower row  [ Ticket detail table ][ Assignee x tester ]
 ```
-Rows share the board height: the KPI strip is compact (about 90 px); the main row takes about 48.8% of the remaining height and the lower row about 51.2%. This transfers 15% of the main row's previous height to the lower row while keeping total height unchanged. Main row column widths are roughly 2.2 : 1.3 : 1.9, giving Burndown and Tickets by status more room while keeping Team Contribution wide enough for its four columns; Tickets by status remains at least 250 px wide. In the lower row the heat grid has about 28% of the width (at least 440 px) and the ticket table the rest. (Revised 2026-10-01: the burndown joined the main row and the heat grid moved to the lower row, D41.) Every tile has a title, a one-line subtitle, a body that scrolls internally when it overflows (sticky header, visible scrollbar), and where useful a pinned Total line.
+Rows share the board height: the KPI strip is compact (about 90 px); the main row takes about 48.8% of the remaining height and the lower row about 51.2%. Main row column widths keep Burndown and Team Contribution generous while reserving at least 250 px each for Tickets by status and Tickets by type. In the lower row the heat grid has about 28% of the width (at least 440 px) and the ticket table the rest. (Revised 2026-10-01: the burndown joined the main row and the heat grid moved to the lower row, D41.) Every tile has a title, a one-line subtitle, a body that scrolls internally when it overflows (sticky header, visible scrollbar), and where useful a pinned Total line.
 
 ### 6.2 Tiles
 
@@ -81,6 +82,7 @@ Rows share the board height: the KPI strip is compact (about 90 px); the main ro
 - **KPI: Carried over** — what carried over from the previous sprint, read straight from `sprint.carriedOver` (never recalculated). Value = ticket count; hint = "X% of tickets, N points" (a part that is null is left out). If `carriedOver` is `null` the tile shows `—` and "Not calculated yet for this sprint"; if `sprint.json` has no `sprint` object it shows `—` and "No sprint data in sprint.json". Never shows 0 for "not calculated".
 - **Burndown** — see §6.3.
 - **Tickets by status** (dimension Status) — one tile, one clickable horizontal bar row per bucket (To Do/Open, In Progress, In Review, Done, and Other only when present in the data). Each row: status name with its colour dot, a bar (length = the bucket's share of the tile's work items), and the pair **work items | story points** with units shown (e.g. `16 W.I | 48 SP`). A header line reads "Work items | Story points". A Total row is pinned below.
+- **Tickets by type** (dimension Type) — one tile, one clickable horizontal bar row per exact Jira issue type present (including unknown values; null or missing Type groups under `—`). Each row shows the type, a bar sized by its share of the tile's work items, and `N W.I | P SP`; a pinned Total row shows the tile totals. Rows sort by W.I descending, then type name. Like other dimension tiles, it excludes its own Type filter while respecting other filters.
 - **Team Contribution** (dimensions Assignee, Tester and Team member) — one combined table with Name, Assignee W.I, Tester W.I and Total W.I | SP columns. One row per person appearing in either role, sorted by unique work item count descending then name. Assignee W.I and Tester W.I are separate clickable counts that filter their corresponding dimension; the name filters tickets where that person is assignee OR tester. The table is computed with all three dimensions excluded, so the available people remain visible. Total W.I counts unique tickets for that person across either role, with the unique story point sum in the explicit format `N W.I | P SP`. The pinned Total row shows Assignee W.I and Tester W.I role counts, then the unique sprint work item count and story point sum only under Total W.I | SP. Subtitle: "Work Items (W.I) by Jira role". Footnote: "Assignee and Tester work item counts can overlap. Story points are shared and count once."
 - **Assignee x tester** (dimensions Assignee and Tester) — a heat grid: rows are assignees, columns are testers (including `Unassigned`), each cell shows the number of work items, shaded by count. Rows and columns are sorted by total work items descending (`Unassigned` column last). Clicking a cell filters to that assignee and tester pair. The `Unassigned` tester column is where coverage gaps show.
 - **Ticket detail** — all filtered tickets in tracker order. Columns: Ticket, Summary, Owner, Tester, Dev to Test, Status (original text, with colour dot), Story points, Parent, Fix version, Linked work items, Last sync update. Dev to Test shows `Yes` when the exact `Dev to Test` classification is present, otherwise `—`. Owner, Tester and Status widths are automatic; their text wraps at spaces to fit the available table width. Last sync update is the note captured in the snapshot and may not include changes made afterward; it is at least 350 px wide so its short status and next step wrap across a few lines. Header shows "n of N work items". Sticky header, inner scroll with visible scrollbar, long text wraps.
@@ -177,7 +179,7 @@ Priority and Type values carry a small icon in the style of Jira's own, so they 
 - **Priority:** Highest = red up arrow; High = orange "="; Medium = amber up chevron; Low = blue down chevron; Lowest = blue double down chevron. (Drawn to match the icons in the team's Jira.)
 - **Type:** Story = green rounded square with a white bookmark; Bug = red square with a white bug; Epic = purple square with a white lightning bolt; Task = blue square with a white check; Sub-task = blue square with two linked boxes; Sub-Bug = red square with two linked boxes (the Sub-task glyph in the Bug colour); Initiative and Doc Task have icons too, in case they appear in the data.
 - A value with no icon (any other name, or `—`) shows text only. Icons are inline SVG drawn by the app (no image files, no network), decorative (`aria-hidden`), carry no text of their own, and never replace the text, so colour is never the only signal. They are not Atlassian's original artwork; they are simple look-alikes.
-- The sprint page has no Priority or Type, so it is unchanged.
+- The sprint page's Type tile uses plain text and does not show the Backlog page's Jira-style Type icons.
 
 ## 9a. Chart colours
 

@@ -110,6 +110,7 @@ These record resolved choices and defaults where the original answers were silen
 | D62 | **Rebalance the sprint main row toward Burndown and Tickets by status.** Clarified by Carlos, 2026-10-14, superseding D61: use a 2.2 : 1.3 : 1.9 ratio for Burndown / Tickets by status / Team Contribution so the first two tiles have enough room and Team Contribution does not dominate. | SPEC §6.1; ACCEPTANCE §3 |
 | D63 | **Clarify Team Contribution's unique total note.** Requested by Carlos, 2026-10-14: remove the sentence "Total W.I counts each ticket once" from the note; keep only the role-overlap and shared-story-point explanation. | SPEC §6.2; ACCEPTANCE §3 |
 | D64 | **Rename the sprint detail note column to "Last sync update".** Requested by Carlos, 2026-10-14: make clear the text is from the latest snapshot sync and may not include subsequent Jira changes. | SPEC §6.2; DATA_CONTRACT §2; ACCEPTANCE §3 |
+| D65 | **Current sprint gains Tickets by type** with per-type `N W.I | P SP` values, preserving Jira issue-type names. `Daily`'s Jira `Type` field feeds the sprint JSON; the tile is a Type cross-filter dimension and groups missing types under `—`. Requested 2026-10-19. | SPEC §6.1–6.2; DATA_CONTRACT §2, §6 |
 
 None of these blocks implementation.
 

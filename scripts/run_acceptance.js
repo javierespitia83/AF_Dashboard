@@ -11,7 +11,7 @@
  * Needs: Node 22+ (global fetch and WebSocket), python3 (for the local servers), Google Chrome.
  * Run from this app folder: node scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
  * Chrome location:     set CHROME_PATH if it is not the default macOS path.
- * Ports used:          8771-8784 (servers) and 9333 (Chrome debugging) on 127.0.0.1.
+ * Ports used:          8771-8784 (servers) on 127.0.0.1; Chrome debugging uses a free port (set ACCEPT_DEBUG_PORT to fix it). Extra Chrome flags: CHROME_ARGS (for example --no-sandbox).
  * Exit code:           0 when every check passes, 1 otherwise.
  * Keep it in sync:     if SPEC.md, DATA_CONTRACT.md or ACCEPTANCE.md change, update the
  *                      expectations here in the same pass.
@@ -76,14 +76,25 @@ const servers = Object.keys(dirs).map(k => spawn('python3', ['-m', 'http.server'
 
 // ---------- CDP ----------
 let chrome;
+let DBG = 9333; // replaced at launch by a free port (or ACCEPT_DEBUG_PORT)
+const freePort = () => new Promise((res, rej) => { const srv = require('net').createServer(); srv.once('error', rej); srv.listen(0, '127.0.0.1', () => { const p = srv.address().port; srv.close(() => res(p)); }); });
 async function launch() {
   fs.rmSync(path.join(SP, 'prof5'), { recursive: true, force: true });
-  chrome = spawn(CH, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9333', '--user-data-dir=' + path.join(SP, 'prof5'), '--no-first-run', 'about:blank'], { stdio: 'ignore' });
-  for (let i = 0; i < 50; i++) { try { await fetch('http://127.0.0.1:9333/json/version'); return; } catch (e) { await sleep(200); } }
-  throw new Error('chrome did not start');
+  DBG = Number(process.env.ACCEPT_DEBUG_PORT) || await freePort();
+  // CHROME_ARGS: extra flags, space separated (for example --no-sandbox in a container or a restricted sandbox).
+  const extra = (process.env.CHROME_ARGS || '').split(/\s+/).filter(Boolean);
+  let err = ''; let exited = null;
+  chrome = spawn(CH, ['--headless=new', '--disable-gpu', '--remote-debugging-port=' + DBG, '--user-data-dir=' + path.join(SP, 'prof5'), '--no-first-run', ...extra, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  chrome.stderr.on('data', d => { err = (err + d).slice(-2000); });
+  chrome.on('exit', (code, sig) => { exited = 'code ' + code + (sig ? ' signal ' + sig : ''); });
+  chrome.on('error', e => { exited = 'spawn error: ' + e.message; });
+  for (let i = 0; i < 150; i++) { // up to 30 s
+    try { await fetch('http://127.0.0.1:' + DBG + '/json/version'); return; } catch (e) { if (exited) break; await sleep(200); }
+  }
+  throw new Error('chrome did not start (debug port ' + DBG + (exited ? ', Chrome exited: ' + exited : ', no answer in 30 s') + ')' + (err ? '\nChrome stderr (last lines):\n' + err.trim().split('\n').slice(-8).join('\n') : '') + '\nHint: if this runs inside a sandbox or container, try CHROME_ARGS=--no-sandbox, or run the script from a normal Terminal.');
 }
 async function openPage(url, w = 1920, h = 1080) {
-  const t = await (await fetch('http://127.0.0.1:9333/json/new?about:blank', { method: 'PUT' })).json();
+  const t = await (await fetch('http://127.0.0.1:'+DBG+'/json/new?about:blank', { method: 'PUT' })).json();
   const ws = new WebSocket(t.webSocketDebuggerUrl); await new Promise(r => ws.addEventListener('open', r));
   let id = 0; const pend = {}; const logs = []; const reqs = []; const resp = {};
   ws.addEventListener('message', m => {
@@ -110,7 +121,7 @@ async function openPage(url, w = 1920, h = 1080) {
   await sleep(200);
   const key = async (k, code, vk, text, modifiers = 0) => { await send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, text, modifiers }); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, modifiers }); };
   const resize = async (ww, hh) => { await send('Emulation.setDeviceMetricsOverride', { width: ww, height: hh, deviceScaleFactor: 1, mobile: false }); await sleep(300); };
-  return { send, ev, logs, reqs, resp, key, resize, close: async () => { await fetch('http://127.0.0.1:9333/json/close/' + t.id); ws.close(); } };
+  return { send, ev, logs, reqs, resp, key, resize, close: async () => { await fetch('http://127.0.0.1:'+DBG+'/json/close/' + t.id); ws.close(); } };
 }
 
 // ---------- page-side helpers ----------
@@ -152,13 +163,14 @@ return { sub: T(b.querySelector('.sub')), empty: emp ? T(emp) : null, has: !!s, 
 `;
 const READ_SPRINT = `
 const c = readCommon();
-const status = {}, statusRaw = {}, statusSel = [], statusDim = [];
+const status = {}, statusRaw = {}, statusSel = [], statusDim = [], types = {}, typeRaw = {}, typeSel = [], typeDim = [];
 rowsOf('Tickets by status').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); status[n]=[parseInt(i,10),parseInt(pp,10)]; statusRaw[n]=raw; if(r.classList.contains('sel')) statusSel.push(n); if(r.classList.contains('dim')) statusDim.push(n); });
+rowsOf('Tickets by type').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); types[n]=[parseInt(i,10),parseFloat(pp)]; typeRaw[n]=raw; if(r.classList.contains('sel')) typeSel.push(n); if(r.classList.contains('dim')) typeDim.push(n); });
 const contribution = () => { const rows=[...tile('Team Contribution').querySelectorAll('.contribution-row')]; return rows.map(r=>({name:T(r.querySelector('.contribution-name')), assignee:+T(r.querySelector('[data-key^="assignee:"]')), tester:+T(r.querySelector('[data-key^="tester:"]')), total:T(r.querySelector('.contribution-total')), nameSelected:r.querySelector('.contribution-name').classList.contains('selected'), nameDimmed:r.querySelector('.contribution-name').classList.contains('dimmed')})); };
 const det = tile('Ticket detail'); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
 const statusFoot = T(tile('Tickets by status').querySelector('.tile-foot'));
 const cf=tile('Team Contribution').querySelector('.tile-foot .totalrow');
-return Object.assign(c, { status, statusRaw, statusSel, statusDim, contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: T(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: [...tile('Team Contribution').querySelector('.colhead.contribution-grid').children].map(T), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
+return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeSel, typeDim, typeFoot:T(tile('Tickets by type').querySelector('.tile-foot')), contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), type: emptyIn('Tickets by type'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: (n => n ? T(n) : null)(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: (h => h ? [...h.children].map(T) : [])(tile('Team Contribution').querySelector('.colhead.contribution-grid')), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
 `;
 
 // ---------- independent sprint model ----------
@@ -166,8 +178,8 @@ const BN = ['To Do/Open', 'In Progress', 'In Review', 'Done', 'Other'];
 const bucket = s => ({ 'To Do': 0, 'Open': 0, 'In Progress': 1, 'In Review': 2, 'Done': 3 }[s] ?? 4);
 const pt = v => typeof v === 'number' ? v : 0;
 const grpName = v => (v == null || String(v).trim() === '' || v === 'Unassigned') ? 'Unassigned' : v;
-const SKEY = { status: t => BN[bucket(t.status)], assignee: t => grpName(t.owner), tester: t => grpName(t.tester), contributor: t => null, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
-const newF = () => ({ status: new Set(), assignee: new Set(), tester: new Set(), contributor: new Set(), fix: new Set(), parent: new Set() });
+const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim()==='' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: t => grpName(t.tester), contributor: t => null, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
+const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), contributor: new Set(), fix: new Set(), parent: new Set() });
 const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || (d === 'contributor' ? (f[d].has(grpName(t.owner)) || f[d].has(grpName(t.tester))) : f[d].has(keyMap[d](t)))) && (!pred || pred(t)));
 const group = (rows, kf) => { const m = {}; rows.forEach(t => { const k = kf(t); (m[k] = m[k] || { i: 0, p: 0 }); m[k].i++; m[k].p += pt(t.points); }); return m; };
 const sumP = rows => rows.reduce((a, t) => a + pt(t.points), 0);
@@ -210,11 +222,12 @@ function expectSprint(S, f, ctx = CTX) {
     midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
     String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
   const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
+  const typeBase = applyF(S, f, SKEY, ['type']); const typeG = group(typeBase, SKEY.type);
   const cBase = applyF(S, f, SKEY, ['assignee', 'tester', 'contributor']);
-  const contrib = {}; cBase.forEach(t => { [SKEY.assignee(t), SKEY.tester(t)].forEach(n => { const r=contrib[n]||(contrib[n]={assignee:0,tester:0,keys:new Map()}); if(SKEY.assignee(t)===n) r.assignee++; if(SKEY.tester(t)===n) r.tester++; r.keys.set(t.ticket,t); }); });
+  const contrib = {}; cBase.forEach(t => { [...new Set([SKEY.assignee(t), SKEY.tester(t)])].forEach(n => { const r=contrib[n]||(contrib[n]={assignee:0,tester:0,keys:new Map()}); if(SKEY.assignee(t)===n) r.assignee++; if(SKEY.tester(t)===n) r.tester++; r.keys.set(t.ticket,t); }); });
   Object.keys(contrib).forEach(n => { const r=contrib[n], u=[...r.keys.values()]; r.total=`${u.length} W.I | ${sumP(u)} SP`; });
   const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {}; mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
-  return { kpiValues: kp, active, all, status: stG, stBase, contribution: contrib, cBase, matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
+  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, contribution: contrib, cBase, matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
 }
 
 async function verifySprint(p, S, f, label, ctx = CTX) {
@@ -272,6 +285,13 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
     BN.forEach(n => { const g = e.status[n] || { i: 0, p: 0 }; const got = d.status[n]; if (got === undefined) { if (n !== 'Other' || g.i) errs.push(['status row missing', n]); } else { if (got[0] !== g.i || got[1] !== g.p) errs.push(['status', n, got, [g.i, g.p]]); if(d.statusRaw[n]!==`${g.i} W.I | ${g.p} SP`) errs.push(['status metric format',n,d.statusRaw[n]]); } });
     if (d.statusFoot.replace(/\s+/g, '') !== `Total${e.stBase.length}W.I|${sumP(e.stBase)}SP`) errs.push(['status total', d.statusFoot]);
   } else if (!d.empties.status) errs.push(['status empty-state missing']);
+  if (e.typeBase.length) {
+    const names=Object.keys(e.types).sort((a,b)=>e.types[b].i-e.types[a].i||a.localeCompare(b));
+    const got=Object.keys(d.types);
+    if(!eq(got,names)) errs.push(['type row order',got,names]);
+    names.forEach(n=>{const g=d.types[n],x=e.types[n];if(!g||g[0]!==x.i||g[1]!==x.p||d.typeRaw[n]!==`${x.i} W.I | ${x.p} SP`) errs.push(['type metrics',n,g,x,d.typeRaw[n]]);});
+    if(d.typeFoot.replace(/\s+/g,'')!==`Total${e.typeBase.length}W.I|${sumP(e.typeBase)}SP`) errs.push(['type total',d.typeFoot]);
+  } else if (!d.empties.type) errs.push(['type empty-state missing']);
   const cExp=e.contribution, cGot=d.contribution, cNames=Object.keys(cExp).sort((a,b)=>cExp[b].keys.size-cExp[a].keys.size||a.localeCompare(b));
   if (!cNames.length) { if (!d.empties.contribution) errs.push(['Team Contribution empty-state missing']); }
   else {
@@ -289,7 +309,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
   if (d.detailSub !== `${e.all.length} of ${S.length} work items`) errs.push(['detail sub', d.detailSub]);
   if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
-  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ status: 'Status', assignee: 'Assignee', tester: 'Tester', contributor: 'Team member', fix: 'Fix version', parent: 'Parent' })[dim] + ': ' + v)));
+  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', contributor: 'Team member', fix: 'Fix version', parent: 'Parent' })[dim] + ': ' + v)));
   if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
   if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
   if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
@@ -378,6 +398,7 @@ const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/Clo
 const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
 const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
 const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
+const CLOSED_CO = CLOSED.sprint && CLOSED.sprint.carriedOver, CLOSED_CARRIED = CLOSED_CO ? [String(CLOSED_CO.count), `${CLOSED_CO.percent}% of tickets, ${CLOSED_CO.storyPoints} points`] : ['—','Not calculated yet for this sprint'];
 const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 2 };
 
 const layoutJs = `const d=document.scrollingElement; const bodies=[...document.querySelectorAll('.tile-body')].map(b=>({sh:b.scrollHeight,ch:b.clientHeight,ov:getComputedStyle(b).overflowY})); const tiles=[...document.querySelectorAll('section.tile')].map(t=>{const r=t.getBoundingClientRect(); return {l:Math.round(r.left), r:Math.round(r.right), t:Math.round(r.top), b:Math.round(r.bottom), w:Math.round(r.width), h:Math.round(r.height), title:(t.querySelector('h2')||t.querySelector('.label')).textContent.trim()};}); const bad=[]; document.querySelectorAll('body *').forEach(n=>{ if(n.closest('.tile-body')) return; const r=n.getBoundingClientRect(); if(r.width>0 && r.right>innerWidth+1) bad.push(n.tagName+'.'+n.className+':'+Math.round(r.right)); }); return {iw:innerWidth, ih:innerHeight, sw:d.scrollWidth, sh:d.scrollHeight, bodies, tiles, bad:bad.slice(0,5)};`;
@@ -399,23 +420,23 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='4697'`).catch(() => false)); i++) await sleep(100);
   const closedView = await run(p, `const det=tile('Ticket detail'), hdr=[...det.querySelectorAll('thead th')].map(T), rows=[...det.querySelectorAll('tbody tr')]; const ix=n=>hdr.indexOf(n), byKey=k=>{const r=rows.find(x=>T(x.children[0])===k);return r?{owner:T(r.children[ix('Owner')]),points:T(r.children[ix('Story points')]),situation:T(r.children[ix('Last sync update')])}:null}; const k=kpi('Carried over'),b=tile('Burndown'),svg=b.querySelector('svg.burndown'); return {url:location.search,probe:window.__sprintSessionProbe,selected:document.getElementById('sprint-select').value,count:rows.length,work:T(kpi('Work items').querySelector('.value')),closed:!document.getElementById('sprint-banner').hidden,historical:document.querySelector('.app').classList.contains('historical-sprint'),banner:T(document.getElementById('sprint-banner')),carried:[T(k.querySelector('.value')),T(k.querySelector('.hint'))],tags:document.querySelectorAll('.tags .tag').length,rowsNullSituation:rows.every(r=>T(r.children[ix('Last sync update')])==='—'),noToday:![...svg.querySelectorAll('text')].some(x=>T(x)==='Today'),days:svg.querySelectorAll('rect.bd-day').length,unassigned:byKey('APP-2983'),nullPoints:rows.filter(r=>T(r.children[ix('Story points')])==='—').length,note:document.querySelector('.sprint-banner-note')&&T(document.querySelector('.sprint-banner-note')),foot:T(b.querySelector('.tile-foot'))};`);
   check('Closed sprint: selection uses SPA navigation, updates the URL, resets filters and loads all 73 tickets', closedView.url === '?sprint=4697' && closedView.probe === 'kept' && closedView.selected === '4697' && closedView.count === CLOSED.tickets.length && closedView.work === String(CLOSED.tickets.length) && closedView.tags === 0 && closedView.closed, closedView);
-  check('Closed sprint: historical banner and gray view, snapshot date and note, null carriedOver/narratives and no Today marker', closedView.banner.includes('HISTORICAL VIEW · CLOSED SPRINT') && closedView.banner.includes('Snapshot as of ' + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.historical && closedView.note === MANIFEST.sprints.find(x=>x.id===4697).note && eq(closedView.carried,['—','Not calculated yet for this sprint']) && closedView.rowsNullSituation && closedView.noToday && closedView.days === 13 && closedView.foot.includes('Tickets removed from the sprint and re-estimates are not reflected'), closedView);
+  check('Closed sprint: historical banner and gray view, snapshot date and note, null carriedOver/narratives and no Today marker', closedView.banner.includes('HISTORICAL VIEW · CLOSED SPRINT') && closedView.banner.includes('Snapshot as of ' + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.historical && closedView.note === MANIFEST.sprints.find(x=>x.id===4697).note && eq(closedView.carried, CLOSED_CARRIED) && closedView.rowsNullSituation === CLOSED.tickets.every(t => !t.lastSyncUpdate) && closedView.noToday && closedView.days === 13 && closedView.foot.includes('Tickets removed from the sprint and re-estimates are not reflected'), closedView);
   check('Closed sprint: null owner displays Unassigned and all three null point values display —', closedView.unassigned && closedView.unassigned.owner === 'Unassigned' && closedView.nullPoints === 3, { unassigned: closedView.unassigned, nullPoints: closedView.nullPoints });
   { const shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_1920.png'),Buffer.from(shot.result.data,'base64')); }
   await p.resize(480,900);
   { const l=await run(p,layoutJs), pick=await run(p,`const r=document.getElementById('sprint-picker').getBoundingClientRect(),s=document.getElementById('sprint-select').getBoundingClientRect(); return {picker:[r.left,r.right,r.width],select:[s.left,s.right,s.width],text:document.getElementById('sprint-select').value}`), shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_480.png'),Buffer.from(shot.result.data,'base64')); check('Closed sprint: selector remains visible at narrow width without page-level horizontal overflow', pick.select[2]>0 && l.sw<=l.iw && l.bad.length===0, { scrollWidth:l.sw, innerWidth:l.iw, bad:l.bad, picker:pick }); }
   await p.resize(1920,1080);
-  await run(p, `setSel('sprint-select','12119')`);
-  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='12119'`).catch(() => false)); i++) await sleep(100);
+  await run(p, `setSel('sprint-select','${MANIFEST.current}')`);
+  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='${MANIFEST.current}'`).catch(() => false)); i++) await sleep(100);
   const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
-  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/sprint.json')).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector==='12119', { requests:p.reqs, returned });
+  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/sprint.json')).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector===String(MANIFEST.current), { requests:p.reqs, returned });
   let unknown = await openPage(base + 'index.html?sprint=999999');
   const unknownState = await run(unknown, `return {heading:T(document.querySelector('#app h2')),picker:!!document.getElementById('sprint-select'),options:document.getElementById('sprint-select')&&document.getElementById('sprint-select').options.length,value:document.getElementById('sprint-select')&&document.getElementById('sprint-select').value}`);
   check('Unknown sprint id: clear error and usable selector remain visible', unknownState.heading==='Sprint not found' && unknownState.picker && unknownState.options===MANIFEST.sprints.length+1, unknownState);
-  await run(unknown, `setSel('sprint-select','12119')`);
+  await run(unknown, `setSel('sprint-select','${MANIFEST.current}')`);
   for (let i=0;i<40 && !(await run(unknown,`!!document.querySelector('.kpis')`).catch(()=>false));i++) await sleep(100);
   const recovered = await run(unknown, `return {kpis:!!document.querySelector('.kpis'),value:document.getElementById('sprint-select').value,search:location.search,heading:document.querySelector('#app h2')&&T(document.querySelector('#app h2')),rows:document.querySelectorAll('#app tbody tr').length}`);
-  check('Unknown sprint id: choosing a valid option recovers', recovered.kpis && recovered.value==='12119' && recovered.search==='?sprint=12119', recovered);
+  check('Unknown sprint id: choosing a valid option recovers', recovered.kpis && recovered.value===String(MANIFEST.current) && recovered.search==='?sprint='+MANIFEST.current, recovered);
   await unknown.close();
   let direct = await openPage(base + 'index.html?sprint=4697');
   const directState = await run(direct, `return {selected:document.getElementById('sprint-select').value,count:tile('Ticket detail').querySelectorAll('tbody tr').length,banner:!document.getElementById('sprint-banner').hidden}`);
@@ -430,6 +451,11 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   }
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
+  { const typeName = Object.keys(expectSprint(S, f).types)[0];
+    await run(p, `clickRow('Tickets by type', ${JSON.stringify(typeName)})`); f.type = new Set([typeName]);
+    await verifySprint(p, S, f, `Click Type "${typeName}": filters the dashboard and preserves the type distribution`);
+    await run(p, `clickReset()`); f = newF();
+    await verifySprint(p, S, f, 'Reset all clears the Type selection'); }
   const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
   const noTesterKpi = await run(p, `const k=kpi('No tester & Not Dev to Test'); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
   check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
@@ -444,17 +470,17 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
   await run(p, `clickEl(kpi('Carried over'))`);
   lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  check('Click Carried Over filters the lower section to exactly the exported 11 keys', carriedKeys.length === 11 && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
+  check('Click Carried Over filters the lower section to exactly the exported carried-over keys (count matches sprint.carriedOver.count)', carriedKeys.length === SPRJ.sprint.carriedOver.count && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
   await run(p, `clickEl(kpi('Carried over'))`);
   await verifySprint(p, S, f, 'KPI filters clear on second click');
   const L = await run(p, layoutJs);
   check('Layout 1920x1080: no page scroll (width and height)', L.sh <= L.ih && L.sw <= L.iw, L);
-  check('Layout 1920x1080: 7 KPI + 3 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 12 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
+  check('Layout 1920x1080: 7 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 13 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
   check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 40px of the footer)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
-  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(7, 10).map(t => t.h)).size === 1 && new Set(L.tiles.slice(10, 12).map(t => t.h)).size === 1 && L.tiles[10].w + L.tiles[11].w + 10 >= L.iw - 30 && L.tiles[11].w >= 440 && L.tiles[11].w <= 0.32 * L.iw, L.tiles.slice(7));
-  const rowRatio = L.tiles[7].h / L.tiles[10].h;
+  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(7, 11).map(t => t.h)).size === 1 && new Set(L.tiles.slice(11, 13).map(t => t.h)).size === 1 && L.tiles[11].w + L.tiles[12].w + 10 >= L.iw - 30 && L.tiles[12].w >= 440 && L.tiles[12].w <= 0.32 * L.iw, L.tiles.slice(7));
+  const rowRatio = L.tiles[7].h / L.tiles[11].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(7).map(t => t.title), ['Burndown', 'Tickets by status', 'Team Contribution', 'Ticket detail', 'Assignee x tester']) && L.tiles[8].w >= 250, L.tiles.slice(7).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(7).map(t => t.title), ['Burndown', 'Tickets by status', 'Tickets by type', 'Team Contribution', 'Ticket detail', 'Assignee x tester']) && L.tiles[8].w >= 250 && L.tiles[9].w >= 250, L.tiles.slice(7).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
   const st = await run(p, `const out={}; for (const [k,t] of [['contribution','Team Contribution'],['detail','Ticket detail'],['matrix','Assignee x tester']]) { const b=tile(t).querySelector('.tile-body'); const th=tile(t).querySelector('.colhead.contribution-grid')||b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile('Team Contribution').querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile('Team Contribution').getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
   check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update width and horizontal scroll, Total line pinned', st.contribution.scrolls && st.contribution.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 340 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
