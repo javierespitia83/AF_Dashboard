@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T09:32:10-05:00",
+  "exportedAt": "2026-10-20T11:46:20-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -706,7 +706,7 @@
       "addedDate": "2026-10-12",
       "cycleTime": null,
       "summary": "Sysadmin — Organization details page (unblocks Classic Manager retirement)",
-      "lastSyncUpdate": "In Review; Kyle had not seen Anumeha’s comments and will review/address them.",
+      "lastSyncUpdate": "In Review. Kyle tagged the tests and will merge when the build passes.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1014,7 +1014,7 @@
     {
       "ticket": "APP-1607",
       "owner": "Salim Abdul",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Story",
       "tester": "Salim Abdul",
       "classifications": null,
@@ -1026,7 +1026,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Support linking to any repository directory across GitLab.com and GitLab self-managed for all operations.",
-      "lastSyncUpdate": "In Progress, started 10/13 by Salim, who works on it while waiting on clarification for the email-notification ticket. Only comment is from August: Indrajeet asked for more details. Git test runs depend on IT-provided instances (see risk).",
+      "lastSyncUpdate": "In Review. PR #7184 created 10/20. Salim to share the IT ticket details for GHEC/GHES; Git test runs remain dependent on those instances.",
       "blocker": "GHEC data residency instance not ready and GHES license expired; IT ticket open. Does not block this release, but blocks Git test runs afterward.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -1046,7 +1046,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "lastSyncUpdate": "In Review; Pavan is waiting to test after merge. Salim to request review in the Platform Engineering channel.",
+      "lastSyncUpdate": "In Review. Carlos requested reviewer availability from Jigish and urgency input from Salim/Barbora; awaiting their reply. Pavan to test after merge.",
       "blocker": "Waiting for PR review/merge before testing.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1066,7 +1066,7 @@
       "addedDate": "2026-10-15",
       "cycleTime": null,
       "summary": "502 error while logging into canary through SSO",
-      "lastSyncUpdate": "Open; no comments yet. 502 error when logging into canary through SSO. Salim Abdul to pick it up.",
+      "lastSyncUpdate": "Open. Salim and Poornima to estimate development/testing effort and add story points.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1114,7 +1114,7 @@
     {
       "ticket": "APP-3103",
       "owner": "Vlad Storona",
-      "status": "Open",
+      "status": "In Progress",
       "type": "Story",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -1126,7 +1126,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "[Backend] Mechanism to notify user if schedule task misses",
-      "lastSyncUpdate": "Open; recovery-notification scope with APP-3097 discussed; fit/sequencing remains undecided. Derek noted the feature may need to be split if it cannot be completed in one sprint.",
+      "lastSyncUpdate": "In Progress. Shared test plan for APP-3103/APP-3097 was generated 10/16. Vlad to progress implementation; fit/sequencing remains open.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
