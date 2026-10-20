@@ -111,6 +111,7 @@ These record resolved choices and defaults where the original answers were silen
 | D63 | **Clarify Team Contribution's unique total note.** Requested by Carlos, 2026-10-14: remove the sentence "Total W.I counts each ticket once" from the note; keep only the role-overlap and shared-story-point explanation. | SPEC §6.2; ACCEPTANCE §3 |
 | D64 | **Rename the sprint detail note column to "Last sync update".** Requested by Carlos, 2026-10-14: make clear the text is from the latest snapshot sync and may not include subsequent Jira changes. | SPEC §6.2; DATA_CONTRACT §2; ACCEPTANCE §3 |
 | D65 | **Current sprint gains Tickets by type** with per-type `N W.I | P SP` values, preserving Jira issue-type names. `Daily`'s Jira `Type` field feeds the sprint JSON; the tile is a Type cross-filter dimension and groups missing types under `—`. Requested 2026-10-19. | SPEC §6.1–6.2; DATA_CONTRACT §2, §6 |
+| D66 | **Sprint Tickets by type reuses Backlog's Jira-style Type icons.** Requested 2026-10-20; icons appear before the exact type label, with unknown and missing types remaining text-only. | SPEC §9b; ACCEPTANCE §6 |
 
 None of these blocks implementation.
 
