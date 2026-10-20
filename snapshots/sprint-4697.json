@@ -59,7 +59,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2719",
@@ -78,7 +79,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2896",
@@ -97,7 +99,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2929",
@@ -116,7 +119,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2961",
@@ -135,7 +139,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2973",
@@ -154,7 +159,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2974",
@@ -173,7 +179,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2700",
@@ -192,7 +199,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2939",
@@ -211,7 +219,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2898",
@@ -230,7 +239,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2899",
@@ -249,7 +259,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2931",
@@ -268,7 +279,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Progress at close); moved to sprint 12119 on 9/22. Still In Review in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2932",
@@ -287,7 +299,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2962",
@@ -306,7 +319,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2985",
@@ -325,7 +339,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2508",
@@ -344,7 +359,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2787",
@@ -363,7 +379,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2900",
@@ -382,7 +399,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2922",
@@ -401,7 +419,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2290",
@@ -420,7 +439,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2775",
@@ -439,7 +459,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2902",
@@ -458,7 +479,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2904",
@@ -477,7 +499,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2905",
@@ -496,7 +519,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2907",
@@ -515,7 +539,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2908",
@@ -534,7 +559,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-369",
@@ -553,7 +579,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2766",
@@ -572,7 +599,8 @@
       "lastSyncUpdate": "Not finished in this sprint (To Do at close); moved to sprint 12119 on 9/16. Still In Progress in sprint 12119 as of 10/8.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Epic"
     },
     {
       "ticket": "APP-2777",
@@ -591,7 +619,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/17. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2936",
@@ -610,7 +639,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2937",
@@ -629,7 +659,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2938",
@@ -648,7 +679,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2934",
@@ -667,7 +699,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2942",
@@ -686,7 +719,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2897",
@@ -705,7 +739,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2920",
@@ -724,7 +759,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2960",
@@ -743,7 +779,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2986",
@@ -762,7 +799,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2895",
@@ -781,7 +819,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2926",
@@ -800,7 +839,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-2959",
@@ -819,7 +859,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-1821",
@@ -838,7 +879,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-1897",
@@ -857,7 +899,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2600",
@@ -876,7 +919,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2614",
@@ -895,7 +939,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2797",
@@ -914,7 +959,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2364",
@@ -933,7 +979,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2903",
@@ -952,7 +999,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2916",
@@ -971,7 +1019,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2935",
@@ -990,7 +1039,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     },
     {
       "ticket": "APP-928",
@@ -1009,7 +1059,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/25 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-1132",
@@ -1028,7 +1079,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/23 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-1599",
@@ -1047,7 +1099,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2305",
@@ -1066,7 +1119,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2306",
@@ -1085,7 +1139,8 @@
       "lastSyncUpdate": "Not finished in this sprint (In Review at close); moved to sprint 12119 on 9/22. Done on 9/24 in the next sprint.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2633",
@@ -1104,7 +1159,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2698",
@@ -1123,7 +1179,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2442",
@@ -1142,7 +1199,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2444",
@@ -1161,7 +1219,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2449",
@@ -1180,7 +1239,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2450",
@@ -1199,7 +1259,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2451",
@@ -1218,7 +1279,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2455",
@@ -1237,7 +1299,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2456",
@@ -1256,7 +1319,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2459",
@@ -1275,7 +1339,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2463",
@@ -1294,7 +1359,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2464",
@@ -1313,7 +1379,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2468",
@@ -1332,7 +1399,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2477",
@@ -1351,7 +1419,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2509",
@@ -1370,7 +1439,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2676",
@@ -1389,7 +1459,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Bug"
     },
     {
       "ticket": "APP-2911",
@@ -1408,7 +1479,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Story"
     },
     {
       "ticket": "APP-2983",
@@ -1427,7 +1499,8 @@
       "lastSyncUpdate": null,
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": null
+      "discussed": null,
+      "type": "Task"
     }
   ]
 }
