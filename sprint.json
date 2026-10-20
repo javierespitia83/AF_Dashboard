@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T01:15:44+00:00",
+  "exportedAt": "2026-10-20T12:55:36+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -134,7 +134,7 @@
     {
       "ticket": "APP-556",
       "owner": "Alan Le",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Story",
       "tester": "Pavan V",
       "classifications": "Customer Escalation",
@@ -146,7 +146,7 @@
       "addedDate": "2026-10-13",
       "cycleTime": null,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "lastSyncUpdate": "In Progress. Canary and local mock tests pass (10/19); Alan to attach/confirm the results.",
+      "lastSyncUpdate": "In Review since 10/19 (was In Progress). Canary and local mock tests pass (10/19); Alan to attach/confirm the results.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -186,7 +186,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "Monitor loses filters in infrastructure node view",
-      "lastSyncUpdate": "In Review since 10/15 (was In Progress). PR #6067 (ClientApps) created 10/15; AI test plan posted 10/15. 10/16 Poornima asked Alan to add end-to-end tests to the PR. Alan posted an update 10/19; QA review pending.",
+      "lastSyncUpdate": "In Review since 10/15. PR #6067 (ClientApps) created 10/15. 10/16 Poornima asked Alan for end-to-end tests; Alan posted an update 10/19; Poornima replied 10/19 with test case C40682506.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -194,7 +194,7 @@
     {
       "ticket": "APP-3033",
       "owner": "Alan Le",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Bug",
       "tester": "Poornima Srikantesh",
       "classifications": null,
@@ -206,7 +206,7 @@
       "addedDate": null,
       "cycleTime": null,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "lastSyncUpdate": "In Progress. Alan could not reproduce it on dev (10/15); on 10/16 Eric Fertig attached the customer's video. 10/19 daily: Alan mentioned the ticket: tests mostly passing with one possibly failing, and he will review Poornima's comments.",
+      "lastSyncUpdate": "In Review since 10/19 (was In Progress). PR created 10/19 (ClientApps #6090 to 4.46_rc). Alan could not reproduce it on dev (10/15); Eric Fertig attached the customer's video 10/16; tests mostly passing per the 10/19 daily.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -226,7 +226,7 @@
       "addedDate": "2026-10-16",
       "cycleTime": null,
       "summary": "\"Account Reference\" changes when copying a snap from one Org to another",
-      "lastSyncUpdate": "In Review since 10/16. Alan opened PR #6077 (ClientApps) and pulled the ticket into the sprint on 10/16 (Poornima flagged it to Carlos and Vishal). Yoelvis traced it on 10/2: paste keeps the source-org account ref; fix is to remap by label. Customer escalation (Rob asked Vishal 10/15). Alan to get the PR reviewed.",
+      "lastSyncUpdate": "In Review since 10/16. PR #6077 (ClientApps) merged to 4.46_rc 10/19. Fix remaps the account reference by label. Customer escalation (Rob asked Vishal 10/15).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -594,7 +594,7 @@
     {
       "ticket": "APP-3113",
       "owner": "Guannan He",
-      "status": "In Review",
+      "status": "Done",
       "type": "Story",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -602,11 +602,11 @@
       "parent": null,
       "linkedWorkItems": "APP-3177 (is connected to)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-19",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 7,
       "summary": "Add search to pipeline selection in task dialog",
-      "lastSyncUpdate": "In Review; Guannan said APP-3113 may merge without APP-3177; coverage through APP-3113 was discussed. Sprint-scope change deferred.",
+      "lastSyncUpdate": "Done 10/19. Add search to pipeline selection in task dialog: PR #6057 merged to 4.46_rc.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -614,7 +614,7 @@
     {
       "ticket": "APP-3171",
       "owner": "Guannan He",
-      "status": "In Review",
+      "status": "Done",
       "type": "Bug",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -622,11 +622,11 @@
       "parent": null,
       "linkedWorkItems": null,
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-19",
       "addedDate": "2026-10-15",
-      "cycleTime": null,
+      "cycleTime": 4,
       "summary": "Task name is blank in designer page task create popup",
-      "lastSyncUpdate": "In Review. PR #6087 (ClientApps) created 10/19. 10/19 Guannan asked Anumeha and Poornima whether to merge now or wait for their local test. Briefly referenced during refinement.",
+      "lastSyncUpdate": "Done 10/19. Task name blank in the task create popup: PR #6087 merged to 4.46_rc.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1226,7 +1226,7 @@
       "addedDate": "2026-10-19",
       "cycleTime": null,
       "summary": "ActivityLog Page does not load in Project Manager",
-      "lastSyncUpdate": "In Review since 10/19. PR #6086 (ClientApps) created 10/19; Guannan asked Pavan whether to test locally or merge now. Activity Log did not load from Project Manager Files; inclusion accepted for now, destination is a product question.",
+      "lastSyncUpdate": "In Review since 10/19. PR #6086 (ClientApps) created 10/19. 10/19 Poornima replied to Guannan that QA will test locally since it is a bigger change; some tests may need changes. Activity Log did not load from Project Manager Files; destination is a product question.",
       "blocker": "Confirm the intended Activity Log location in Project Manager vs. Monitor.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1254,7 +1254,7 @@
     {
       "ticket": "APP-3183",
       "owner": "Guannan He",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Bug",
       "tester": "Aysu Ahmadli",
       "classifications": null,
@@ -1266,7 +1266,7 @@
       "addedDate": "2026-10-19",
       "cycleTime": null,
       "summary": "[Regression][APIM] API Manager Create Task – pipeline picker lists all project spaces/APIs, and no pipeline can be selected within APIs (even within the same API)",
-      "lastSyncUpdate": "In Progress. Regression bug in API Manager Create Task: pipeline picker lists all project spaces/APIs. No comments yet.",
+      "lastSyncUpdate": "In Review since 10/19 (was In Progress). Regression bug in API Manager Create Task: pipeline picker lists all project spaces/APIs. 10/19 Guannan replied to Aysu that the list is searchable.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"

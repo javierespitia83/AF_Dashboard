@@ -89,8 +89,9 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Search (in the filter bar): `mis`, `miss`, `missi`, `missing` (any case, surrounding spaces) all give DoR = Missing; `wea`, `weak` give Weak; `wel`, `well`, `well-formed` give Well-Formed; `n/a` gives N/A (Epic); `rea`, `ready` give Ready only if the data has it (older snapshots), otherwise zero results; counts equal the data. Under 3 characters, or `missingx`, runs a normal text search. Text search matches ticket, summary, epic, cluster and risk. The readiness hint and a search tag appear while a DoR prefix is active.
 - [ ] Search combines with tile selections by AND; "Showing X of Y tickets" updates; clearing the search restores results.
 
-**Priority and Type icons (backlog)**
-- [ ] Every Priority tile row and Priority table cell whose value is Highest, High, Medium, Low or Lowest, and every Type tile row and Type table cell whose value is Story, Bug, Sub-Bug, Epic, Task, Sub-task, Initiative or Doc Task, shows exactly one icon of the right kind before the text; the text is unchanged.
+**Priority and Type icons (backlog and sprint)**
+- [ ] In Backlog, every Priority tile row and Priority table cell whose value is Highest, High, Medium, Low or Lowest, and every Type tile row and Type table cell whose value is Story, Bug, Sub-Bug, Epic, Task, Sub-task, Initiative or Doc Task, shows exactly one icon of the right kind before the text; the text is unchanged.
+- [ ] Each sprint Tickets by type row shows the same Type icon used in Backlog before the unchanged exact type label when an icon is defined; unknown types and `—` remain readable without an icon.
 - [ ] Values without an icon (unknown names, `—`) show text only; icons are `aria-hidden`, contain no text, and add no network request or element other than inline SVG.
 
 **Epic filter (backlog)**

@@ -174,12 +174,12 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 - **Tiles:** white surface, hairline border, small radius, no shadows; equal gutters; tile bodies scroll inside with a visible scrollbar and sticky headers.
 - **Accessibility:** colour is never the only signal (names and numbers are always shown); contrast at least AA for text; focus outlines; selection is exposed with `aria-pressed`.
 
-## 9b. Priority and Type icons (backlog, D49)
-Priority and Type values carry a small icon in the style of Jira's own, so they are recognisable at a glance. Icons appear **before the text** (the text is never removed) in: the Priority and Type tile rows and the Priority and Type columns of the backlog table.
+## 9b. Priority and Type icons (D49; sprint Type added 2026-10-20)
+Priority and Type values carry a small icon in the style of Jira's own, so they are recognisable at a glance. Icons appear **before the text** (the text is never removed) in the Priority and Type tile rows and Priority and Type columns of the backlog table; the sprint Tickets by type tile uses the same Type icons.
 - **Priority:** Highest = red up arrow; High = orange "="; Medium = amber up chevron; Low = blue down chevron; Lowest = blue double down chevron. (Drawn to match the icons in the team's Jira.)
 - **Type:** Story = green rounded square with a white bookmark; Bug = red square with a white bug; Epic = purple square with a white lightning bolt; Task = blue square with a white check; Sub-task = blue square with two linked boxes; Sub-Bug = red square with two linked boxes (the Sub-task glyph in the Bug colour); Initiative and Doc Task have icons too, in case they appear in the data.
 - A value with no icon (any other name, or `—`) shows text only. Icons are inline SVG drawn by the app (no image files, no network), decorative (`aria-hidden`), carry no text of their own, and never replace the text, so colour is never the only signal. They are not Atlassian's original artwork; they are simple look-alikes.
-- The sprint page's Type tile uses plain text and does not show the Backlog page's Jira-style Type icons.
+- Priority icons remain backlog-only; the sprint Type tile reuses the Backlog Type icons.
 
 ## 9a. Chart colours
 

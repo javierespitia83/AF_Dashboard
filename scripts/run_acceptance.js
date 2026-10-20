@@ -163,14 +163,14 @@ return { sub: T(b.querySelector('.sub')), empty: emp ? T(emp) : null, has: !!s, 
 `;
 const READ_SPRINT = `
 const c = readCommon();
-const status = {}, statusRaw = {}, statusSel = [], statusDim = [], types = {}, typeRaw = {}, typeSel = [], typeDim = [];
+const status = {}, statusRaw = {}, statusSel = [], statusDim = [], types = {}, typeRaw = {}, typeIcons = {}, typeSel = [], typeDim = [];
 rowsOf('Tickets by status').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); status[n]=[parseInt(i,10),parseInt(pp,10)]; statusRaw[n]=raw; if(r.classList.contains('sel')) statusSel.push(n); if(r.classList.contains('dim')) statusDim.push(n); });
-rowsOf('Tickets by type').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); types[n]=[parseInt(i,10),parseFloat(pp)]; typeRaw[n]=raw; if(r.classList.contains('sel')) typeSel.push(n); if(r.classList.contains('dim')) typeDim.push(n); });
+rowsOf('Tickets by type').forEach(r => { const label=r.querySelector('.name'), n=T(label); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); types[n]=[parseInt(i,10),parseFloat(pp)]; typeRaw[n]=raw; typeIcons[n]=label.querySelector('svg.ico')?.getAttribute('data-icon')||null; if(r.classList.contains('sel')) typeSel.push(n); if(r.classList.contains('dim')) typeDim.push(n); });
 const contribution = () => { const rows=[...tile('Team Contribution').querySelectorAll('.contribution-row')]; return rows.map(r=>({name:T(r.querySelector('.contribution-name')), assignee:+T(r.querySelector('[data-key^="assignee:"]')), tester:+T(r.querySelector('[data-key^="tester:"]')), total:T(r.querySelector('.contribution-total')), nameSelected:r.querySelector('.contribution-name').classList.contains('selected'), nameDimmed:r.querySelector('.contribution-name').classList.contains('dimmed')})); };
 const det = tile('Ticket detail'); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
 const statusFoot = T(tile('Tickets by status').querySelector('.tile-foot'));
 const cf=tile('Team Contribution').querySelector('.tile-foot .totalrow');
-return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeSel, typeDim, typeFoot:T(tile('Tickets by type').querySelector('.tile-foot')), contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), type: emptyIn('Tickets by type'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: (n => n ? T(n) : null)(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: (h => h ? [...h.children].map(T) : [])(tile('Team Contribution').querySelector('.colhead.contribution-grid')), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
+return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile('Tickets by type').querySelector('.tile-foot')), contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), type: emptyIn('Tickets by type'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: (n => n ? T(n) : null)(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: (h => h ? [...h.children].map(T) : [])(tile('Team Contribution').querySelector('.colhead.contribution-grid')), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
 `;
 
 // ---------- independent sprint model ----------
@@ -289,7 +289,8 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
     const names=Object.keys(e.types).sort((a,b)=>e.types[b].i-e.types[a].i||a.localeCompare(b));
     const got=Object.keys(d.types);
     if(!eq(got,names)) errs.push(['type row order',got,names]);
-    names.forEach(n=>{const g=d.types[n],x=e.types[n];if(!g||g[0]!==x.i||g[1]!==x.p||d.typeRaw[n]!==`${x.i} W.I | ${x.p} SP`) errs.push(['type metrics',n,g,x,d.typeRaw[n]]);});
+    const iconTypes=new Set(['Story','Bug','Sub-Bug','Epic','Task','Sub-task','Initiative','Doc Task']);
+    names.forEach(n=>{const g=d.types[n],x=e.types[n],wantIcon=iconTypes.has(n)?'type:'+n:null;if(!g||g[0]!==x.i||g[1]!==x.p||d.typeRaw[n]!==`${x.i} W.I | ${x.p} SP`) errs.push(['type metrics',n,g,x,d.typeRaw[n]]);if(d.typeIcons[n]!==wantIcon) errs.push(['type icon',n,d.typeIcons[n],wantIcon]);});
     if(d.typeFoot.replace(/\s+/g,'')!==`Total${e.typeBase.length}W.I|${sumP(e.typeBase)}SP`) errs.push(['type total',d.typeFoot]);
   } else if (!d.empties.type) errs.push(['type empty-state missing']);
   const cExp=e.contribution, cGot=d.contribution, cNames=Object.keys(cExp).sort((a,b)=>cExp[b].keys.size-cExp[a].keys.size||a.localeCompare(b));

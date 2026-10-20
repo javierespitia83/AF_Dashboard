@@ -463,7 +463,7 @@
             title: name + ': ' + group.items + ' work items, ' + fmt(group.points) + ' story points',
             onclick: function (multi) { store.click('type', name, multi); }
           }, [
-            el('span', { class: 'name', text: name }),
+            el('span', { class: 'name' }, [AF.icon.type(name), name]),
             el('div', { class: 'bar-track' }, [el('div', { class: 'bar', style: 'width:' + share.toFixed(2) + '%' }, [
               el('span', { class: 'seg type-bar', style: 'flex:1 1 0' })
             ])]),
