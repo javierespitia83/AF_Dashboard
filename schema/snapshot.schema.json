@@ -203,6 +203,13 @@
                   "null"
                 ]
               },
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Exact Jira issue type captured when the ticket left the sprint; optional for older removed records."
+              },
               "owner": {
                 "type": [
                   "string",
@@ -266,6 +273,10 @@
             "null"
           ],
           "description": "Original Jira status, preserved verbatim (To Do, Open, In Progress, In Review, Done, or an unrecognized value \u2014 unrecognized values are never dropped or remapped by the exporter). The dashboard UI may choose to display 'Open' as 'To Do'; that is a display-layer decision documented in the skill file, not something this exporter does to the data."
+        },
+        "type": {
+          "type": ["string", "null"],
+          "description": "Exact Jira issue type, preserved verbatim; null when the source tracker has no Type value yet."
         },
         "tester": {
           "type": [

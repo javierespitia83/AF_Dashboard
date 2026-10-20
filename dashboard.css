@@ -163,7 +163,7 @@ svg.burndown { display: block; }
   .kpis.k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .kpis.k5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .kpis.k7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .main.sprint { grid-template-columns: minmax(0, 2.2fr) minmax(250px, 1.3fr) minmax(0, 1.9fr); }
+  .main.sprint { grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr) minmax(250px, 1fr) minmax(0, 1.8fr); }
   .lower { min-height: 0; margin-bottom: 0; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) minmax(440px, 28%); }
   .lower .tile { margin-bottom: 0; }
   .lower .tile-body { max-height: none; }
@@ -230,6 +230,7 @@ svg.burndown { display: block; }
 .bar-track { flex: 1; min-width: 0; height: 12px; background: var(--line-soft); border-radius: 4px; overflow: hidden; }
 .bar { height: 100%; display: flex; border-radius: 4px; overflow: hidden; gap: 1px; }
 .seg { display: block; min-width: 3px; height: 100%; }
+.seg.type-bar { background: var(--teal); }
 .fill { height: 100%; border-radius: 4px; background: var(--navy); }
 .fill.teal { background: var(--teal); }
 .fill.ready { background: #7fcf8f; } .fill.weak { background: #f0c93e; } .fill.missing { background: #f08f9c; } .fill.other { background: var(--s-done); }

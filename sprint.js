@@ -3,6 +3,7 @@
   'use strict';
   var AF = window.AF, el = AF.el, fmt = AF.fmtNum;
   var app = document.getElementById('app');
+  var shell = document.querySelector('.app') || app; // outer wrapper: .app.historical-sprint in dashboard.css
   var barBox = document.getElementById('filterbar');
   var pickerBox = document.getElementById('sprint-picker');
   var banner = document.getElementById('sprint-banner');
@@ -74,7 +75,7 @@
     pickerBox.appendChild(sprintSelect);
   }
   function loadSprint(entry) {
-    app.classList.toggle('historical-sprint', entry.state === 'closed');
+    shell.classList.toggle('historical-sprint', entry.state === 'closed');
     AF.clear(banner);
     banner.hidden = true;
     if (!snapshotCache[entry.file]) {
@@ -127,7 +128,7 @@
     var tickets = data.tickets;
     var sprint = data.sprint || null; // may be absent in older files (DATA_CONTRACT §2a)
     var isClosed = !!entry && entry.state === 'closed';
-    app.classList.toggle('historical-sprint', isClosed);
+    shell.classList.toggle('historical-sprint', isClosed);
     AF.setUpdated(data.refreshedAt, data.exportedAt);
     AF.clear(banner);
     banner.hidden = !isClosed;
@@ -149,6 +150,7 @@
     var NONE = AF.NONE;
     var store = AF.createStore({
       status: { label: 'Status', get: function (t) { return AF.BUCKETS[AF.bucketOf(t.status)]; } },
+      type: { label: 'Type', get: function (t) { return AF.isBlank(t.type) ? '—' : String(t.type); } },
       assignee: { label: 'Assignee', get: function (t) { return AF.personName(t.owner); } },
       tester: { label: 'Tester', get: function (t) { return AF.personName(t.tester); } },
       contributor: { label: 'Team member', matches: function (t, selected) { return selected.has(AF.personName(t.owner)) || selected.has(AF.personName(t.tester)); } },
@@ -173,6 +175,7 @@
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
     tBurn.body.classList.add('chart');
     var tStatus = AF.tile({ title: 'Tickets by status', sub: 'Click a status to filter' });
+    var tType = AF.tile({ title: 'Tickets by type', sub: 'Click a type to filter' });
     var tContribution = AF.tile({ title: 'Team Contribution', sub: 'Work Items (W.I) by Jira role' });
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
@@ -249,7 +252,7 @@
     };
 
     app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kCycle.root]));
-    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tContribution.root]));
+    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tContribution.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
     // ---- filter bar controls (Fix version, Parent) ----
@@ -433,6 +436,46 @@
       });
     }
 
+    function renderTypes() {
+      var base = store.apply(tickets, 'type');
+      var groups = Object.create(null);
+      base.forEach(function (ticket) {
+        var name = AF.isBlank(ticket.type) ? '—' : String(ticket.type);
+        var group = groups[name] || (groups[name] = { items: 0, points: 0 });
+        group.items += 1;
+        group.points += typeof ticket.points === 'number' && isFinite(ticket.points) ? ticket.points : 0;
+      });
+      var keys = Object.keys(groups).sort(function (a, b) {
+        return groups[b].items - groups[a].items || a.localeCompare(b);
+      });
+      var selection = store.sel.type, any = selection.size > 0;
+      AF.rebuild(tType, function () {
+        if (!base.length) { tType.body.appendChild(AF.emptyState(EMPTY)); return; }
+        tType.colhead.className = 'colhead status-grid';
+        tType.colhead.appendChild(el('span', { text: 'Type' }));
+        tType.colhead.appendChild(el('span', { class: 'span2', text: 'Work items | Story points' }));
+        keys.forEach(function (name) {
+          var group = groups[name], selected = selection.has(name);
+          var share = group.items / base.length * 100;
+          tType.body.appendChild(AF.rowButton({
+            key: 'type:' + name, cls: 'status-grid tall' + (group.items === 0 ? ' zero' : ''),
+            selected: selected, dimmed: any && !selected,
+            title: name + ': ' + group.items + ' work items, ' + fmt(group.points) + ' story points',
+            onclick: function (multi) { store.click('type', name, multi); }
+          }, [
+            el('span', { class: 'name', text: name }),
+            el('div', { class: 'bar-track' }, [el('div', { class: 'bar', style: 'width:' + share.toFixed(2) + '%' }, [
+              el('span', { class: 'seg type-bar', style: 'flex:1 1 0' })
+            ])]),
+            pair(group.items, group.points)
+          ]));
+        });
+        tType.foot.appendChild(el('div', { class: 'status-grid totalrow' }, [
+          el('span', { text: 'Total' }), el('span'), pair(base.length, AF.sum(base, 'points'))
+        ]));
+      });
+    }
+
     function renderContributions() {
       var base = store.apply(tickets, ['assignee', 'tester', 'contributor']);
       var byOwner = AF.aggregateBy(base, owner);
@@ -454,7 +497,7 @@
       var ownerSelected = store.sel.assignee, testerSelected = store.sel.tester;
       AF.rebuild(tContribution, function () {
         if (!rows.length) { tContribution.body.appendChild(AF.emptyState(EMPTY)); return; }
-        tContribution.colhead.className = 'contribution-grid';
+        tContribution.colhead.className = 'colhead contribution-grid';
         [['Name', 'name'], ['Assignee W.I', 'assignee'], ['Tester W.I', 'tester'], ['Total W.I | SP', 'total']].forEach(function (col) {
           tContribution.colhead.appendChild(el('span', { text: col[0] }));
         });
@@ -528,6 +571,7 @@
       renderKpis(f);
       renderBurndown(f);
       renderStatus();
+      renderTypes();
       renderContributions();
       renderLower();
       updateBar();

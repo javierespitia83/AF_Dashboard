@@ -21,6 +21,8 @@ node scripts/run_acceptance.js
 
 Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and `ACCEPTANCE.md`. It must stay read-only with respect to the real data files and the tracker.
 
+**Run the acceptance harness whenever the app changes (rule of 2026-10-20).** After any change to `sprint.js`, `backlog.js`, `dashboard.js`, `dashboard.css`, the schema or the fixtures, run `node scripts/run_acceptance.js` in the same pass and report PASS/FAIL, instead of waiting for the next full sync. The harness derives every expected value (tile counts, carried-over keys, Team Contribution, filters) from the live `sprint.json`, `backlog.json`, `sprints.json` and the frozen snapshots; do not hard-code counts, ticket keys or sprint ids in it. The only fixed values allowed are layout expectations and the frozen closed-sprint snapshots. The harness only reads the data files, so it cannot hide a data problem: a data failure is fixed at the source (tracker or exporter), never by editing the expected values.
+
 ## Read before coding
 
 1. `SPEC.md` — pages, metrics, filters, design.
