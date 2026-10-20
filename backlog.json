@@ -1,8 +1,38 @@
 {
   "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T17:50:20+00:00",
+  "exportedAt": "2026-10-20T21:49:45+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
+    {
+      "ticket": "APP-38",
+      "summary": "[Monitor][Infrastructure][UI] Add decoration to the node with issues.",
+      "type": "Story",
+      "priority": "High",
+      "dor": "Weak",
+      "points": 5,
+      "needsSplitting": null,
+      "days": 42,
+      "epic": "APP-41 – Better Observability on inactive nodes in Infrastructure View",
+      "risk": "Scope listed (node decorations, hover list) but no explicit verifiable AC; scope to be revalidated after the activity-log investigation (moved to backlog 9/24)",
+      "quickCheck": "Refinement Check — the description lists the node decorations to add but has no explicit acceptance criteria, and the scope still depends on the open investigation of the activity-log mechanism. Under-specified tickets get parked toward the bottom of the rank until refined; if you want this prioritized, please help refine it (AC and validated scope) so it can move back up in a future sweep. Thanks.",
+      "cluster": "APP-39",
+      "created": "2025-07-24"
+    },
+    {
+      "ticket": "APP-39",
+      "summary": "[Docs][APP] Refine node inactivity status: only show nodes as inactive if unexpectedly down",
+      "type": "Sub-task",
+      "priority": "High",
+      "dor": "Weak",
+      "points": 1,
+      "needsSplitting": null,
+      "days": 35,
+      "epic": "APP-38 – [Monitor][Infrastructure][UI] Add decoration to the node with issues.",
+      "risk": "Benefit and four decorations described, no verifiable done condition; overlaps parent APP-38 scope",
+      "quickCheck": "Refinement Check — the description explains the benefit and the four node decorations, but there is no verifiable done condition and the scope overlaps its parent APP-38. Under-specified tickets get parked toward the bottom of the rank until refined; if you want this prioritized, please help refine it (clear scope vs. APP-38 and a done condition) so it can move back up in a future sweep. Thanks.",
+      "cluster": "APP-38",
+      "created": "2025-07-24"
+    },
     {
       "ticket": "APP-167",
       "summary": "[UX] [Task Summary] Develop design for task summary page in monitor",
@@ -1084,21 +1114,6 @@
       "created": "2026-08-21"
     },
     {
-      "ticket": "APP-2703",
-      "summary": "[New GUI] Pipeline search fails to return pipelines located inside the APIM folder hierarchy",
-      "type": "Bug",
-      "priority": "High",
-      "dor": "Weak",
-      "points": 1,
-      "needsSplitting": null,
-      "days": 12,
-      "epic": "APP-55 – App Foundation PSWAT",
-      "risk": "Customer-reported; no numbered repro steps or acceptance criteria. Reopened (Done -> Open) on 10/8 by Martin Becker, so confirm what is still missing.",
-      "quickCheck": null,
-      "cluster": null,
-      "created": "2026-08-17"
-    },
-    {
       "ticket": "APP-2721",
       "summary": "Sorting incorrect for user names, roles",
       "type": "Bug",
@@ -1789,6 +1804,21 @@
       "created": "2026-10-05"
     },
     {
+      "ticket": "APP-3097",
+      "summary": "[Backend] Recovery Notifications",
+      "type": "Story",
+      "priority": "Lowest",
+      "dor": "Well-Formed",
+      "points": 3,
+      "needsSplitting": null,
+      "days": 15,
+      "epic": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
+      "risk": "Open question in AC: whether \"suspended\" is a recovery condition (typo/question mark)",
+      "quickCheck": "Scope, acceptance criteria and DoD are in the ticket's own description (description only; comments not read). Returned to Backlog (Prioritized) 10/20 from sprint 12176; recovery-notification scope is shared with APP-3103.",
+      "cluster": null,
+      "created": "2026-10-05"
+    },
+    {
       "ticket": "APP-3109",
       "summary": "Fix CodeQL Scans",
       "type": "Bug",
@@ -2014,6 +2044,21 @@
       "created": "2026-09-30"
     },
     {
+      "ticket": "APP-3172",
+      "summary": "Intermittent Issue's while connecting the snaps at the Designer",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Weak",
+      "points": null,
+      "needsSplitting": null,
+      "days": 11,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": "No repro steps or expected-vs-actual; Support could not reproduce (55 snaps); customer GIFs and ZIPs attached",
+      "quickCheck": "Refinement Check — the description reports an intermittent snap-connection problem in the Designer (customer GIFs attached) but has no repro steps and no expected-vs-actual behavior; Support could not reproduce it. Under-specified tickets get parked toward the bottom of the rank until refined; if you want this prioritized, please help refine it (repro steps or a reproduction on a current build) so it can move back up in a future sweep. Thanks.",
+      "cluster": null,
+      "created": "2026-10-09"
+    },
+    {
       "ticket": "APP-3176",
       "summary": "Org name not displayed in motd",
       "type": "Bug",
@@ -2025,21 +2070,6 @@
       "epic": null,
       "risk": "Only a title and a screenshot; no repro steps, expected result or acceptance criteria; no estimate; not linked to an Epic",
       "quickCheck": "Hi, this bug only has a title and a screenshot. Can the owner add repro steps, the expected result (where the org name should appear in the MOTD) and acceptance criteria, and set an estimate? Under-specified tickets get parked toward the bottom of the rank until refined. Thanks!",
-      "cluster": null,
-      "created": "2026-10-16"
-    },
-    {
-      "ticket": "APP-3177",
-      "summary": "index/list_assets API should honor perm_filter for permission-scoped pipeline search",
-      "type": "Story",
-      "priority": "High",
-      "dor": "Weak",
-      "points": null,
-      "needsSplitting": null,
-      "days": 4,
-      "epic": null,
-      "risk": "No estimate; follow-up from APP-3113 (planned for 4.46 or 4.46.1); not linked to an Epic",
-      "quickCheck": null,
       "cluster": null,
       "created": "2026-10-16"
     }
