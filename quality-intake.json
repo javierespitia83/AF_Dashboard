@@ -1,0 +1,673 @@
+{
+  "refreshedAt": "2026-10-20",
+  "exportedAt": "2026-10-20T19:18:58-05:00",
+  "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
+  "sprints": [
+    {
+      "sprintId": 4697,
+      "name": "Sprint 4697",
+      "windowStart": "2026-09-09",
+      "windowEnd": "2026-09-21",
+      "weekdays": 9,
+      "partial": false,
+      "counts": {
+        "pswat": 3,
+        "appBugs": 19
+      },
+      "ratesPer10Weekdays": {
+        "pswat": 3.33,
+        "appBugs": 21.11
+      },
+      "tickets": [
+        {
+          "source": "APP Bugs",
+          "key": "APP-2902",
+          "summary": "custom idle timeout not working",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-09",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2902"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2912",
+          "summary": "Investigate incorrect behavior during Alerting tests",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-10",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2912"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2913",
+          "summary": "[Data Lineage] Lineage in ternary condition is not tracked",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-11",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2913"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2916",
+          "summary": "The OpenLineage API is returning an HTTP 500 Internal Server Error when requesting page 7 of the lineage results.",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-14",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2916"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2927",
+          "summary": "Snaplex icon in the toolbar is unclickable while a long-running pipeline is executing",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-15",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2927"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2928",
+          "summary": "Deprecated Snaplex version alerts are not seen in the Monitor",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-15",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2928"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2936",
+          "summary": "Enable and migrate formEngine test suites",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2936"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2937",
+          "summary": "Fix onClickAcceptSelcted typo",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2937"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2938",
+          "summary": "Run the Designer tests in CI, and fix the failures blocking that",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2938"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2939",
+          "summary": "[UI] - Error\" Failed health/status check. Git server hostname misconfigured: https://dev.azure.com/woundedwarriorproject \"",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2939"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2941",
+          "summary": "Lint FormEngine",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2941"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2943",
+          "summary": "Fix url precedence issue in sldb manager factory",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2943"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2965",
+          "summary": "Investigate ACL behavior when unsubscribe the AutoSync feature",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-17",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2965"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2971",
+          "summary": "Some buttons broken in Admin manager page",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-18",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2971"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2972",
+          "summary": "Doc links for Import and Export Project to be updated",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-20",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2972"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2975",
+          "summary": "Pipeline does not show the \"=\" token in expression library",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2975"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2976",
+          "summary": "[Designer] Moved pipeline still shows old path in tab tooltip",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2976"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-2977",
+          "summary": "[Designer] Cannot move pipeline",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-2977"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3033",
+          "summary": "In Monitor, user is unable to navigate back to original org",
+          "type": "Bug",
+          "status": "In Review",
+          "created": "2026-09-10",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3033"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2730",
+          "summary": "[SnapGPT] Org admin cannot configure SnapGPT.",
+          "type": "Bug",
+          "status": "Integration Testing",
+          "created": "2026-09-17",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2730"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2732",
+          "summary": "HTTP 429 error on Sharepoint Online snap",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-11",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2732"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2733",
+          "summary": "RuntimeLogWrite logs are no longer present in jcc.json",
+          "type": "Bug",
+          "status": "Resolved",
+          "created": "2026-09-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2733"
+        }
+      ]
+    },
+    {
+      "sprintId": 12119,
+      "name": "APP Sprint 10-09-2026",
+      "windowStart": "2026-09-22",
+      "windowEnd": "2026-10-11",
+      "weekdays": 14,
+      "partial": false,
+      "counts": {
+        "pswat": 2,
+        "appBugs": 31
+      },
+      "ratesPer10Weekdays": {
+        "pswat": 1.43,
+        "appBugs": 22.14
+      },
+      "tickets": [
+        {
+          "source": "APP Bugs",
+          "key": "APP-3005",
+          "summary": "Remove unused test script",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-22",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3005"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3006",
+          "summary": "App Settings and RunTime Arrchive Doc Link is broken",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-22",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3006"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3031",
+          "summary": "Investigate CC alert and snaplex metrics during test",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-23",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3031"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3037",
+          "summary": "Admin Manager: Env Admin cannot update a multi-org user's profile — save fails with cross-org \"cannot change authentication methods\" error",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3037"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3038",
+          "summary": "UI fetches all assets in a folder — asset-listing requests are missing asset-type filters",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3038"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3040",
+          "summary": "APP-1135 fix disables ultra alias conflict check for overwrite import, letting duplicate aliases in that then cannot be deleted",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3040"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3041",
+          "summary": "[Asset Catalog] V4 catalog CSV export returns 403 for non-admin users (tasks/pipelines)",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3041"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3043",
+          "summary": "Ultra llfeed summary pipeline is broken and has no live consumer — propose retirement (or a two-line fix)",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3043"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3044",
+          "summary": "Investigate AuthInterceptor Filter issue",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-24",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3044"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3045",
+          "summary": "Execution summary count no longer matches runtimes list for non-admin users (APP-543 follow-up)",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-25",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3045"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3047",
+          "summary": "Script error on Expression File Preview",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-25",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3047"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3052",
+          "summary": "Unable to Migrate a task from one org to another through metadata snap",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-27",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3052"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3053",
+          "summary": "Intrenal Server Error Displayed when Doing Git operations for a branch having ~1000 files",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-28",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3053"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3063",
+          "summary": "Pipeline versions are out of order",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3063"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3066",
+          "summary": "Investigate /feed-master/queue/echo endpoint on JCC",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3066"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3070",
+          "summary": "Rewrite copy asset test for project service",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3070"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3075",
+          "summary": "Activity log info for snap pack subscribed/unsubscribed is not displayed",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3075"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3079",
+          "summary": "Investigate migrating API services",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3079"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3083",
+          "summary": "Snaps in restricted class id is displayed in asset palette",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3083"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3084",
+          "summary": "BYOK S3 invalid bucket name",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-01",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3084"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3085",
+          "summary": "Facing issue while downloading the asset from Monitor in Production Enviornment",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-09-25",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3085"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3086",
+          "summary": "Cannot open account",
+          "type": "Bug",
+          "status": "In Review",
+          "created": "2026-09-28",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3086"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3088",
+          "summary": "Investigate the invalid accounts in integration tests for snaps",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-01",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3088"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3091",
+          "summary": "Child_Pipeline Search From Advanced Filter with Flattened Option Does not work",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-05",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3091"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3092",
+          "summary": "iris_pipeline_search throwing 500 error on UAT",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-10-05",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3092"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3093",
+          "summary": "In UAT Pod, snap statistics API is taking approx  1 minutes",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-05",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3093"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3098",
+          "summary": "Project Manager init always calls GET /api/1/rest/asset/<org>/undefined, causing permission denied error when an \"undefined\" project space exists",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-05",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3098"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3105",
+          "summary": "Unable to select Global Shared on Copy/Move Dialog",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-10-06",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3105"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3109",
+          "summary": "Fix CodeQL Scans",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-07",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3109"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3170",
+          "summary": "SnapLogic Catalog Public API is returning an HTTP 500 Internal Server Error.",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-09-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3170"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3172",
+          "summary": "Intermittent Issue's while connecting the snaps at the Designer",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-09",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3172"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2746",
+          "summary": "Cloud node did not come up post upgrade.",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-04",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2746"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2747",
+          "summary": "runtime-log.json management/configuration",
+          "type": "Doc Task",
+          "status": "Open",
+          "created": "2026-10-06",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2747"
+        }
+      ]
+    },
+    {
+      "sprintId": 12176,
+      "name": "App Sprint 10-23-2026",
+      "windowStart": "2026-10-12",
+      "windowEnd": "2026-10-20",
+      "weekdays": 7,
+      "partial": true,
+      "counts": {
+        "pswat": 4,
+        "appBugs": 9
+      },
+      "ratesPer10Weekdays": {
+        "pswat": 5.71,
+        "appBugs": 12.86
+      },
+      "tickets": [
+        {
+          "source": "APP Bugs",
+          "key": "APP-3171",
+          "summary": "Task name is blank in designer page task create popup",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-10-15",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3171"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3173",
+          "summary": "Pipeline execute snap settings not visible in Designer but reflecting via Print PDF",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-14",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3173"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3174",
+          "summary": "502 error while logging into canary through SSO",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-15",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3174"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3176",
+          "summary": "Org name not displayed in motd",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3176"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3178",
+          "summary": "ActivityLog Page does not load in Project Manager",
+          "type": "Bug",
+          "status": "In Review",
+          "created": "2026-10-19",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3178"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3179",
+          "summary": "SSO Login is not working on Canary Pod",
+          "type": "Bug",
+          "status": "Done",
+          "created": "2026-10-19",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3179"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3183",
+          "summary": "[Regression][APIM] API Manager Create Task – pipeline picker lists all project spaces/APIs, and no pipeline can be selected within APIs (even within the same API)",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-19",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3183"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3185",
+          "summary": "Notification dropdown button to navigate to other org is incorrectly aligned",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-20",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3185"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3186",
+          "summary": "Duplicate Snap Packs cannot be subscribed",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-20",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3186"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2756",
+          "summary": "Unable to Overwrite API Keys using Import Public API",
+          "type": "Bug",
+          "status": "In Progress",
+          "created": "2026-10-14",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2756"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2758",
+          "summary": "In Mapper Snap, the parseFloat() is evaluating to correct result but final value in mapper output is wrong.",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2758"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2759",
+          "summary": "User Creation Date Incorrectly Displays Original Date Across Different Orgs",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-16",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2759"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2761",
+          "summary": "Granular Details of the API's aren't visible from the API Metrics Tab",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-19",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2761"
+        }
+      ]
+    }
+  ]
+}

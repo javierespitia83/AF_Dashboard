@@ -5,7 +5,7 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 ## 1. Stack and hard limits
 
 - Static HTML, CSS and vanilla JavaScript (ES5-style: `var`, `function`, no modules, no classes, no build). Served with `python3 -m http.server` from this folder. `file://` is unsupported (browsers block `fetch` of local JSON).
-- No npm, no CDN, no web fonts, no library, no remote network calls. `dashboard.js` has one fetch path for relative local JSON: the sprint page loads `sprints.json` then one selected sprint snapshot (or falls back to `sprint.json`), while the backlog page loads `backlog.json`. Charts are inline SVG built with `createElementNS`; bars and heat grids are HTML/CSS.
+- No npm, no CDN, no web fonts, no library, no remote network calls. `dashboard.js` has one fetch path for relative local JSON: the sprint page loads `sprints.json` then one selected sprint snapshot (or falls back to `sprint.json`), the backlog page loads `backlog.json`, and Quality Intake loads `quality-intake.json`. Charts are inline SVG built with `createElementNS`; bars and heat grids are HTML/CSS.
 - **No `innerHTML`, `eval`, `document.write`.** Every DOM node is built with `AF.el` (text nodes only) so data can never inject markup. The acceptance script greps for this.
 - Light mode only. System fonts only (`--font` stack in `dashboard.css`).
 - The app is read-only: it writes nothing (not Excel, Jira or the JSON).
@@ -14,21 +14,24 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 
 | File | Responsibility | Approx. size |
 |---|---|---|
-| `index.html` / `backlog.html` | Shell only: top bar with tabs, sprint selector mount on the sprint page, `#asof`, `#filterbar`, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then `sprint.js` (or `backlog.js`). Inline favicon `data:,` (avoids a 404 console error). | 28 lines each |
+| `index.html` / `backlog.html` / `quality-intake.html` | Shell only: top bar with three tabs, sprint selector mount on Current sprint, `#asof`, `#filterbar` where needed, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then the relevant page script. Inline favicon `data:,` (avoids a 404 console error). | small static shells |
 | `dashboard.js` | Shared engine, exported as `window.AF`: status buckets, value helpers, pure aggregation, the filter store, burndown model and SVG drawing, DOM helpers (tile, rebuild, rowButton, bars, table, heat grid, filter bar), Jira link helpers, loading and error states. | ~610 lines |
 | `sprint.js` | Sprint page: validates the sprint manifest, creates the sprint selector, caches selected snapshots, builds the shell tiles, defines the five dimensions, one `render*` function per tile, the marker panel, the resize observer. | ~400 lines |
 | `backlog.js` | Backlog page: DoR prefix search, age buckets, four distribution tiles, matrix, table. Exposes `AF.backlog` for tests. | ~205 lines |
+| `quality-intake.js` | Quality Intake page: renders tracker-defined sprint windows, source counts and rates, expands ticket detail, uses safe Jira links. | standalone page script |
 | `dashboard.css` | Tokens, shell, tiles, KPI tiles, bars, clickable rows, heat grid, tables, chart tile, burndown panel, layout modes. | ~270 lines |
 | `scripts/run_acceptance.js` | Automated acceptance (see §10). | ~800 lines |
 
 Order of scripts matters: `dashboard.js` defines `AF`; the page script reads `window.AF` at load.
 
-## 3. Page lifecycle (both pages)
+## 3. Page lifecycle (Current sprint and Backlog)
 
 1. `AF.loadJson(file)` → the single `fetch(file, {cache:'no-store'})` path for relative local JSON. `AF.loadSnapshot(file)` calls it and requires `data.tickets` to be an array. The sprint page validates `sprints.json` before using its file paths; a missing or invalid manifest silently falls back to `sprint.json`.
 2. `.then(init, onError)` — use the two-argument form so a *render* error is not misreported as a "can't load file" error.
 3. `init(data)`: set the header timestamp, show a closed-sprint banner if applicable, clear `#app` and sprint filter bar, handle an empty ticket list (neutral message, return), create a fresh store, build the shell and controls, subscribe `render` to the store, call `render()`. On sprint switch the page calls `init` again with the cached or newly loaded snapshot so all filters reset.
 4. `render()` is the only way the screen changes: `f = store.apply(tickets)` then, in order, KPIs, burndown (sprint), each dimension tile, matrix, table, then `updateBar()` and control sync. Tiles are **redrawn from scratch on every filter change** (they are small); there is no incremental DOM diffing.
+
+Quality Intake has a separate lifecycle: load and validate `quality-intake.json`, set the export timestamp, render one card per sprint, and expand/collapse source ticket lists from button clicks. All data strings use text nodes; only exact Jira URLs matching the shared `AF.jira.url(key)` are linked.
 
 ## 4. `AF` API (dashboard.js)
 
@@ -106,7 +109,7 @@ Clickable things are real `<button>`s in tab order with a visible focus outline 
 
 ## 9. Data pipeline (outside this folder, needed to refresh data)
 
-`AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` (sheets `Daily`, `Backlog Prioritized`) → `AF_Snaplogic/05_Automation/export_dashboard_snapshots.py` (read-only, manual, atomic write, refuses to run while the Excel lock file exists, needs `openpyxl`) → `sprint.json`, `backlog.json` validated by `schema/snapshot.schema.json`. Mapping rules: `DATA_CONTRACT.md` and the AF_Snaplogic skill `af-dashboard-snapshot-export.md` at the absolute path listed in `AGENTS.md`. A rebuild that has no tracker can develop against `fixtures/sample_snapshot.json` (four sprint tickets with edge cases) and hand-made JSON. If a new field is needed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
+`AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx` (`Daily`, `Backlog Prioritized`, `Sprint Metrics`, and `Quality Intake Detail`) → `AF_Snaplogic/05_Automation/export_dashboard_snapshots.py` (read-only, manual, atomic writes, refuses to run while the Excel lock file exists, needs `openpyxl`) → `sprint.json`, `backlog.json`, and `quality-intake.json`. Sprint and backlog use `schema/snapshot.schema.json`; Quality Intake uses `schema/quality-intake.schema.json`. `--quality-intake-only` writes only the new intake file. Mapping rules: `DATA_CONTRACT.md` and the AF_Snaplogic skill `af-dashboard-snapshot-export.md` at the absolute path listed in `AGENTS.md`. A rebuild with no tracker can use hand-made quality-intake JSON. If a new field is needed, update the exporter, its skill, the relevant schema, fixture when applicable, and `DATA_CONTRACT.md` together.
 
 Known data limits that the UI must keep showing, not hide: older snapshots may contain `addedDate` values from before the approximation marker was retired, but the marker is not preserved in JSON; removals are reflected only when `sprint.removed` is present, and re-estimates are not reflected; `sprint.carriedOver` has a ticket percentage only (no points percentage).
 

@@ -4,7 +4,7 @@ Data rules are in `DATA_CONTRACT.md`. Done criteria are in `ACCEPTANCE.md`. Deci
 
 ## 1. Goal and users
 
-A local, read-only dashboard that turns the tracker's two sheets into a fast, explorable view for the Scrum Master, the Product Owner and the engineering team. It supports: daily standup preparation, sprint review, workload review, tester-coverage review, and backlog refinement.
+A local, read-only dashboard that turns tracker data into a fast, explorable view for the Scrum Master, the Product Owner and the engineering team. It supports: daily standup preparation, sprint review, workload review, tester-coverage review, backlog refinement, and sprint-window quality intake comparison.
 
 Questions it must answer, mostly by clicking:
 - Is the sprint progressing, and how much is done?
@@ -13,25 +13,26 @@ Questions it must answer, mostly by clicking:
 - Who owns the work, and who tests it?
 - Which tickets have no tester, and what status are they in?
 - Which backlog items are ready, weak, or missing for refinement, and how old are they?
+- How many PSWAT issues and APP Bugs were created in each sprint intake window?
 
 ## 2. Scope
 
-**In v2:** two pages (`index.html` sprint, `backlog.html` backlog) reading the selected sprint snapshot from `sprints.json` (falling back to `sprint.json` if the manifest is unavailable) and `backlog.json`, full-screen tiles, page-wide cross-filtering.
+**In v2:** three pages: `index.html` (Current sprint), `backlog.html` (Backlog), and `quality-intake.html` (Quality Intake). The first two keep their existing data and interactions. Quality Intake reads `quality-intake.json` and compares tracker-defined intake windows across sprints.
 
-**Non-goals:** reading Excel; Jira write-back or live Jira calls; history or trend charts other than the current-sprint burndown (§6.3); authentication; hosting or sharing; a new backlog ranking algorithm; editing data; dark mode; a build step or any dependency; column sorting; saving or sharing filter state.
+**Non-goals:** reading Excel in the app; Jira write-back or live Jira calls; history or trend charts other than the current-sprint burndown (§6.3) and the Quality Intake comparison (§8); authentication; hosting or sharing; a new backlog ranking algorithm; editing data; dark mode; a build step or any dependency; column sorting; saving or sharing filter state.
 
 ## 3. Runtime and screen target
 
-- Served with `python3 -m http.server`; opened in a modern Chromium-based browser. `file://` is not supported. Works offline once the local data files exist. No CDN, web fonts, or remote network calls; the sprint page fetches the manifest and one selected sprint snapshot, and the backlog page fetches its snapshot.
+- Served with `python3 -m http.server`; opened in a modern Chromium-based browser. `file://` is not supported. Works offline once the local data files exist. No CDN, web fonts, or remote app requests; the sprint page fetches the manifest and one selected sprint snapshot, the backlog page fetches its snapshot, and Quality Intake fetches `quality-intake.json`.
 - **Primary target: 1920 x 1080 browser viewport.** The dashboard uses the whole viewport: no page-level scroll, no wasted side margins, no max-width cap.
 - **The dashboard layout applies at a viewport width of at least 1366 and height of at least 760.** It must also work cleanly at 1440 x 900 and 1536 x 864.
 - **Below that (narrower or shorter), fall back to a normal scrolling layout:** tiles stack in one or two columns, each tile has a fixed height with its own inner scroll, no page-level horizontal scroll.
 
-## 4. App shell (both pages)
+## 4. App shell (all pages)
 
 Top to bottom:
-1. **Top bar** (fixed height): app name, tabs **Current sprint** and **Backlog** (the active tab is marked), the sprint page's accessible **Sprint** selector when a valid manifest is available, and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
-2. **Filter bar** (fixed height): the active-filter tags, page-specific controls (see §6 and §7), and a **Reset all** button. With no filter active it says: "No filters. Click a bar, a person, or a cell to filter."
+1. **Top bar** (fixed height): app name, tabs **Current sprint**, **Backlog**, and **Quality Intake** (the active tab is marked), the sprint page's accessible **Sprint** selector when a valid manifest is available, and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
+2. **Filter bar** (fixed height) on Current sprint and Backlog: active-filter tags, page-specific controls (see §6 and §7), and a **Reset all** button. Quality Intake has no filters. With no filter active it says: "No filters. Click a bar, a person, or a cell to filter."
 3. **Board**: the tiles, filling all remaining height.
 4. **Footer** (slim, fixed height): "Internal — team only. Do not reuse in executive or external documents without review."
 
@@ -100,7 +101,7 @@ A line chart of story points remaining, day by day, for the current sprint (the 
 - **Ideal line:** a straight dashed line from the **starting scope** (the scope on the first day, before anything was added) to 0 on the last day, linear over calendar days. Work added later therefore shows as the remaining line sitting above the ideal, as in Jira's own burndown.
 - **Today marker:** a thin vertical line labelled "Today" (when today is inside the sprint).
 - **Addition markers (D46):** a small marker on the x axis, with the number of tickets, at **every date after the start day** on which filtered tickets were added (`addedDate` later than `startDate`; tickets dated on the start day are the starting scope and get no marker). Two styles: a **filled amber triangle** for dates after the mid-sprint threshold (§6.2; these are the tickets the Added mid-sprint KPI counts) and a **hollow triangle** for earlier dates (within the first days, inside the threshold). Hover shows the tickets and points. Older snapshots may not distinguish dates from before the approximation marker was retired (DATA_CONTRACT §2a). The scope step line rises on the same days.
-- **Marker click (added tickets list):** clicking a marker (or pressing Enter or Space on it; markers are focusable buttons with `aria-pressed`) opens a small panel inside the burndown tile titled "Added Sep. 28, 2026" (the date written out as `Mon. D, YYYY`, in English; older snapshot caveat is explained in the footnote and the marker tooltip) with the ticket and point counts and one row per ticket: Ticket (Jira link, §8a), Summary, Points, Status, Assignee. Clicking the same marker again, the × button or Escape closes it; clicking another marker replaces it. The panel is information only: it does not change any filter, KPI or tile. It follows the filters (if the open date has no tickets after a filter change it closes) and stays open when the chart is redrawn on resize. The panel scrolls inside itself when the list is long (D44).
+- **Marker click (added tickets list):** clicking a marker (or pressing Enter or Space on it; markers are focusable buttons with `aria-pressed`) opens a small panel inside the burndown tile titled "Added Sep. 28, 2026" (the date written out as `Mon. D, YYYY`, in English; older snapshot caveat is explained in the footnote and the marker tooltip) with the ticket and point counts and one row per ticket: Ticket (Jira link, §9a), Summary, Points, Status, Assignee. Clicking the same marker again, the × button or Escape closes it; clicking another marker replaces it. The panel is information only: it does not change any filter, KPI or tile. It follows the filters (if the open date has no tickets after a filter change it closes) and stays open when the chart is redrawn on resize. The panel scrolls inside itself when the list is long (D44).
 - **Hover:** every day has a tooltip: date, points remaining (or the ideal for future days), points done that day and how many tickets.
 - **Subtitle:** "X of Y points remaining today, ideal Z" where Y is the scope today and Z the ideal for today (for the filtered set).
 - **Footnote (always visible):** without `sprint.removed`: "Scope grows on each ticket's added date. Tickets removed from the sprint and re-estimates are not reflected. Older snapshots may not identify legacy estimated dates." With `sprint.removed`: "Scope grows on each ticket's added date and shrinks on the date a ticket left the sprint. Re-estimates are not reflected. Older snapshots may not identify legacy estimated dates."
@@ -141,7 +142,19 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 - **Accessibility:** the button has `aria-expanded` and `aria-haspopup`; options are real `input type="checkbox"` elements inside `label`s, reachable with Tab; the focus outline is visible.
 - A long epic name is shortened with an ellipsis in tags and options (the full text in the tooltip); nothing is lost from the data.
 
-## 8. Interactions summary
+## 8. Page 3 — Quality Intake (`quality-intake.html`)
+
+Quality Intake reads only `quality-intake.json`; it does not make Jira calls or read Excel. The page has no cross-filters. It lists sprints chronologically using the intake windows recorded in Sprint Metrics. The active window is marked **ACTIVE WINDOW · PARTIAL** when `partial` is true.
+
+For each sprint, show the intake window start/end, weekday count, two source rows, raw tickets created, and rate per 10 weekdays. The rate is calculated from the exported count and weekday denominator (count × 10 ÷ weekdays), shown to one decimal. A zero count remains `0`; null or missing metrics show `n/a` without failing the page. Intake window dates come directly from the workbook and are inclusive dates in America/Los_Angeles; the window is not inferred from the sprint manifest dates.
+
+The sources are fixed: **PSWAT** counts every PSWAT project issue created in the window, regardless of issue type; **APP Bugs** counts APP project issues created in the window whose Jira issue type is exactly `Bug`. These are intake signals, not defect or defect escape rates. PSWAT includes support requests and other non-defect issues.
+
+Each numeric raw count is a button. Activating it expands a ticket list scoped to that sprint and source, and activating it again collapses the list. Zero is clickable and opens the empty list message; `n/a` is not clickable. The list shows Ticket, Summary, Type, Status and Created. A valid key links to its exported Jira URL in a new tab; no remote request occurs until the user follows that link. Ticket keys and summaries are deliberately published in this file because privacy is not a concern for this initial internal tool decision.
+
+The exporter validates each populated source count against the number of matching rows in `Quality Intake Detail`; a mismatch stops export before files are written. Blank source counts and other missing intake values are exported as null and display as `n/a`. An empty `sprints` array shows an empty-state message.
+
+## 9. Interactions summary
 
 | Interaction | Behavior |
 |---|---|
@@ -155,7 +168,7 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 | Hover | Native tooltips on bars and cells show status, work items and story points (or the count). |
 | Keyboard | Clickable rows and cells are real `button` elements, in tab order, with a visible focus outline. Enter or Space activates; Ctrl, Cmd or Shift + Enter/Space multi-selects. |
 
-## 8a. Jira links
+## 9a. Jira links
 
 - **Where:** the **Ticket** column of both tables is a link. In the sprint table the **Parent** and **Linked work items** cells, and in the backlog table the **Epic** and **Related / cluster** cells, show every Jira key inside them as its own link; the rest of the cell text stays plain. Free-text columns (Summary, Last sync update, Risk / open question) are never linked, to avoid false matches such as `UTF-8`.
 - **What a key is:** a whole word shaped like `ABC-123` (capital letter, then capital letters or digits, a hyphen, digits). Any project key works (`APP-189`, `DOC-3360`, `DI-989`).
@@ -163,7 +176,7 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 - **Behavior:** opens in a new tab (`target="_blank"`, `rel="noopener noreferrer"`), tooltip "Open <KEY> in Jira", visible focus outline, never changes a filter. Following a link needs internet and a Jira login in that browser; loading the dashboard still makes no external request.
 - **Not in v2:** an "Open in Jira" button for the current selection; links on tile rows or matrix cells (those filter).
 
-## 9. Design
+## 10. Design
 
 - **Light mode only.** Dense, calm, high-contrast; the numbers are the largest element on a tile. System font stack, tabular numerals, sentence-case labels.
 - **Status colours** (bars, dots): To Do/Open = sky blue, In Progress = blue, In Review = green, Done = gray, Other = hatched amber.
@@ -174,19 +187,19 @@ A button in the filter bar labelled **Epic** (with the number of selected epics 
 - **Tiles:** white surface, hairline border, small radius, no shadows; equal gutters; tile bodies scroll inside with a visible scrollbar and sticky headers.
 - **Accessibility:** colour is never the only signal (names and numbers are always shown); contrast at least AA for text; focus outlines; selection is exposed with `aria-pressed`.
 
-## 9b. Priority and Type icons (D49; sprint Type added 2026-10-20)
+## 10b. Priority and Type icons (D49; sprint Type added 2026-10-20)
 Priority and Type values carry a small icon in the style of Jira's own, so they are recognisable at a glance. Icons appear **before the text** (the text is never removed) in the Priority and Type tile rows and Priority and Type columns of the backlog table; the sprint Tickets by type tile uses the same Type icons.
 - **Priority:** Highest = red up arrow; High = orange "="; Medium = amber up chevron; Low = blue down chevron; Lowest = blue double down chevron. (Drawn to match the icons in the team's Jira.)
 - **Type:** Story = green rounded square with a white bookmark; Bug = red square with a white bug; Epic = purple square with a white lightning bolt; Task = blue square with a white check; Sub-task = blue square with two linked boxes; Sub-Bug = red square with two linked boxes (the Sub-task glyph in the Bug colour); Initiative and Doc Task have icons too, in case they appear in the data.
 - A value with no icon (any other name, or `—`) shows text only. Icons are inline SVG drawn by the app (no image files, no network), decorative (`aria-hidden`), carry no text of their own, and never replace the text, so colour is never the only signal. They are not Atlassian's original artwork; they are simple look-alikes.
 - Priority icons remain backlog-only; the sprint Type tile reuses the Backlog Type icons.
 
-## 9a. Chart colours
+## 10a. Chart colours
 
 See §6.3 for the burndown. No other chart types exist; bars and heat grids are HTML.
 
-## 10. Code structure (guidance)
+## 11. Code structure (guidance)
 
 The detailed structure (files, the `AF` API, page lifecycle, layout CSS, burndown model and drawing, DOM contract) is in `IMPLEMENTATION.md`; the build order is in `BUILD_PLAN.md`.
 
-`index.html`, `backlog.html`, `dashboard.css`, `dashboard.js` (helpers, aggregation, filter store, tile builders), `sprint.js`, `backlog.js`. Keep the filter store and the aggregation functions pure (no DOM) so numbers can be checked in the console. No `innerHTML`; build DOM from text nodes.
+`index.html`, `backlog.html`, `quality-intake.html`, `dashboard.css`, `dashboard.js` (shared helpers, aggregation, filter store, tile builders), `sprint.js`, `backlog.js`, `quality-intake.js`. Keep the filter store and aggregation functions pure (no DOM) so numbers can be checked in the console. No `innerHTML`; build DOM from text nodes.

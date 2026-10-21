@@ -31,6 +31,9 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Closed sprints show a high-contrast historical banner, subtly grayer page background, snapshot as-of date/time and optional manifest note; the burndown runs through sprint end and has no live Today marker. Null carried-over, removal, narrative, discussed and demo fields render using their documented placeholders/messages.
 - [ ] `sprints.json` and `fixtures/sprints.json` conform to `schema/sprints.schema.json`; active and closed snapshots conform to `schema/snapshot.schema.json`.
 - [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and shows the tabs Current sprint and Backlog with the active one marked.
+- [ ] The Quality Intake tab opens the third page and only requests `quality-intake.json`; its sprint windows, partial marker, source counts, and per-10-weekday rates match that file. It labels counts as an intake signal, not a defect rate, and explains PSWAT and APP Bugs definitions.
+- [ ] Clicking a source count expands only that sprint/source's ticket list, with key linked to Jira and summary, type, status, and created date shown; clicking again closes the list. Missing values show `n/a`.
+- [ ] `quality-intake.json` conforms to `schema/quality-intake.schema.json`; exporter reconciliation rejects any populated Sprint Metrics count that differs from Quality Intake Detail rows for the same sprint/source.
 
 **Layout at 1920 x 1080**
 - [ ] No page-level scroll (document height does not exceed the viewport, no horizontal overflow) on both pages.

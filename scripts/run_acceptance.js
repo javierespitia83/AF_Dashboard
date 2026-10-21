@@ -2,7 +2,7 @@
 /*
  * run_acceptance.js — automated acceptance run for the AF_Dashboard web app (ACCEPTANCE.md).
  *
- * Drives a real headless Chrome over the DevTools protocol, clicks through both pages
+ * Drives a real headless Chrome over the DevTools protocol, clicks through all pages
  * and compares every tile, KPI, tag and table with an independent calculation from
  * the sprint manifest/snapshots and backlog.json. Read-only: it never modifies the real data files, the
  * tracker or the app; edge cases (fixture, empty, missing, invalid data) run on throwaway
@@ -37,7 +37,7 @@ const asOfLabel = snapshot => {
 };
 
 // ---------- variants (copies; real data files never touched) ----------
-const APP = ['index.html', 'backlog.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js'];
+const APP = ['index.html', 'backlog.html', 'quality-intake.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js', 'quality-intake.js', 'quality-intake.json'];
 function variant(name, files) {
   const d = path.join(SP, 'var_' + name); fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true });
   APP.forEach(f => fs.copyFileSync(path.join(ROOT, f), path.join(d, f)));
@@ -396,7 +396,7 @@ function linkErrors(cells, values, structured) {
 }
 const mtime = f => fs.statSync(f).mtimeMs;
 const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx';
-const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
+const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
 const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
 const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
 const CLOSED_CO = CLOSED.sprint && CLOSED.sprint.carriedOver, CLOSED_CARRIED = CLOSED_CO ? [String(CLOSED_CO.count), `${CLOSED_CO.percent}% of tickets, ${CLOSED_CO.storyPoints} points`] : ['—','Not calculated yet for this sprint'];
@@ -413,7 +413,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   console.log('\n--- Sprint page (real data) ---');
   p = await openPage(base + 'index.html');
   check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
-  check('Shell: top bar tabs (Current sprint active), export date and time, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===2 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Shell: top bar tabs (Current sprint active), export date and time, footer text', await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===3 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(tabs[2])==='Quality Intake' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   check('Sprint manifest: accessible selector defaults to current and lists sprint name and state without repeated dates', await run(p, `const s=document.getElementById('sprint-select'), opts=s&&[...s.options].map(o=>T(o)); return s && document.querySelector('label[for="sprint-select"]') && T(document.querySelector('label[for="sprint-select"]'))==='Sprint' && s.value===String(${MANIFEST.current}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='active').name + ' (active)')}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='closed').name + ' (closed)')}) && document.getElementById('sprint-banner').hidden`));
   const sprintJsonRequests = () => p.reqs.filter(u => u.endsWith('.json'));
   check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/sprint.json')) && !sprintJsonRequests().some(u => u.includes('/snapshots/')), p.reqs);
@@ -731,6 +731,29 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   }
   await p.close();
 
+  // =============== QUALITY INTAKE ===============
+  console.log('\n--- Quality Intake page (real data) ---');
+  const Q = J('quality-intake.json');
+  p = await openPage(base + 'quality-intake.html');
+  check('Quality Intake: JSON 200, local requests only, no console errors', p.resp[base + 'quality-intake.json'] === 200 && p.logs.length === 0 && p.reqs.filter(u => u.endsWith('.json')).length === 1 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, reqs: p.reqs, logs: p.logs });
+  const qualityShell = await run(p, `const tabs=[...document.querySelectorAll('.tab')]; return tabs.length===3 && T(tabs[2])==='Quality Intake' && tabs[2].classList.contains('active') && tabs[2].getAttribute('aria-current')==='page' && T(document.querySelector('h1'))==='Quality Intake' && /intake signal, not a defect rate/i.test(T(document.querySelector('.qi-intro'))) && /PSWAT includes all/i.test(T(document.querySelector('.qi-intro')))`);
+  check('Quality Intake: third tab active, intake-signal caveat and source definitions', qualityShell);
+  const qCards = await run(p, `const txt=n=>n?T(n):''; return [...document.querySelectorAll('.qi-sprint')].map(card=>({id:Number(card.dataset.sprintId),title:txt(card.querySelector('h2')),sub:txt(card.querySelector('.sub')),partial:txt(card.querySelector('.qi-partial')),complete:txt(card.querySelector('.qi-complete')),rows:[...card.querySelectorAll('.qi-metrics tbody tr')].map(r=>({source:txt(r.querySelector('th')),count:txt(r.querySelector('.qi-count')||r.querySelector('.qi-na')),rate:txt(r.lastElementChild)}))}))`);
+  const qExpected = Q.sprints.map(s => ({ id: s.sprintId, title: s.name || `Sprint ${s.sprintId}`, sub: `Sprint ${s.sprintId} · Window: ${s.windowStart || 'n/a'} to ${s.windowEnd || 'n/a'} · ${s.weekdays == null ? 'n/a' : s.weekdays} weekdays`, partial: s.partial === true ? 'ACTIVE WINDOW · PARTIAL' : '', complete: s.partial === false ? 'COMPLETE WINDOW' : '', rows: [['PSWAT','pswat'],['APP Bugs','appBugs']].map(([source,k])=>({source,count:s.counts && s.counts[k] != null ? String(s.counts[k]) : 'n/a',rate:s.ratesPer10Weekdays && s.ratesPer10Weekdays[k] != null ? (Math.round(s.ratesPer10Weekdays[k]*10)/10).toFixed(1) : 'n/a'})) }));
+  check('Quality Intake: sprint windows, partial marker, raw counts and rates match the JSON', eq(qCards, qExpected), { actual: qCards, expected: qExpected });
+  const qChoice = Q.sprints.find(s => Array.isArray(s.tickets) && s.tickets.length && s.counts && s.counts.pswat > 0) || Q.sprints.find(s => Array.isArray(s.tickets) && s.tickets.length);
+  if (qChoice) {
+    const qSource = qChoice.tickets[0].source, qSourceKey = qSource === 'PSWAT' ? 'pswat' : 'appBugs', qItems = qChoice.tickets.filter(t => t.source === qSource);
+    await run(p, `document.querySelectorAll('.qi-sprint').forEach(c=>{if(c.dataset.sprintId===${JSON.stringify(String(qChoice.sprintId))}) [...c.querySelectorAll('.qi-count')].find(b=>b.getAttribute('data-key')===${JSON.stringify(String(qChoice.sprintId)+'|'+qSourceKey)}).click()})`);
+    const qDetail = await run(p, `const card=[...document.querySelectorAll('.qi-sprint')].find(c=>c.dataset.sprintId===${JSON.stringify(String(qChoice.sprintId))});const d=card.querySelector('.qi-details'),b=card.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]');return {open:!!d,head:T(d&&d.querySelector('h3')),expanded:b&&b.getAttribute('aria-expanded'),rows:[...(d?d.querySelectorAll('tbody tr'):[])].map(r=>({key:T(r.children[0]),summary:T(r.children[1]),type:T(r.children[2]),status:T(r.children[3]),created:T(r.children[4]),href:r.querySelector('a')&&r.querySelector('a').href}))}`);
+    const qRowsExpected = qItems.map(t=>({key:t.key,summary:t.summary || 'n/a',type:t.type || 'n/a',status:t.status || 'n/a',created:t.created || 'n/a',href:t.url || null}));
+    check('Quality Intake: clicking a source count expands exactly its ticket list with Jira-linked keys', qDetail.open && qDetail.expanded === 'true' && qDetail.head === `${qSource} ticket detail · ${qItems.length}` && eq(qDetail.rows,qRowsExpected), {actual:qDetail,expected:qRowsExpected});
+    await run(p, `document.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]').click()`);
+    check('Quality Intake: clicking the expanded count closes its detail', await run(p, `return !document.querySelector('.qi-details') && document.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]').getAttribute('aria-expanded')==='false'`));
+  } else check('Quality Intake: click-through has a populated source row', false);
+  check('Quality Intake: no console errors after interactions', p.logs.length === 0, p.logs);
+  await p.close();
+
   // =============== FIXTURE ===============
   console.log('\n--- Fixture edge cases (copy of the app) ---');
   p = await openPage('http://127.0.0.1:' + ports.fixture + '/index.html');
@@ -863,13 +886,13 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const ext = []; const codeOf = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   for (const f of APP) { const t = codeOf(f); (t.match(/(?:src|href)\s*=\s*"https?:\/\/[^"]+"|url\(\s*['"]?https?:/g) || []).forEach(m => ext.push(f + ': ' + m)); if (/@import|googleapis|cdn\./i.test(t)) ext.push(f + ': cdn/font/import'); if (/\bimport\s+.*from|require\(/.test(t)) ext.push(f + ': module import'); if (/XMLHttpRequest|WebSocket|sendBeacon/.test(t)) ext.push(f + ': network API'); }
   check('No external src/href/url(), CDN, @import, web font, module import or network API', ext.length === 0, ext);
-  { const hits = []; APP.forEach(f => { const m = codeOf(f).match(/atlassian\.net/g); if (m) hits.push(f + ' x' + m.length); });
+  { const hits = []; APP.filter(f => /\.(html|js|css)$/.test(f)).forEach(f => { const m = codeOf(f).match(/atlassian\.net/g); if (m) hits.push(f + ' x' + m.length); });
     check('The Jira address appears once in the app source (one constant in dashboard.js)', eq(hits, ['dashboard.js x1']), hits); }
   const strip = f => codeOf(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
   const fetches = []; ['dashboard.js', 'sprint.js', 'backlog.js'].forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
   check('Only one fetch() code path, loading a local relative JSON path via loadJson', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
   check('No innerHTML / document.write / eval in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|document\.write|\beval\(/.test(strip(f))));
-  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), x: mtime(TRACKER) };
+  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
   { const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'schema/snapshot.schema.json'), 'utf8'));
     const vType = (v, ty) => (Array.isArray(ty) ? ty : [ty]).some(x => x === 'null' ? v === null : x === 'integer' ? Number.isInteger(v) : x === 'number' ? typeof v === 'number' : x === 'string' ? typeof v === 'string' : x === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v)) : x === 'array' ? Array.isArray(v) : false);
     const vNode = (v, node, at, errs) => {
@@ -911,8 +934,23 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     };
     const manifestConform=obj=>{const errs=[];vManifest(obj,manifestSchema,'manifest',errs);const ids=obj.sprints.map(s=>s.id),act=obj.sprints.filter(s=>s.state==='active');if(new Set(ids).size!==ids.length)errs.push('duplicate ids');if(act.length!==1||!act[0]||act[0].id!==obj.current)errs.push('current must match exactly one active entry');return errs.slice(0,5);};
     const liveManifestErrors=manifestConform(MANIFEST),fixtureManifestErrors=manifestConform(J('fixtures/sprints.json'));
-    check('sprints.json and manifest fixture conform to schema, with exactly one active current id and unique ids',liveManifestErrors.length===0&&fixtureManifestErrors.length===0,{live:liveManifestErrors,fixture:fixtureManifestErrors}); }
-  check('manifest, selected snapshots, backlog.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
+    check('sprints.json and manifest fixture conform to schema, with exactly one active current id and unique ids',liveManifestErrors.length===0&&fixtureManifestErrors.length===0,{live:liveManifestErrors,fixture:fixtureManifestErrors});
+    const qualitySchema=J('schema/quality-intake.schema.json');
+    const vQuality=(v,node,at,errs)=>{
+      if(node.$ref){const target=node.$ref.split('/').slice(1).reduce((o,k)=>o&&o[k.replace(/~1/g,'/').replace(/~0/g,'~')],qualitySchema);return vQuality(v,target,at,errs);}
+      const types=Array.isArray(node.type)?node.type:[node.type];
+      if(node.type&&!types.some(t=>t==='null'&&v===null||t==='object'&&v!==null&&typeof v==='object'&&!Array.isArray(v)||t==='array'&&Array.isArray(v)||t==='integer'&&Number.isInteger(v)||t==='number'&&typeof v==='number'&&Number.isFinite(v)||t==='boolean'&&typeof v==='boolean'||t==='string'&&typeof v==='string')){errs.push(at+' type');return;}
+      if(node.enum&&!node.enum.includes(v))errs.push(at+' enum');
+      if(node.format==='date'&&v!==null&&(!/^\d{4}-\d{2}-\d{2}$/.test(v)||new Date(v+'T00:00:00Z').toISOString().slice(0,10)!==v))errs.push(at+' date');
+      if(node.pattern&&typeof v==='string'&&!new RegExp(node.pattern).test(v))errs.push(at+' pattern');
+      if(node.minLength!==undefined&&typeof v==='string'&&v.length<node.minLength)errs.push(at+' minLength');
+      if(typeof v==='number'&&node.minimum!==undefined&&v<node.minimum)errs.push(at+' minimum');
+      if(Array.isArray(v)&&node.items)v.forEach((x,i)=>vQuality(x,node.items,at+'['+i+']',errs));
+      if(v!==null&&typeof v==='object'&&!Array.isArray(v)&&node.properties){(node.required||[]).forEach(k=>{if(!(k in v))errs.push(at+' missing '+k);});Object.keys(v).forEach(k=>{if(node.properties[k])vQuality(v[k],node.properties[k],at+'.'+k,errs);else if(node.additionalProperties===false)errs.push(at+' unexpected '+k);});}
+    };
+    const qualityErrors=[];vQuality(J('quality-intake.json'),qualitySchema,'quality-intake',qualityErrors);
+    check('quality-intake.json conforms to schema/quality-intake.schema.json',qualityErrors.length===0,qualityErrors.slice(0,8)); }
+  check('manifest, selected snapshots, sprint.json, backlog.json, quality-intake.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
 
   const failed = results.filter(r => !r.ok);
   console.log(`\nTOTAL ${results.length}  PASS ${results.length - failed.length}  FAIL ${failed.length}`);
