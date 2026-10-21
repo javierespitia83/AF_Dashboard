@@ -170,6 +170,8 @@
     var kItems = kpi('items', 'Work items'), kPoints = kpi('points', 'Story points');
     var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester & Not Dev to Test');
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
+    var kTime = kpi('plain', 'Time in status');
+    kTime.root.title = 'In Progress or In Review tickets that have stayed in the same status for the configured number of days or more. A follow-up list, not a risk rating. Click to filter the lower section.';
     kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
     kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
@@ -192,7 +194,13 @@
       var testerMissing = t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
       return testerMissing && !isDevToTest(t);
     }
+    function inTimeInStatus(t) {
+      return (t.status === 'In Progress' || t.status === 'In Review') &&
+        typeof t.statusAging === 'number' && isFinite(t.statusAging) &&
+        t.statusAging >= AF.config.timeInStatusThresholdDays;
+    }
     function matchesLowerFilter(t) {
+      if (lowerFilter === 'timeInStatus') return inTimeInStatus(t);
       if (lowerFilter === 'noTester') return noTesterAndNotDevToTest(t);
       if (lowerFilter === 'midSprint') {
         var mid = AF.midSprintAdded([t], sprint, AF.config.midSprintThresholdDays);
@@ -202,11 +210,12 @@
       return true;
     }
     function syncLowerKpis() {
-      [kMid, kCarried, kNoTester].forEach(function (kpi) {
+      [kMid, kCarried, kNoTester, kTime].forEach(function (kpi) {
         var selected =
           (kpi === kMid && lowerFilter === 'midSprint') ||
           (kpi === kCarried && lowerFilter === 'carriedOver') ||
-          (kpi === kNoTester && lowerFilter === 'noTester');
+          (kpi === kNoTester && lowerFilter === 'noTester') ||
+          (kpi === kTime && lowerFilter === 'timeInStatus');
         kpi.root.classList.toggle('selected', selected);
         kpi.root.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
@@ -222,7 +231,7 @@
     store.tags = function () {
       var tags = baseTags();
       if (lowerFilter) {
-        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test' };
+        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Time in status' };
         tags.push({ dim: '__kpi', label: 'KPI', value: labels[lowerFilter] || lowerFilter });
       }
       return tags;
@@ -232,7 +241,7 @@
       if (dim === '__kpi') { setLowerFilter(lowerFilter); return; }
       baseRemove(dim, value);
     };
-    [[kMid, 'midSprint'], [kNoTester, 'noTester']].concat(carriedKeys ? [[kCarried, 'carriedOver']] : []).forEach(function (entry) {
+    [[kMid, 'midSprint'], [kNoTester, 'noTester'], [kTime, 'timeInStatus']].concat(carriedKeys ? [[kCarried, 'carriedOver']] : []).forEach(function (entry) {
       entry[0].root.classList.add('clickable');
       entry[0].root.setAttribute('role', 'button');
       entry[0].root.setAttribute('tabindex', '0');
@@ -251,7 +260,7 @@
       resetFilters();
     };
 
-    app.appendChild(el('div', { class: 'kpis k7' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kCycle.root]));
+    app.appendChild(el('div', { class: 'kpis k8' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kTime.root, kCycle.root]));
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tContribution.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
@@ -294,6 +303,13 @@
       kDone.hint.textContent = fmt(doneP) + ' of ' + fmt(P) + ' points done';
       kNoTester.value.textContent = String(f.filter(noTesterAndNotDevToTest).length);
       kNoTester.hint.textContent = 'no tester, excluding Dev to Test · of ' + f.length + ' work items';
+      var tis = f.filter(inTimeInStatus), withAging = f.filter(function (t) {
+        return (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number';
+      });
+      kTime.value.textContent = withAging.length ? String(tis.length) : '\u2014';
+      kTime.hint.textContent = withAging.length
+        ? 'In Progress / In Review, ' + AF.config.timeInStatusThresholdDays + ' days or more'
+        : 'Days in status not available yet';
       var ct = AF.avgCycleTime(f);
       kCycle.value.textContent = ct.avg === null ? '\u2014' : AF.oneDecimal(ct.avg);
       kCycle.hint.textContent = ct.n ? 'days, over ' + ct.n + ' Done ticket' + (ct.n === 1 ? '' : 's') : 'no Done tickets with a cycle time';
@@ -545,7 +561,8 @@
       Status: function (t) { return t.status; },
       'Story points': function (t) { return t.points; },
       Parent: function (t) { return t.parent; },
-      'Fix version': function (t) { return t.fixVersion; }
+      'Fix version': function (t) { return t.fixVersion; },
+      'Days in status': function (t) { return typeof t.statusAging === 'number' ? t.statusAging : null; }
     };
     var detailCols = [
       { label: 'Ticket', cls: 'nowrap', render: function (t) { return AF.ticketCell(t.ticket); } },
@@ -554,6 +571,9 @@
       { label: 'Tester', cls: 'tester wrap-text', render: tester },
       { label: 'Dev to Test', cls: 'nowrap', render: function (t) { return AF.show(isDevToTest(t) ? 'Yes' : null); } },
       { label: 'Status', cls: 'status wrap-text', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
+      { label: 'Days in status', cls: 'num', render: function (t) {
+          return AF.show(typeof t.statusAging === 'number' ? t.statusAging + (t.statusAgingApprox ? '*' : '') : null);
+        } },
       { label: 'Story points', cls: 'num', render: function (t) { return AF.showPoints(t.points); } },
       { label: 'Parent', cls: 'wrap', render: function (t) { return AF.linkCell(t.parent); } },
       { label: 'Fix version', cls: 'nowrap', render: function (t) { return AF.show(t.fixVersion); } },
@@ -565,10 +585,11 @@
       var getValue = detailSortGetters[detailSort.key], direction = detailSort.direction === 'asc' ? 1 : -1;
       return rows.slice().sort(function (a, b) {
         var av = getValue(a), bv = getValue(b);
-        var aMissing = detailSort.key === 'Story points' ? typeof av !== 'number' || !isFinite(av) : AF.isBlank(av);
-        var bMissing = detailSort.key === 'Story points' ? typeof bv !== 'number' || !isFinite(bv) : AF.isBlank(bv);
+        var numeric = detailSort.key === 'Story points' || detailSort.key === 'Days in status';
+        var aMissing = numeric ? typeof av !== 'number' || !isFinite(av) : AF.isBlank(av);
+        var bMissing = numeric ? typeof bv !== 'number' || !isFinite(bv) : AF.isBlank(bv);
         if (aMissing || bMissing) return aMissing === bMissing ? 0 : (aMissing ? direction : -direction);
-        var cmp = detailSort.key === 'Story points' ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+        var cmp = numeric ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
         return cmp * direction;
       });
     }
@@ -598,7 +619,7 @@
       return table;
     }
     function renderDetail(f) {
-      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test' };
+      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Time in status' };
       tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items' +
         (lowerFilter ? ' · ' + filterLabels[lowerFilter] + ' (click KPI again to clear)' : '');
       AF.rebuild(tDetail, function () {
