@@ -143,6 +143,7 @@ button { font: inherit; color: inherit; }
 .qi-ticket-table { min-width: 520px; font-size: 12px; }
 .qi-ticket-table td { overflow-wrap: anywhere; }
 .qi-ticket-table td:first-child { white-space: nowrap; }
+.qi-scroll-hint { flex: none; margin: 4px 0; color: var(--navy); font-size: 11px; font-weight: 700; }
 .kpis, .main { display: grid; gap: 10px; margin-bottom: 10px; }
 .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -203,6 +204,15 @@ svg.burndown { display: block; }
   .detail { min-height: 0; display: flex; }
   .detail .tile { flex: 1; }
   .main .tile .tile-body, .detail .tile-body { max-height: none; }
+}
+@media (min-width: 901px) {
+  .qi-body { display: flex; flex-direction: column; }
+  .qi-metrics { flex: none; }
+  .qi-details { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+  .qi-ticket-scroll { flex: 1; min-height: 120px; max-height: none; overflow-y: auto; scrollbar-gutter: stable; scrollbar-color: #667b96 #e3e9f0; scrollbar-width: auto; }
+  .qi-ticket-scroll::-webkit-scrollbar { width: 14px; }
+  .qi-ticket-scroll::-webkit-scrollbar-track { background: #e3e9f0; }
+  .qi-ticket-scroll::-webkit-scrollbar-thumb { background: #667b96; border: 2px solid #e3e9f0; border-radius: 7px; }
 }
 @media (max-width: 900px) {
   .topbar { height: auto; min-height: var(--topbar-h); flex-wrap: wrap; gap: 4px 12px; padding: 6px 12px; }

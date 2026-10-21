@@ -121,5 +121,14 @@
       return card;
     });
     app.appendChild(el('div', { class: 'qi-grid' }, cards));
+    Array.prototype.forEach.call(app.querySelectorAll('.qi-ticket-scroll'), function (list) {
+      if (list.scrollHeight <= list.clientHeight + 1) return;
+      var count = list.querySelectorAll('tbody tr').length;
+      list.setAttribute('aria-label', 'Quality intake ticket list; scroll to view all ' + count + ' tickets');
+      list.parentNode.insertBefore(el('p', {
+        class: 'qi-scroll-hint',
+        text: 'Scroll within this list to see all ' + count + ' tickets.'
+      }), list);
+    });
   }
 }());

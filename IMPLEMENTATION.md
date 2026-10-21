@@ -18,7 +18,7 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 | `dashboard.js` | Shared engine, exported as `window.AF`: status buckets, value helpers, pure aggregation, the filter store, burndown model and SVG drawing, DOM helpers (tile, rebuild, rowButton, bars, table, heat grid, filter bar), Jira link helpers, loading and error states. | ~610 lines |
 | `sprint.js` | Sprint page: validates the sprint manifest, creates the sprint selector, caches selected snapshots, builds the shell tiles, defines the five dimensions, one `render*` function per tile, the marker panel, the resize observer. | ~400 lines |
 | `backlog.js` | Backlog page: DoR prefix search, age buckets, four distribution tiles, matrix, table. Exposes `AF.backlog` for tests. | ~205 lines |
-| `quality-intake.js` | Quality Intake page: renders tracker-defined sprint windows, source counts and rates, expands ticket detail, uses safe Jira links. | standalone page script |
+| `quality-intake.js` | Quality Intake page: renders tracker-defined sprint windows, source counts and rates, expands ticket detail to fill desktop card space, adds an overflow hint when needed, uses safe Jira links. | standalone page script |
 | `dashboard.css` | Tokens, shell, tiles, KPI tiles, bars, clickable rows, heat grid, tables, chart tile, burndown panel, layout modes. | ~270 lines |
 | `scripts/run_acceptance.js` | Automated acceptance (see §10). | ~800 lines |
 
