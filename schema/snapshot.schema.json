@@ -374,6 +374,14 @@
             "null"
           ],
           "description": "Days from start of work to Done. Populated only when status is Done; null for every other ticket by design (the metric does not apply)."
+        },
+        "statusAging": {
+          "type": ["integer", "null"],
+          "description": "Whole days the ticket has been in its current status, from the tracker Status Aging column (Done tickets: days since Done Date). Null when the tracker has no usable number."
+        },
+        "statusAgingApprox": {
+          "type": "boolean",
+          "description": "True when statusAging is approximate (tracker value ends in *, meaning days since created)."
         }
       }
     },
