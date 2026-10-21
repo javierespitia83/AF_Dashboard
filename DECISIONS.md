@@ -116,6 +116,7 @@ These record resolved choices and defaults where the original answers were silen
 | D68 | **Make expanded Quality Intake lists use the available desktop card height and clearly signal overflow.** If the list needs scrolling, show a visible scrollbar and a nearby instruction that the full ticket list is available by scrolling inside it. | SPEC §8; ACCEPTANCE §3 |
 | D69 | **Allow sorting the sprint Ticket detail table by Ticket, Owner, Tester, Status, Story points, Parent, and Fix version.** Each sortable header has a small direction arrow; clicking a different header sorts ascending and clicking it again reverses direction. Text uses natural alphabetical/numeric ordering, sorting respects the filtered rows, and tracker order remains the default until the user selects a column. | SPEC §6.2; ACCEPTANCE §3 |
 | D70 | **Missing values follow sort direction in sprint Ticket detail.** They appear last in ascending order and first in descending order, so users can quickly find tickets without a Fix version or another selected field. Requested 2026-10-21. | SPEC §6.2; DATA_CONTRACT §6 |
+| D71 | **Make snapshot freshness explicit and provide a route to live Jira data.** All pages label the app as `SNAPSHOT · NOT LIVE`, display `Data as of`, and place a visible `Jira dashboard · LIVE` link beside it, opening Jira dashboard 18635 in a new tab. The app does not query Jira when loaded. Requested 2026-10-21. | SPEC §4; DATA_CONTRACT |
 
 None of these blocks implementation.
 

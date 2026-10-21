@@ -632,6 +632,7 @@
 
   // ---- Jira links (SPEC §8a, DATA_CONTRACT §7a) ----------------------------
   var JIRA_BASE = 'https://mysnaplogic.atlassian.net'; // the only place the Jira address lives
+  var JIRA_DASHBOARD_URL = JIRA_BASE + '/jira/dashboards/18635';
   var KEY_PATTERN = '[A-Z][A-Z0-9]+-[0-9]+';
   var KEY_EXACT = new RegExp('^' + KEY_PATTERN + '$');
 
@@ -715,7 +716,9 @@
     el: el, clear: clear, isMulti: isMulti, tile: tile, rebuild: rebuild, rowButton: rowButton,
     statusDot: statusDot, stackedBar: stackedBar, simpleBar: simpleBar, heatStyle: heatStyle,
     buildTable: buildTable, filterBar: filterBar, heatGrid: heatGrid,
-    jira: { base: JIRA_BASE, url: jiraUrl, link: jiraLink, linkify: linkify }, ticketCell: ticketCell, linkCell: linkCell,
+    jira: { base: JIRA_BASE, url: jiraUrl, link: jiraLink, linkify: linkify }, jiraDashboardUrl: JIRA_DASHBOARD_URL, ticketCell: ticketCell, linkCell: linkCell,
     loadJson: loadJson, loadSnapshot: loadSnapshot, showError: showError, emptyState: emptyState, setUpdated: setUpdated
   };
+  var liveDashboardLink = document.querySelector('.live-dashboard-link');
+  if (liveDashboardLink) liveDashboardLink.href = JIRA_DASHBOARD_URL;
 })();

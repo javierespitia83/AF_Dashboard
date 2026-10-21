@@ -14,7 +14,7 @@ Audience: an AI coding agent (or a developer) that must **recreate this app from
 
 | File | Responsibility | Approx. size |
 |---|---|---|
-| `index.html` / `backlog.html` / `quality-intake.html` | Shell only: top bar with three tabs, sprint selector mount on Current sprint, `#asof`, `#filterbar` where needed, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then the relevant page script. Inline favicon `data:,` (avoids a 404 console error). | small static shells |
+| `index.html` / `backlog.html` / `quality-intake.html` | Shell only: top bar with three tabs, sprint selector mount on Current sprint, snapshot badge, `#asof`, user-clicked live Jira dashboard link, `#filterbar` where needed, `<main id="app" class="board">` (starts with "Loading…"), footer. Load `dashboard.js` then the relevant page script. Inline favicon `data:,` (avoids a 404 console error). | small static shells |
 | `dashboard.js` | Shared engine, exported as `window.AF`: status buckets, value helpers, pure aggregation, the filter store, burndown model and SVG drawing, DOM helpers (tile, rebuild, rowButton, bars, table, heat grid, filter bar), Jira link helpers, loading and error states. | ~610 lines |
 | `sprint.js` | Sprint page: validates the sprint manifest, creates the sprint selector, caches selected snapshots, builds the shell tiles, defines the five dimensions, one `render*` function per tile, the marker panel, the resize observer. | ~400 lines |
 | `backlog.js` | Backlog page: DoR prefix search, age buckets, four distribution tiles, matrix, table. Exposes `AF.backlog` for tests. | ~205 lines |

@@ -21,7 +21,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 ## 3. Checks
 
 **Loading and safety**
-- [ ] Both pages load through `python3 -m http.server`; both JSON files return 200.
+- [ ] All three pages load through `python3 -m http.server`; each page's JSON file returns 200.
 - [ ] No errors or warnings in the console on load or during any interaction.
 - [ ] Only requests to localhost; works with the network off. No `npm`, CDN, web font, external library, `innerHTML`, `eval` or `document.write` in the source.
 - [ ] `sprints.json`, the selected sprint snapshot, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
@@ -30,7 +30,8 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] A direct `?sprint=<id>` opens the corresponding manifest entry. An unknown id shows a clear error and leaves the selector usable. Missing/invalid manifests silently fall back to `sprint.json` with no selector.
 - [ ] Closed sprints show a high-contrast historical banner, subtly grayer page background, snapshot as-of date/time and optional manifest note; the burndown runs through sprint end and has no live Today marker. Null carried-over, removal, narrative, discussed and demo fields render using their documented placeholders/messages.
 - [ ] `sprints.json` and `fixtures/sprints.json` conform to `schema/sprints.schema.json`; active and closed snapshots conform to `schema/snapshot.schema.json`.
-- [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and shows the tabs Current sprint and Backlog with the active one marked.
+- [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and marks the active page tab.
+- [ ] Every page shows a `SNAPSHOT · NOT LIVE` badge beside `Data as of` and a visible `Jira dashboard · LIVE` link to dashboard 18635. The link opens a new tab with `noopener noreferrer`; loading any page makes no Jira request. On narrow screens both the badge and link remain visible without horizontal overflow.
 - [ ] The Quality Intake tab opens the third page and only requests `quality-intake.json`; its sprint windows, partial marker, source counts, and per-10-weekday rates match that file. It labels counts as an intake signal, not a defect rate, and explains PSWAT and APP Bugs definitions.
 - [ ] Clicking a source count expands only that sprint/source's ticket list, with key linked to Jira and summary, type, status, and created date shown; clicking again closes the list. Missing values show `n/a`.
 - [ ] On desktop, expanded ticket detail reaches the bottom of its card. If the list overflows, its scrollbar is visible and a nearby hint explains that scrolling reveals the full ticket list.

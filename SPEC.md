@@ -31,7 +31,7 @@ Questions it must answer, mostly by clicking:
 ## 4. App shell (all pages)
 
 Top to bottom:
-1. **Top bar** (fixed height): app name, tabs **Current sprint**, **Backlog**, and **Quality Intake** (the active tab is marked), the sprint page's accessible **Sprint** selector when a valid manifest is available, and "Data as of <local date> · <local HH:MM> UTC±HH:MM" on the right when `exportedAt` is present. Convert the timestamp to the viewing browser's local timezone. Older snapshots show `refreshedAt` only.
+1. **Top bar** (fixed height on desktop, wraps on narrow screens): app name, tabs **Current sprint**, **Backlog**, and **Quality Intake** (the active tab is marked), the sprint page's accessible **Sprint** selector when a valid manifest is available, and a highlighted **SNAPSHOT · NOT LIVE** badge beside "Data as of <local date> · <local HH:MM> UTC±HH:MM". Convert `exportedAt` to the viewing browser's local timezone; older snapshots show `refreshedAt` only. Beside the snapshot status, show a prominent **Jira dashboard · LIVE** link to `https://mysnaplogic.atlassian.net/jira/dashboards/18635`, opening in a new tab. It is user-clicked only; the app makes no external request on page load. The badge and timestamp clarify that the app can be stale; Jira is the place to go for current Jira data.
 2. **Filter bar** (fixed height) on Current sprint and Backlog: active-filter tags, page-specific controls (see §6 and §7), and a **Reset all** button. Quality Intake has no filters. With no filter active it says: "No filters. Click a bar, a person, or a cell to filter."
 3. **Board**: the tiles, filling all remaining height.
 4. **Footer** (slim, fixed height): "Internal — team only. Do not reuse in executive or external documents without review."

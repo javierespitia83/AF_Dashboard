@@ -16,7 +16,13 @@
         <a class="tab" href="backlog.html">Backlog</a>
         <a class="tab active" href="quality-intake.html" aria-current="page">Quality Intake</a>
       </nav>
-      <div class="asof" id="asof">Data as of &mdash;</div>
+      <div class="snapshot-status" role="status" aria-label="Snapshot update status">
+        <span class="snapshot-badge">SNAPSHOT &middot; NOT LIVE</span>
+        <span class="asof" id="asof">Data as of &mdash;</span>
+      </div>
+      <a class="live-dashboard-link" target="_blank" rel="noopener noreferrer" title="Open the Jira dashboard for the latest Jira data">
+        Jira dashboard <span class="live-dashboard-badge">LIVE</span><span aria-hidden="true">&#8599;</span>
+      </a>
     </header>
     <main class="board quality-board" id="app"><p class="loading">Loading&hellip;</p></main>
     <noscript><p>This dashboard needs JavaScript.</p></noscript>
