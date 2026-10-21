@@ -567,7 +567,7 @@
         var av = getValue(a), bv = getValue(b);
         var aMissing = detailSort.key === 'Story points' ? typeof av !== 'number' || !isFinite(av) : AF.isBlank(av);
         var bMissing = detailSort.key === 'Story points' ? typeof bv !== 'number' || !isFinite(bv) : AF.isBlank(bv);
-        if (aMissing || bMissing) return aMissing === bMissing ? 0 : (aMissing ? 1 : -1);
+        if (aMissing || bMissing) return aMissing === bMissing ? 0 : (aMissing ? direction : -direction);
         var cmp = detailSort.key === 'Story points' ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
         return cmp * direction;
       });

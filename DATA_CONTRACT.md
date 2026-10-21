@@ -146,6 +146,8 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 
 **Combining:** values inside one dimension are OR; different dimensions are AND; the backlog text search (§7) is AND with all of them. A tile for dimension D is computed over the set filtered by every dimension **except D** (a matrix tile except both of its dimensions; Team Contribution except Assignee, Tester and Team member); KPI tiles and the ticket table use the set filtered by everything.
 
+**Sprint Ticket detail sorting:** text columns use natural alphabetical/numeric ordering and Story points sort numerically. Missing values sort last in ascending order and first in descending order, making unassigned fields such as Fix version easy to bring to the top. Sorting only reorders the visible filtered rows; tracker order is the default.
+
 **Sprint metrics (over the relevant set):**
 
 | Metric | Definition |
