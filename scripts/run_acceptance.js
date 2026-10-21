@@ -126,7 +126,7 @@ async function openPage(url, w = 1920, h = 1080) {
 
 // ---------- page-side helpers ----------
 const H = `
-const T = n => n.textContent.replace(/\\s+/g,' ').trim();
+const T = n => { const c=n.cloneNode(true); c.querySelectorAll('.detail-sort-arrow').forEach(x=>x.remove()); return c.textContent.replace(/\\s+/g,' ').trim(); };
 const tile = t => [...document.querySelectorAll('section.tile')].find(s => { const h = s.querySelector('h2'); return h && h.textContent.trim() === t; });
 const kpi = t => [...document.querySelectorAll('.kpi')].find(k => T(k.querySelector('.label')) === t);
 const rowsOf = t => [...tile(t).querySelectorAll('.tile-body .rowbtn')];
@@ -603,6 +603,38 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     { const bdf = await run(p, READ_BD); check(`Layout ${w}x${h}: burndown redraws to fit its tile (svg as wide as the tile, no scroll bars)`, bdf.has && Math.abs(bdf.svgW - bdf.bodyW) <= 2 && bdf.bodyOverflow <= 1, { svgW: bdf.svgW, bodyW: bdf.bodyW, o: bdf.bodyOverflow }); }
     if (w === 1440 || w === 800) { const shot = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SP, `acc2_sprint_${w}.png`), Buffer.from(shot.result.data, 'base64')); }
   }
+  const sortableHeaders = ['Ticket', 'Owner', 'Tester', 'Status', 'Story points', 'Parent', 'Fix version'];
+  const sortHeaderState = await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(th=>({label:T(th),button:!!th.querySelector('button.detail-sort'),sort:th.getAttribute('aria-sort'),arrow:th.querySelector('.detail-sort-arrow')&&T(th.querySelector('.detail-sort-arrow'))}))`);
+  check('Ticket detail: only the requested seven headers have accessible sort buttons and direction arrows', eq(sortHeaderState.filter(x=>x.button).map(x=>x.label),sortableHeaders) && sortHeaderState.filter(x=>x.button).every(x=>x.sort==='none'&&x.arrow==='↕') && sortHeaderState.filter(x=>!x.button).every(x=>x.sort===null), sortHeaderState);
+  const naturalAsc = S.map(t=>t.ticket).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
+  const ticketAsc = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Ticket"]').closest('th').getAttribute('aria-sort'),arrow:T(tile('Ticket detail').querySelector('thead th .detail-sort-arrow'))}`);
+  check('Ticket detail: Ticket sorts naturally ascending (APP-9 before APP-10)', eq(ticketAsc.keys,naturalAsc) && ticketAsc.sort==='ascending' && ticketAsc.arrow==='↑', ticketAsc);
+  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
+  const ticketDesc = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Ticket"]').closest('th').getAttribute('aria-sort'),arrow:T(tile('Ticket detail').querySelector('thead th .detail-sort-arrow'))}`);
+  check('Ticket detail: clicking the active header reverses the sort direction', eq(ticketDesc.keys,naturalAsc.slice().reverse()) && ticketDesc.sort==='descending' && ticketDesc.arrow==='↓', ticketDesc);
+  const pointAsc = S.map((t,i)=>({t,i})).sort((a,b)=>a.t.points==null?b.t.points==null?a.i-b.i:1:b.t.points==null?-1:a.t.points-b.t.points).map(x=>x.t.ticket);
+  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Story points"]').click()`);
+  const pointsSorted = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Story points"]').closest('th').getAttribute('aria-sort')}`);
+  check('Ticket detail: Story points sort numerically and missing points remain last', eq(pointsSorted.keys,pointAsc) && pointsSorted.sort==='ascending', pointsSorted);
+  const textSortCases = [
+    ['Owner',t=>grpName(t.owner)], ['Tester',t=>grpName(t.tester)],
+    ['Status',t=>t.status], ['Parent',t=>t.parent], ['Fix version',t=>t.fixVersion]
+  ];
+  for (const [label,getValue] of textSortCases) {
+    await run(p, `tile('Ticket detail').querySelector(${JSON.stringify('.detail-sort[data-sort-key="'+label+'"]')}).click()`);
+    const expected = S.map((t,i)=>({key:t.ticket,value:getValue(t),i})).sort((a,b)=>{
+      const am=a.value==null||String(a.value).trim()==='',bm=b.value==null||String(b.value).trim()==='';
+      if(am||bm)return am===bm?a.i-b.i:am?1:-1;
+      return String(a.value).localeCompare(String(b.value),undefined,{numeric:true,sensitivity:'base'})||a.i-b.i;
+    }).map(x=>x.key);
+    const actual = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0]))`);
+    check(`Ticket detail: ${label} sorts in natural ascending order`,eq(actual,expected),{actual,expected});
+  }
+  await run(p, `clickReset(); clickRow('Tickets by status','In Progress'); tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Owner"]').click()`);
+  const filteredOwnerSort = await run(p, `const tl=tile('Ticket detail'),h=[...tl.querySelectorAll('thead th')].map(T),oi=h.indexOf('Owner'),rows=[...tl.querySelectorAll('tbody tr')];return {owners:rows.map(r=>T(r.children[oi])),statuses:rows.map(r=>T(r.children[h.indexOf('Status')])),tags:document.querySelectorAll('.tags .tag').length}`);
+  const ownerAsc = S.filter(t=>t.status==='In Progress').map(t=>grpName(t.owner)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+  check('Ticket detail: sorting respects the active status filter', eq(filteredOwnerSort.owners,ownerAsc) && filteredOwnerSort.statuses.every(x=>x==='In Progress') && filteredOwnerSort.tags===1, filteredOwnerSort);
   await p.close();
 
   // =============== BACKLOG ===============

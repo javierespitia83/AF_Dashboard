@@ -537,6 +537,16 @@
       });
     }
 
+    var detailSort = { key: null, direction: 'asc' };
+    var detailSortGetters = {
+      Ticket: function (t) { return t.ticket; },
+      Owner: owner,
+      Tester: tester,
+      Status: function (t) { return t.status; },
+      'Story points': function (t) { return t.points; },
+      Parent: function (t) { return t.parent; },
+      'Fix version': function (t) { return t.fixVersion; }
+    };
     var detailCols = [
       { label: 'Ticket', cls: 'nowrap', render: function (t) { return AF.ticketCell(t.ticket); } },
       { label: 'Summary', cls: 'wrap', render: function (t) { return AF.show(t.summary); } },
@@ -550,13 +560,50 @@
       { label: 'Linked work items', cls: 'wrap', render: function (t) { return AF.linkCell(t.linkedWorkItems); } },
       { label: 'Last sync update', cls: 'wrap current-situation', render: function (t) { return AF.show(t.lastSyncUpdate); } }
     ];
+    function sortDetailRows(rows) {
+      if (!detailSort.key) return rows;
+      var getValue = detailSortGetters[detailSort.key], direction = detailSort.direction === 'asc' ? 1 : -1;
+      return rows.slice().sort(function (a, b) {
+        var av = getValue(a), bv = getValue(b);
+        var aMissing = detailSort.key === 'Story points' ? typeof av !== 'number' || !isFinite(av) : AF.isBlank(av);
+        var bMissing = detailSort.key === 'Story points' ? typeof bv !== 'number' || !isFinite(bv) : AF.isBlank(bv);
+        if (aMissing || bMissing) return aMissing === bMissing ? 0 : (aMissing ? 1 : -1);
+        var cmp = detailSort.key === 'Story points' ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+        return cmp * direction;
+      });
+    }
+    function sortableDetailTable(rows) {
+      var table = AF.buildTable(detailCols, sortDetailRows(rows), { cls: 'data wider' });
+      Array.prototype.forEach.call(table.querySelectorAll('thead th'), function (th, index) {
+        var label = detailCols[index].label;
+        if (!detailSortGetters[label]) return;
+        var active = detailSort.key === label;
+        var direction = active ? detailSort.direction : null;
+        var actionDirection = active ? (direction === 'asc' ? 'descending' : 'ascending') : 'ascending';
+        th.setAttribute('aria-sort', direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none');
+        AF.clear(th);
+        th.appendChild(el('button', {
+          type: 'button', class: 'detail-sort', 'data-sort-key': label,
+          'aria-label': 'Sort by ' + label + ', ' + actionDirection,
+          title: 'Sort by ' + label + ' (' + actionDirection + ')',
+          onclick: function () {
+            if (detailSort.key === label) detailSort.direction = detailSort.direction === 'asc' ? 'desc' : 'asc';
+            else detailSort = { key: label, direction: 'asc' };
+            renderDetail(rows);
+            var next = tDetail.body.querySelector('.detail-sort[data-sort-key="' + label + '"]');
+            if (next) next.focus({ preventScroll: true });
+          }
+        }, [label, el('span', { class: 'detail-sort-arrow', 'aria-hidden': 'true', text: active ? (direction === 'asc' ? '↑' : '↓') : '↕' })]));
+      });
+      return table;
+    }
     function renderDetail(f) {
       var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test' };
       tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items' +
         (lowerFilter ? ' · ' + filterLabels[lowerFilter] + ' (click KPI again to clear)' : '');
       AF.rebuild(tDetail, function () {
         if (!f.length) { tDetail.body.appendChild(AF.emptyState(lowerFilter === 'carriedOver' && !carriedKeys ? 'The snapshot has the carried-over total but no ticket keys, so those tickets cannot be identified here yet.' : EMPTY)); return; }
-        tDetail.body.appendChild(AF.buildTable(detailCols, f, { cls: 'data wider' }));
+        tDetail.body.appendChild(sortableDetailTable(f));
       });
     }
 

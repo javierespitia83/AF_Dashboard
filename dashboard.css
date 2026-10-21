@@ -337,6 +337,9 @@ table.heat td.dim { opacity: 0.4; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; }
 table.data th, table.data td { padding: 5px 9px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line-soft); }
 table.data thead th { position: sticky; top: 0; z-index: 2; background: #f4f7fa; color: var(--muted); font-size: 12px; font-weight: 700; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.detail-sort { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.detail-sort:hover { color: var(--navy); text-decoration: underline; }
+.detail-sort-arrow { min-width: 9px; color: var(--navy); font-size: 10px; line-height: 1; text-align: center; }
 td.num, th.num { text-align: right; white-space: nowrap; }
 td.wrap { min-width: 220px; white-space: normal; overflow-wrap: anywhere; }
 td.nowrap { white-space: nowrap; }
