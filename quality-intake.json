@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-20",
-  "exportedAt": "2026-10-20T19:18:58-05:00",
+  "refreshedAt": "2026-10-21",
+  "exportedAt": "2026-10-21T12:55:03+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -573,7 +573,7 @@
           "key": "APP-3174",
           "summary": "502 error while logging into canary through SSO",
           "type": "Bug",
-          "status": "Open",
+          "status": "In Progress",
           "created": "2026-10-15",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3174"
         },
@@ -591,7 +591,7 @@
           "key": "APP-3178",
           "summary": "ActivityLog Page does not load in Project Manager",
           "type": "Bug",
-          "status": "In Review",
+          "status": "Done",
           "created": "2026-10-19",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3178"
         },
@@ -609,7 +609,7 @@
           "key": "APP-3183",
           "summary": "[Regression][APIM] API Manager Create Task – pipeline picker lists all project spaces/APIs, and no pipeline can be selected within APIs (even within the same API)",
           "type": "Bug",
-          "status": "Open",
+          "status": "In Review",
           "created": "2026-10-19",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3183"
         },
