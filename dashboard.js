@@ -441,7 +441,9 @@
     var W = Math.max(280, container.clientWidth), H = Math.max(120, container.clientHeight); // fits the tile exactly
     var small = H < 260; // short tiles (small laptop screens) get tighter margins
     var hasRem = Object.keys(m.removedByDate).length > 0, extra = hasRem ? 18 : 0; // removal triangles hang below the axis, so the date labels move down
-    var L = 42, R = 16, T = small ? 34 : 42, B = (small ? 36 : 50) + extra, pw = W - L - R, ph = H - T - B;
+    var narrow = W < (hasRem ? 760 : 700); // not enough room for the axis title and the legend on one line
+    var legendTwoRows = narrow && hasRem;
+    var L = 42, R = 16, T = Math.max(small ? 34 : 42, legendTwoRows ? 51 : 0), B = (small ? 36 : 50) + extra, pw = W - L - R, ph = H - T - B;
     var sc = niceScale(m.total);
     var x = function (i) { return L + (m.n > 1 ? pw * i / (m.n - 1) : pw / 2); };
     var y = function (v) { return T + ph - ph * v / sc.top; };
@@ -453,7 +455,6 @@
       g.push(svg('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: GRID, 'stroke-width': 1 }));
       g.push(svg('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: MUTED, text: fmtNum(v) }));
     }
-    var narrow = W < (hasRem ? 760 : 700); // not enough room for the axis title and the legend on one line
     if (!narrow) g.push(svg('text', { x: L, y: 14, 'font-size': 11, 'font-weight': 700, fill: MUTED, text: 'Story points remaining' }));
     // per-day hover columns (tooltips), drawn first so markers and lines stay on top
     m.days.forEach(function (d, i) {
@@ -562,13 +563,22 @@
     g.push(svg('text', { x: lx + 113, y: 14, 'font-size': 11, fill: MUTED, text: 'Ideal' }));
     g.push(svg('line', { x1: lx + 160, x2: lx + 178, y1: 10, y2: 10, stroke: '#b9c3d0', 'stroke-width': 1.5 }));
     g.push(svg('text', { x: lx + 183, y: 14, 'font-size': 11, fill: MUTED, text: 'Scope' }));
-    g.push(svg('path', { d: 'M' + (lx + 230) + ',16 L' + (lx + 242) + ',16 L' + (lx + 236) + ',5 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
-    g.push(svg('text', { x: lx + 247, y: 14, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
-    g.push(svg('path', { d: 'M' + (lx + 410) + ',16 L' + (lx + 422) + ',16 L' + (lx + 416) + ',5 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
-    g.push(svg('text', { x: lx + 427, y: 14, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
-    if (hasRem) {
-      g.push(svg('path', { d: 'M' + (lx + 480) + ',5 L' + (lx + 492) + ',5 L' + (lx + 486) + ',16 Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }));
-      g.push(svg('text', { x: lx + 497, y: 14, 'font-size': 11, fill: MUTED, text: 'Removed' }));
+    if (legendTwoRows) {
+      g.push(svg('path', { d: 'M' + lx + ',36 L' + (lx + 12) + ',36 L' + (lx + 6) + ',25 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
+      g.push(svg('text', { x: lx + 17, y: 34, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
+      g.push(svg('path', { d: 'M' + (lx + 140) + ',36 L' + (lx + 152) + ',36 L' + (lx + 146) + ',25 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
+      g.push(svg('text', { x: lx + 157, y: 34, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
+      g.push(svg('path', { d: 'M' + (lx + 210) + ',25 L' + (lx + 222) + ',25 L' + (lx + 216) + ',36 Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }));
+      g.push(svg('text', { x: lx + 227, y: 34, 'font-size': 11, fill: MUTED, text: 'Removed' }));
+    } else {
+      g.push(svg('path', { d: 'M' + (lx + 230) + ',16 L' + (lx + 242) + ',16 L' + (lx + 236) + ',5 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
+      g.push(svg('text', { x: lx + 247, y: 14, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
+      g.push(svg('path', { d: 'M' + (lx + 410) + ',16 L' + (lx + 422) + ',16 L' + (lx + 416) + ',5 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
+      g.push(svg('text', { x: lx + 427, y: 14, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
+      if (hasRem) {
+        g.push(svg('path', { d: 'M' + (lx + 480) + ',5 L' + (lx + 492) + ',5 L' + (lx + 486) + ',16 Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }));
+        g.push(svg('text', { x: lx + 497, y: 14, 'font-size': 11, fill: MUTED, text: 'Removed' }));
+      }
     }
     container.appendChild(svg('svg', {
       width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': opts.label, class: 'burndown'
