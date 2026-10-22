@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-22",
-  "exportedAt": "2026-10-22T16:46:17+00:00",
+  "exportedAt": "2026-10-22T16:59:23+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -174,7 +174,7 @@
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "lastSyncUpdate": "In Review. Alan Le needs a code review; e2e tests pass, screenshots added. 10/21 daily: full regression in progress; Poornima Srikantesh needs Shardul Sardesai's help to set a feature flag. Ships with APP-2719.",
+      "lastSyncUpdate": "In Review. Alan Le needs a code review; e2e tests pass, screenshots added. 10/21 daily: full regression in progress; Poornima Srikantesh needs Shardul Sardesai's help with a feature flag. Jira 10/21: Poornima asked Alan Le to check the regression test failures (locators may need updating). Ships with APP-2719.",
       "blocker": "Waiting for a code review; QA full regression needs a feature flag set (Shardul Sardesai).",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -240,7 +240,7 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "lastSyncUpdate": "In Review since 10/19 (was In Progress). PR created 10/19 (ClientApps #6090 to 4.46_rc). Alan could not reproduce it on dev (10/15); Eric Fertig attached the customer's video 10/16; tests mostly passing per the 10/19 daily. PR #6090 merged to 4.46_rc 10/20.",
+      "lastSyncUpdate": "In Review since 10/20. PR #6090 merged to 4.46_rc 10/20. Jira 10/21: Poornima Srikantesh could not reproduce the issue manually in Elastic or Canary (cc Eric Fertig).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -438,7 +438,7 @@
       "statusAging": 9,
       "statusAgingApprox": false,
       "summary": "Display locked & invited account indicator in Admin Manager",
-      "lastSyncUpdate": "In Progress; UI verification is waiting on a change from Salim. Pavan V updated the test cases and test IDs 10/21 per Barbora Novakova's comments; test cases are linked with APP-3067.",
+      "lastSyncUpdate": "In Progress; blocked by APP-2970 (Pavan V, Jira 10/22), which is still In Review. Pavan V updated the test cases and test IDs 10/21 per Barbora Novakova's comments; test cases are linked with APP-3067.",
       "blocker": "Waiting for the change needed to complete UI verification; confirm which change remains.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -460,7 +460,7 @@
       "statusAging": 7,
       "statusAgingApprox": false,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "lastSyncUpdate": "In Progress. PR #6097 (Playwright tests) 10/20. 10/21 daily: Barbora Novakova to review Pavan V's test case feedback; Pavan V posted questions in the ticket and is updating scripts. Verification waits for the backend merge.",
+      "lastSyncUpdate": "In Progress; blocked by APP-2970 (Pavan V, Jira 10/22). PR #6097 (Playwright tests) 10/20. 10/21 daily: Barbora Novakova to review Pavan V's test case feedback; Pavan V is updating scripts. Verification waits for the backend merge.",
       "blocker": "Dependency: merge of a related ticket from Salim Abdul before verification.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -482,7 +482,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "[UI] Add \"missed\" option in the dropdown for task email notification.",
-      "lastSyncUpdate": "Open; Guannan proposed replacing it in the sprint with APP-3177, since it depends on an API research task. Derek to research APP-3177 and discuss offline. No scope change was decided.",
+      "lastSyncUpdate": "In Progress since 10/21. Anumeha Singh cannot test this UI story until the backend story APP-3103 is merged (Jira 10/22); she asked Alan Le to review the test cases (10/22).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -526,7 +526,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "Install Appcues code snippet on Canary pod for evaluation purposes",
-      "lastSyncUpdate": "In Progress since 10/20 (was Open). Barbora sized it at 1-2 pts: add a script tag and identify call, like the Userpilot integration (APP-2555), with no backend changes. On 10/13 Vishal asked Barbora to confirm the effort; the docs team wants to evaluate Appcues on Canary.",
+      "lastSyncUpdate": "In Review since 10/21 (was In Progress). Barbora sized it at 1-2 pts: add a script tag and identify call, like the Userpilot integration (APP-2555), with no backend changes. On 10/13 Vishal asked Barbora to confirm the effort; the docs team wants to evaluate Appcues on Canary.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1164,7 +1164,7 @@
       "statusAging": 7,
       "statusAgingApprox": false,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "lastSyncUpdate": "In Review. Platform Engineering (Jigish Patel) is looking for a reviewer (Jira 10/20, Daily); Carlos Espitia asked Salim Abdul for urgency input. Pavan V to test after merge.",
+      "lastSyncUpdate": "In Review (PR #7166). Reviewer not confirmed: Platform Engineering (Jigish Patel) was looking for one (10/20). Blocks APP-2968 and APP-2969. Awaiting reply from Vishal Soni and Derek Fung to Carlos's 10/22 question (stay in 4.46 or move to the next release). Pavan V to test after merge.",
       "blocker": "Dependency: Platform Engineering (Jigish Patel) for a PR reviewer; waiting for review/merge before testing.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1252,7 +1252,7 @@
       "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "[Backend] Mechanism to notify user if schedule task misses",
-      "lastSyncUpdate": "In Review since 10/22. PR #7187 (Tectonic) created 10/21. Shared test plan for APP-3103/APP-3097 generated 10/16; fit/sequencing remains open.",
+      "lastSyncUpdate": "In Review since 10/22. PR #7187 (Tectonic) created 10/21. Vlad Storona replied 10/22 on Anumeha Singh's test cases: corrected preconditions and verification checks and listed extra cases to add. APP-2978 (UI) waits on this merge.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
