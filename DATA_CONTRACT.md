@@ -49,7 +49,7 @@ The Quality Intake page reads only this file. The exporter builds it from `Sprin
 | `doneDate` | string (date) or null | `YYYY-MM-DD`, America/Los_Angeles: date of the latest transition to Done. Only populated when `status` is `Done`. | `—` |
 | `addedDate` | string (date) or null | `YYYY-MM-DD`: when the ticket entered the sprint. **Two different origins the JSON does not distinguish** (§2a). | `—` |
 | `cycleTime` | integer or null | Days from start of work to Done. Only populated when `status` is `Done`; `null` for every other ticket by design. | `—` |
-| `statusAging` | integer or null | Whole days in the current status, read from the tracker `Status Aging` column (Done tickets: days since Done Date). `null` when the cell is blank or not a number. Feeds the Time in status KPI and the Days in status column. | `—` |
+| `statusAging` | integer or null | Whole days in the current status, read from the tracker `Status Aging` column (Done tickets: days since Done Date). `null` when the cell is blank or not a number. Feeds the Long-running work · 7+ days KPI and the Days in status column. | `—` |
 | `statusAgingApprox` | boolean | `true` when the tracker value ends in `*` (approximate: days since the ticket was created). Shown with a trailing `*`. Optional; absent means `false`. | — |
 | `summary` | string or null | Exact Jira `summary` of the ticket (not reworded; since 2026-10-07 the workbook column is `Summary`) | `—` |
 | `lastSyncUpdate` | string or null | Short status plus next step, up to about 200 characters; shown under “Last sync update”. It reflects the snapshot's captured note and may omit changes made after that snapshot | `—` |

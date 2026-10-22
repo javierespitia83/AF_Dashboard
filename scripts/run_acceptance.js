@@ -218,7 +218,7 @@ function expectSprint(S, f, ctx = CTX) {
   else if (!co) { carriedV = '—'; carriedH = 'Not calculated yet for this sprint'; }
   else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in sprint.json'; }
   const midOk = ctx.sprint && !isNaN(dn(ctx.sprint.startDate));
-  const kh = { time: tisAging0(all) ? 'In Progress / In Review, 7 days or more' : 'Days in status not available yet', cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in sprint.json', carried: carriedH };
+  const kh = { time: tisAging0(all) ? 'In Progress / In Review tickets' : 'Days in status not available yet', cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in sprint.json', carried: carriedH };
   const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—',
     midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
     String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
@@ -239,7 +239,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
   if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
   if (!e.active && d.kpis[0].hint !== 'tickets in the sprint') errs.push(['kpi hint', d.kpis[0].hint]);
-  if (d.kpis.length !== 8 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Time in status', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
+  if (d.kpis.length !== 8 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Long-running work · 7+ days', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
   if (d.kpis[6].hint !== e.kpiHints.time) errs.push(['time hint', d.kpis[6].hint, e.kpiHints.time]);
   if (d.kpis[7].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[7].hint, e.kpiHints.cycle]);
   if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
@@ -467,10 +467,10 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
   { const tisKeys = S.filter(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number' && t.statusAging >= 7).map(t => t.ticket);
     await run(p, `clickReset()`);
-    await run(p, `clickEl(kpi('Time in status'))`);
+    await run(p, `clickEl(kpi('Long-running work · 7+ days'))`);
     const got = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.querySelector('td')))`);
     const hdr = await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(T)`);
-    check('Click Time in status lists exactly the In Progress / In Review tickets with 7 or more days, and the table has a Days in status column', eq([...got].sort(), [...tisKeys].sort()) && hdr.some(h => /Days in status/.test(h)), { expected: tisKeys, got });
+    check('Click Long-running work lists exactly the In Progress / In Review tickets with 7 or more days, and the table has a Days in status column', eq([...got].sort(), [...tisKeys].sort()) && hdr.some(h => /Days in status/.test(h)), { expected: tisKeys, got });
     await run(p, `clickReset()`); }
   await run(p, `clickEl(kpi('No tester & Not Dev to Test'))`);
   let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);

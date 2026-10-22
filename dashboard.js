@@ -42,7 +42,7 @@
 
   // ---- Settings (SPEC §6.2 / D38) -------------------------------------------
   var config = {
-    timeInStatusThresholdDays: 7, // In Progress / In Review tickets in the same status this many days or more are listed under "Time in status"
+    timeInStatusThresholdDays: 7, // In Progress / In Review tickets in the same status this many days or more appear under "Long-running work · 7+ days"
     midSprintThresholdDays: 2 // tickets added later than start + this many days count as "added mid-sprint"
   };
 
