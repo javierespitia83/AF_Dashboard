@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-22",
-  "exportedAt": "2026-10-22T07:50:50-05:00",
+  "exportedAt": "2026-10-22T16:46:17+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -592,7 +592,7 @@
       "ticket": "APP-1819",
       "summary": "Project sorting behavior is inconsistent between Designer and Project Manager.",
       "type": "Story",
-      "priority": "Medium",
+      "priority": "High",
       "dor": "Well-Formed",
       "points": null,
       "needsSplitting": null,
