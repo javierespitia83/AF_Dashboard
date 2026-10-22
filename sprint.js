@@ -170,8 +170,8 @@
     var kItems = kpi('items', 'Work items'), kPoints = kpi('points', 'Story points');
     var kDone = kpi('plain', 'Done'), kNoTester = kpi('plain', 'No tester & Not Dev to Test');
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
-    var kTime = kpi('plain', 'Time in status');
-    kTime.root.title = 'In Progress or In Review tickets that have stayed in the same status for the configured number of days or more. A follow-up list, not a risk rating. Click to filter the lower section.';
+    var kTime = kpi('plain', 'Long-running work · ' + AF.config.timeInStatusThresholdDays + '+ days');
+    kTime.root.title = 'In Progress or In Review tickets that have stayed in the same status for ' + AF.config.timeInStatusThresholdDays + ' days or more. A neutral follow-up list, not a risk rating. Click to filter the lower section.';
     kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
     kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
@@ -231,7 +231,7 @@
     store.tags = function () {
       var tags = baseTags();
       if (lowerFilter) {
-        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Time in status' };
+        var labels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Long-running work · ' + AF.config.timeInStatusThresholdDays + '+ days' };
         tags.push({ dim: '__kpi', label: 'KPI', value: labels[lowerFilter] || lowerFilter });
       }
       return tags;
@@ -308,7 +308,7 @@
       });
       kTime.value.textContent = withAging.length ? String(tis.length) : '\u2014';
       kTime.hint.textContent = withAging.length
-        ? 'In Progress / In Review, ' + AF.config.timeInStatusThresholdDays + ' days or more'
+        ? 'In Progress / In Review tickets'
         : 'Days in status not available yet';
       var ct = AF.avgCycleTime(f);
       kCycle.value.textContent = ct.avg === null ? '\u2014' : AF.oneDecimal(ct.avg);
@@ -619,7 +619,7 @@
       return table;
     }
     function renderDetail(f) {
-      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Time in status' };
+      var filterLabels = { midSprint: 'Added mid-sprint', carriedOver: 'Carried over', noTester: 'No tester & Not Dev to Test', timeInStatus: 'Long-running work · ' + AF.config.timeInStatusThresholdDays + '+ days' };
       tDetail.head.querySelector('.sub').textContent = f.length + ' of ' + tickets.length + ' work items' +
         (lowerFilter ? ' · ' + filterLabels[lowerFilter] + ' (click KPI again to clear)' : '');
       AF.rebuild(tDetail, function () {
