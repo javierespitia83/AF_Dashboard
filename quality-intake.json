@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-21",
-  "exportedAt": "2026-10-21T22:15:02+00:00",
+  "refreshedAt": "2026-10-22",
+  "exportedAt": "2026-10-22T07:50:50-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -538,16 +538,16 @@
       "sprintId": 12176,
       "name": "App Sprint 10-23-2026",
       "windowStart": "2026-10-12",
-      "windowEnd": "2026-10-20",
-      "weekdays": 7,
+      "windowEnd": "2026-10-21",
+      "weekdays": 8,
       "partial": true,
       "counts": {
         "pswat": 4,
-        "appBugs": 9
+        "appBugs": 12
       },
       "ratesPer10Weekdays": {
-        "pswat": 5.71,
-        "appBugs": 12.86
+        "pswat": 5.0,
+        "appBugs": 15.0
       },
       "tickets": [
         {
@@ -609,7 +609,7 @@
           "key": "APP-3183",
           "summary": "[Regression][APIM] API Manager Create Task – pipeline picker lists all project spaces/APIs, and no pipeline can be selected within APIs (even within the same API)",
           "type": "Bug",
-          "status": "In Review",
+          "status": "Done",
           "created": "2026-10-19",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3183"
         },
@@ -630,6 +630,33 @@
           "status": "Open",
           "created": "2026-10-20",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3186"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3190",
+          "summary": "SnapGPT banner in the Snap dialog: \"Start SnapGPT\" and \"SnapGPT is activated.\" are not visible",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3190"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3191",
+          "summary": "Update Node",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3191"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3192",
+          "summary": "Asset Catalog: five UI defects (tab history, search paging, custom metadata, saved columns)",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-21",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3192"
         },
         {
           "source": "PSWAT",
