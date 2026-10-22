@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-22",
-  "exportedAt": "2026-10-22T19:42:44+00:00",
+  "exportedAt": "2026-10-22T16:35:02-05:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -542,11 +542,11 @@
       "weekdays": 8,
       "partial": true,
       "counts": {
-        "pswat": 4,
+        "pswat": 3,
         "appBugs": 11
       },
       "ratesPer10Weekdays": {
-        "pswat": 5.0,
+        "pswat": 3.75,
         "appBugs": 13.75
       },
       "tickets": [
@@ -669,17 +669,8 @@
         },
         {
           "source": "PSWAT",
-          "key": "PSWAT-2759",
-          "summary": "User Creation Date Incorrectly Displays Original Date Across Different Orgs",
-          "type": "Bug",
-          "status": "Open",
-          "created": "2026-10-16",
-          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2759"
-        },
-        {
-          "source": "PSWAT",
           "key": "PSWAT-2761",
-          "summary": "Granular Details of the API%27s aren%27t visible from the API Metrics Tab",
+          "summary": "Granular Details of the API's aren't visible from the API Metrics Tab",
           "type": "Bug",
           "status": "Open",
           "created": "2026-10-19",
