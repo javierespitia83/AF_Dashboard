@@ -483,7 +483,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
   await run(p, `clickEl(kpi('Carried over'))`);
   lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  check('Click Carried Over filters the lower section to exactly the exported carried-over keys (count matches sprint.carriedOver.count)', carriedKeys.length === SPRJ.sprint.carriedOver.count && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
+  check('Click Carried Over filters the lower section to exactly the exported carried-over keys (keys never exceed sprint.carriedOver.count; fewer is allowed when a carried ticket left the sprint)', carriedKeys.length <= SPRJ.sprint.carriedOver.count && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
   await run(p, `clickEl(kpi('Carried over'))`);
   await verifySprint(p, S, f, 'KPI filters clear on second click');
   const L = await run(p, layoutJs);
