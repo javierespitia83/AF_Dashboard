@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-23",
-  "exportedAt": "2026-10-23T11:37:58+00:00",
+  "exportedAt": "2026-10-23T14:50:51+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -1408,6 +1408,28 @@
       "lastSyncUpdate": "Done 10/12. JellyRoll 2.0 Slider aligned with updated spec; PR #6050 merged to develop.",
       "blocker": null,
       "demoOrSpike": "Candidate",
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3206",
+      "owner": "Pavan V",
+      "status": "Done",
+      "type": "Task",
+      "tester": null,
+      "classifications": null,
+      "points": 1,
+      "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
+      "linkedWorkItems": null,
+      "fixVersion": "4.46",
+      "doneDate": "2026-10-23",
+      "addedDate": "2026-10-23",
+      "cycleTime": 0,
+      "statusAging": 0,
+      "statusAgingApprox": false,
+      "summary": "Setup GHEC and Fix Test Cases",
+      "lastSyncUpdate": "Done 10/23. Created and closed the same morning by Pavan V (1 point, Fix Version 4.46); Jira had flagged a missing Fix Version and Story Points when it was added.",
+      "blocker": null,
+      "demoOrSpike": null,
       "discussed": "No"
     }
   ]
