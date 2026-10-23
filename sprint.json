@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-23",
-  "exportedAt": "2026-10-23T14:50:51+00:00",
+  "exportedAt": "2026-10-23T17:25:23+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12176,
@@ -14,11 +14,9 @@
       "ticketKeys": [
         "APP-2719",
         "APP-556",
-        "APP-2643",
         "APP-3067",
         "APP-3106",
         "APP-2781",
-        "APP-3072",
         "APP-3086"
       ]
     },
@@ -152,6 +150,32 @@
         "tester": "Aysu Ahmadli",
         "fixVersion": "4.46",
         "parent": "APP-55 – App Foundation PSWAT"
+      },
+      {
+        "ticket": "APP-2643",
+        "removedDate": "2026-10-23",
+        "points": 5,
+        "addedDate": "2026-10-12",
+        "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
+        "status": "In Review",
+        "type": null,
+        "owner": "Artem Velykorodnyi",
+        "tester": "Anumeha Singh",
+        "fixVersion": "4.46",
+        "parent": "APP-55 – App Foundation PSWAT"
+      },
+      {
+        "ticket": "APP-3072",
+        "removedDate": "2026-10-23",
+        "points": 5,
+        "addedDate": "2026-10-12",
+        "summary": "Rewrite Designer in React",
+        "status": "In Review",
+        "type": null,
+        "owner": "Kyle Scheuerlein",
+        "tester": "Poornima Srikantesh",
+        "fixVersion": null,
+        "parent": "APP-265 – Restyle designer"
       }
     ]
   },
@@ -159,7 +183,7 @@
     {
       "ticket": "APP-2719",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "Done",
       "type": "Story",
       "tester": "Pavan V",
       "classifications": null,
@@ -167,16 +191,16 @@
       "parent": null,
       "linkedWorkItems": "APP-556 (is blocked by)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-23",
       "addedDate": "2026-10-13",
-      "cycleTime": null,
-      "statusAging": 14,
+      "cycleTime": 10,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "[Designer] Create new pipeline in same project space as current pipeline",
-      "lastSyncUpdate": "In Review. Alan fixed the import project-path issue and Pavan verified it on 10/11. It ships in one combined PR with APP-556, so both must be ready before merge. Pavan reported 3 test cases still without automation (10/14). Alan to complete the missing automation.",
+      "lastSyncUpdate": "Done 10/23. Alan Le merged after approval (10/23 daily); ships with APP-556.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2883",
@@ -217,10 +241,10 @@
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "In Monitor, user is unable to navigate back to original org",
-      "lastSyncUpdate": "In Review since 10/20. PR #6090 merged to 4.46_rc 10/20. Jira 10/22: Poornima Srikantesh could not reproduce the issue and verified org switching from the PR branch; Alan Le updated tests in PR #6117.",
+      "lastSyncUpdate": "In Review. 10/23 daily: the first fix did not address the issue; Alan Le submitted a new fix and needs a quick review, then Poornima Srikantesh can test.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3111",
@@ -269,7 +293,7 @@
     {
       "ticket": "APP-556",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "Done",
       "type": "Story",
       "tester": "Pavan V",
       "classifications": "Customer Escalation",
@@ -277,16 +301,16 @@
       "parent": "APP-265 – Restyle designer",
       "linkedWorkItems": "DOC-3492 (relates to), APP-2719 (blocks)",
       "fixVersion": "4.46",
-      "doneDate": null,
+      "doneDate": "2026-10-23",
       "addedDate": "2026-10-13",
-      "cycleTime": null,
-      "statusAging": 4,
+      "cycleTime": 10,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "[Designer]  Modernize Pipeline Settings Modal",
-      "lastSyncUpdate": "In Review; ships with APP-2719. 10/21 daily: full regression in progress, needs Shardul Sardesai's help with a feature flag. Jira 10/22: Alan Le updated the failing regression tests; all pass except one unrelated test (C462). QA to verify.",
+      "lastSyncUpdate": "Done 10/23. Alan Le merged after approval (10/23 daily); ships with APP-2719.",
       "blocker": "Waiting for a code review; QA full regression needs a feature flag set (Shardul Sardesai).",
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3122",
@@ -379,7 +403,7 @@
     {
       "ticket": "APP-3193",
       "owner": "Anumeha Singh",
-      "status": "In Review",
+      "status": "Done",
       "type": "Task",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -387,38 +411,16 @@
       "parent": "APP-3145 – Epic to track QA Activities for App Sprint 10-23",
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-23",
       "addedDate": "2026-10-21",
-      "cycleTime": null,
-      "statusAging": 1,
+      "cycleTime": 2,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Backlog automation for CP and Studio",
-      "lastSyncUpdate": "In Review since 10/22. QA task added to the sprint 10/21; Anumeha Singh is assignee and tester. 10/22 daily: the backlog automation was reviewed.",
+      "lastSyncUpdate": "Done 10/23. Marked Done in Jira after the 10/23 daily (QA task for backlog automation).",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
-    },
-    {
-      "ticket": "APP-2643",
-      "owner": "Artem Velykorodnyi",
-      "status": "In Review",
-      "type": "Bug",
-      "tester": "Anumeha Singh",
-      "classifications": null,
-      "points": 5,
-      "parent": "APP-55 – App Foundation PSWAT",
-      "linkedWorkItems": null,
-      "fixVersion": "4.46",
-      "doneDate": null,
-      "addedDate": "2026-10-12",
-      "cycleTime": null,
-      "statusAging": 25,
-      "statusAgingApprox": false,
-      "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "lastSyncUpdate": "In Review; PR changes ready; Artem is on PTO. 10/22 daily: Platform Engineering left review comments; Salim Abdul is still analyzing them (not trivial); a merge before the freeze is unlikely.",
-      "blocker": "Dependency: Platform Engineering review comments pending resolution.",
-      "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2880",
@@ -748,7 +750,7 @@
       "lastSyncUpdate": "In Review. PR #198 created 10/19; PR #1632 (adm-gitops) merged 10/21. 10/22 daily: Indrajeet Kane continues with it.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3102",
@@ -839,28 +841,6 @@
       "discussed": "No"
     },
     {
-      "ticket": "APP-3072",
-      "owner": "Kyle Scheuerlein",
-      "status": "In Review",
-      "type": "Story",
-      "tester": "Poornima Srikantesh",
-      "classifications": null,
-      "points": 5,
-      "parent": "APP-265 – Restyle designer",
-      "linkedWorkItems": "APP-3187 (blocks), APP-3188 (blocks)",
-      "fixVersion": null,
-      "doneDate": null,
-      "addedDate": "2026-10-12",
-      "cycleTime": null,
-      "statusAging": 3,
-      "statusAgingApprox": false,
-      "summary": "Rewrite Designer in React",
-      "lastSyncUpdate": "In Review since 10/20. Kyle Scheuerlein finished the work; E2E tests to add. 10/22 daily: Poornima Srikantesh spoke with Kyle about the React changes; she needs to set up the feature flag and start testing.",
-      "blocker": null,
-      "demoOrSpike": null,
-      "discussed": "Yes"
-    },
-    {
       "ticket": "APP-3151",
       "owner": "Kyle Scheuerlein",
       "status": "Done",
@@ -899,10 +879,10 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "M2: Replace removed React APIs in our code",
-      "lastSyncUpdate": "In Review. PR #6110 created 10/21.",
+      "lastSyncUpdate": "In Review. 10/23 daily: small change, Dev to Test; Guannan He will review it today.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3153",
@@ -921,10 +901,10 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "M3: Small library bumps",
-      "lastSyncUpdate": "In Progress. Dev to Test (set 10/13). 10/21 daily: Kyle Scheuerlein can probably start it after APP-3152.",
+      "lastSyncUpdate": "In Progress. 10/23 daily: Kyle Scheuerlein expects to finish today; small, Dev to Test, then review and merge.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2990",
@@ -1276,7 +1256,7 @@
       "lastSyncUpdate": "In Review. PR #7184 created 10/20. 10/22 daily: Salim Abdul hopes to finish this sprint; a Platform Engineering reviewer promised to review today and he will merge if fine; Dev to Test. Git test runs still depend on GHEC/GHES (IT ticket open).",
       "blocker": "GHEC data residency instance not ready and GHES license expired; IT ticket open. Does not block this release, but blocks Git test runs afterward.",
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-2970",
@@ -1295,7 +1275,7 @@
       "statusAging": 8,
       "statusAgingApprox": false,
       "summary": "Email notifications for admin-triggered account lock, unlock, and password expiration",
-      "lastSyncUpdate": "In Review (PR #7166). Reviewer still unconfirmed; blocks APP-2968 and APP-2969. Awaiting reply from Vishal Soni and Derek Fung on whether to stay in 4.46 or move to the next release. Pavan V to test after merge.",
+      "lastSyncUpdate": "In Review. 10/23 daily: Salim Abdul awaits the final review; the UI part will not ship in 4.46, so it goes back to the prioritized backlog (Derek Fung); it could merge Monday.",
       "blocker": "Dependency: Platform Engineering (Jigish Patel) for a PR reviewer; waiting for review/merge before testing.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1317,7 +1297,7 @@
       "statusAging": 8,
       "statusAgingApprox": false,
       "summary": "Resend invitation email — Inner API",
-      "lastSyncUpdate": "In Review. PR #7167 merged to develop (Jira 10/21); Vlad reported the merge in the 10/22 daily. Jira still shows In Review.",
+      "lastSyncUpdate": "In Review. 10/23 daily: Vlad Storona says changes are merged and integration-tested; Bornali Nath will test this backend story together with the corresponding UI story.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1350,7 +1330,7 @@
       "status": "In Review",
       "type": "Story",
       "tester": "Anumeha Singh",
-      "classifications": null,
+      "classifications": "Dev to Test",
       "points": 5,
       "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
       "linkedWorkItems": "APP-2978 (blocks)",
@@ -1361,7 +1341,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "[Backend] Mechanism to notify user if schedule task misses",
-      "lastSyncUpdate": "In Review since 10/22. PR #7187 (Tectonic) created 10/21. Vlad Storona replied 10/22 on Anumeha Singh's test cases: corrected preconditions and verification checks and listed extra cases to add. APP-2978 (UI) waits on this merge.",
+      "lastSyncUpdate": "In Review. 10/23 daily: not needed in 4.46; Vishal Soni asked Vlad Storona to merge it to develop and close this backend story, which will be tested with the UI story. Awaiting: merge to develop.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
