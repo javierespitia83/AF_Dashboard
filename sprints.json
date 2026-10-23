@@ -16,7 +16,7 @@
       "endDate": "2026-10-09",
       "state": "closed",
       "file": "snapshots/sprint-12119.json",
-      "note": "Final snapshot exported 2026-10-13 after the sprint was closed in Jira (completed 2026-10-13). 76 tickets, 76 Done; APP-194/1711 (converted sub-tasks), 556 and 2719 left to Backlog (Prioritized) at close; APP-3106 moved straight to sprint 12176 on 10/12 (listed under removed)."
+      "note": "Final snapshot exported 2026-10-13 after the sprint was closed in Jira (completed 2026-10-13). 76 tickets, 76 Done; APP-194/1711 (converted sub-tasks), 556 and 2719 left to Backlog (Prioritized) at close; APP-3106 moved straight to sprint 12176 on 10/12 (listed under removed). On 2026-10-23, rows for 556, 2719 and 2766 (carried over from sprint 4697, then moved to Backlog (Prioritized) before close) were reconstructed in tickets and carriedOver.ticketKeys; tickets now 79 (76 Done, 3 not Done at close)."
     },
     {
       "id": 4697,
