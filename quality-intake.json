@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-22",
-  "exportedAt": "2026-10-22T16:35:02-05:00",
+  "refreshedAt": "2026-10-23",
+  "exportedAt": "2026-10-23T11:37:58+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -538,16 +538,16 @@
       "sprintId": 12176,
       "name": "App Sprint 10-23-2026",
       "windowStart": "2026-10-12",
-      "windowEnd": "2026-10-21",
-      "weekdays": 8,
+      "windowEnd": "2026-10-22",
+      "weekdays": 9,
       "partial": true,
       "counts": {
-        "pswat": 3,
+        "pswat": 5,
         "appBugs": 11
       },
       "ratesPer10Weekdays": {
-        "pswat": 3.75,
-        "appBugs": 13.75
+        "pswat": 5.56,
+        "appBugs": 12.22
       },
       "tickets": [
         {
@@ -670,11 +670,29 @@
         {
           "source": "PSWAT",
           "key": "PSWAT-2761",
-          "summary": "Granular Details of the API's aren't visible from the API Metrics Tab",
+          "summary": "APIM Logs Not Loading in Production: SIE_Health_Prod",
           "type": "Bug",
           "status": "Open",
           "created": "2026-10-19",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2761"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2762",
+          "summary": "Change of behavior in task create snap",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-22",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2762"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2763",
+          "summary": "The HTTP Client snap inside the child pipeline invoked through the \"Pipeline Execute\" snap with \"Reuse executions\" is unable to use the refreshed token",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-22",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2763"
         }
       ]
     }
