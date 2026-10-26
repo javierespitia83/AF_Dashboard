@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-23",
-  "exportedAt": "2026-10-23T22:34:09+00:00",
+  "refreshedAt": "2026-10-26",
+  "exportedAt": "2026-10-26T09:37:49+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -538,16 +538,16 @@
       "sprintId": 12176,
       "name": "App Sprint 10-23-2026",
       "windowStart": "2026-10-12",
-      "windowEnd": "2026-10-22",
-      "weekdays": 9,
+      "windowEnd": "2026-10-25",
+      "weekdays": 10,
       "partial": true,
       "counts": {
-        "pswat": 5,
-        "appBugs": 11
+        "pswat": 6,
+        "appBugs": 13
       },
       "ratesPer10Weekdays": {
-        "pswat": 5.56,
-        "appBugs": 12.22
+        "pswat": 6.0,
+        "appBugs": 13.0
       },
       "tickets": [
         {
@@ -650,6 +650,24 @@
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3192"
         },
         {
+          "source": "APP Bugs",
+          "key": "APP-3205",
+          "summary": "Features are missing on create organisation feature tabs",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-23",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3205"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3207",
+          "summary": "Validating GHEC is throwing error",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-23",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3207"
+        },
+        {
           "source": "PSWAT",
           "key": "PSWAT-2756",
           "summary": "Unable to Overwrite API Keys using Import Public API",
@@ -693,6 +711,15 @@
           "status": "Open",
           "created": "2026-10-22",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2763"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2765",
+          "summary": "AWS crawl canaries: JCC request thread hangs on SLDB/schema/asset calls during pipeline preparation, ~5 min stall (recurring, ~15-20 times/week)",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-25",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2765"
         }
       ]
     }
