@@ -210,7 +210,7 @@ function expectSprint(S, f, ctx = CTX) {
   const all = applyF(S, f, SKEY), P = sumP(all), TP = sumP(S);
   const doneP = sumP(all.filter(t => bucket(t.status) === 3));
   const active = Object.keys(f).some(d => f[d].size);
-  const thr = ctx.thr || 2, bd = expectBurn(all, ctx, thr, (ctx.sprint && Array.isArray(ctx.sprint.removed)) ? applyF(ctx.sprint.removed, f, SKEY) : []);
+  const thr = ctx.thr || 1, bd = expectBurn(all, ctx, thr, (ctx.sprint && Array.isArray(ctx.sprint.removed)) ? applyF(ctx.sprint.removed, f, SKEY) : []);
   const cyc = all.filter(t => bucket(t.status) === 3 && typeof t.cycleTime === 'number'), avg = cyc.length ? cyc.reduce((a, t) => a + t.cycleTime, 0) / cyc.length : null;
   const tisAging0 = (a) => a.some(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number');
   const co = ctx.sprint ? ctx.sprint.carriedOver : undefined; let carriedV, carriedH;
@@ -261,7 +261,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
         }
         const wantAdded = Object.keys(x.by).sort().map(k => [k, x.by[k].c, x.by[k].p]), gotAdded = bd.added.map(a => [a.date, a.count, a.points]).sort();
         if (!eq(gotAdded, wantAdded)) errs.push(['added markers', gotAdded, wantAdded]);
-        { const lim = isoN(dn(ctx.sprint.startDate) + (ctx.thr || 2)); const bad = bd.added.filter(a => (a.date <= lim) !== (a.early === '1') || (a.date <= lim) !== (a.fill === '#ffffff')); if (bad.length) errs.push(['early (hollow) vs after-threshold (filled) markers', bad.map(a => [a.date, a.early, a.fill])]); if (!bd.legend.includes('Earlier')) errs.push(['legend Earlier']); }
+        { const lim = isoN(dn(ctx.sprint.startDate) + (ctx.thr || 1)); const bad = bd.added.filter(a => (a.date <= lim) !== (a.early === '1') || (a.date <= lim) !== (a.fill === '#ffffff')); if (bad.length) errs.push(['early (hollow) vs after-threshold (filled) markers', bad.map(a => [a.date, a.early, a.fill])]); if (!bd.legend.includes('Earlier')) errs.push(['legend Earlier']); }
         if (!bd.added.every(a => !/approximate/i.test(a.tip))) errs.push(['marker tooltip still labels added dates approximate']);
         { const wantR = Object.keys(x.rby || {}).sort().map(k => [k, x.rby[k].c, x.rby[k].p]), gotR = bd.removed.map(a => [a.date, a.count, a.points]).sort();
           if (!eq(gotR, wantR)) errs.push(['removed markers', gotR, wantR]);
@@ -280,7 +280,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
           if (!bd.scopeLine) errs.push(['scope line missing']);
           else if (bd.scopeLine.n !== 2 * want.length - 1) errs.push(['scope line point count', bd.scopeLine.n, 2 * want.length - 1]);
           else if (bd.scopeLine.vals && !eq(bd.scopeLine.vals, want.map(Math.round))) errs.push(['scope line steps', bd.scopeLine.vals, want]); }
-        if (!bd.legend.includes('Added after day ' + (ctx.thr || 2)) || /approx/i.test(bd.legend)) errs.push(['legend threshold', bd.legend]);
+        if (!bd.legend.includes('Added after day ' + (ctx.thr || 1)) || /approx/i.test(bd.legend)) errs.push(['legend threshold', bd.legend]);
         if (!bd.foot.includes('Scope grows on each ticket') || (x.hasRemoved ? !bd.foot.includes('shrinks on the date a ticket left the sprint') : !bd.foot.includes('Tickets removed from the sprint and re-estimates are not reflected')) || /approx/i.test(bd.foot)) errs.push(['footnote', bd.foot]);
         if (x.unplaced && !bd.foot.includes(`${x.unplaced} Done ticket${x.unplaced === 1 ? ' has' : 's have'} no done date`)) errs.push(['unplaced note', bd.foot]);
         if (!x.unplaced && /no done date/.test(bd.foot)) errs.push(['unexpected unplaced note']);
@@ -405,7 +405,7 @@ const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(R
 const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
 const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
 const CLOSED_CO = CLOSED.sprint && CLOSED.sprint.carriedOver, CLOSED_CARRIED = CLOSED_CO ? [String(CLOSED_CO.count), `${CLOSED_CO.percent}% of tickets, ${CLOSED_CO.storyPoints} points`] : ['—','Not calculated yet for this sprint'];
-const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 2 };
+const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 1 };
 
 const layoutJs = `const d=document.scrollingElement; const bodies=[...document.querySelectorAll('.tile-body')].map(b=>({sh:b.scrollHeight,ch:b.clientHeight,ov:getComputedStyle(b).overflowY})); const tiles=[...document.querySelectorAll('section.tile')].map(t=>{const r=t.getBoundingClientRect(); return {l:Math.round(r.left), r:Math.round(r.right), t:Math.round(r.top), b:Math.round(r.bottom), w:Math.round(r.width), h:Math.round(r.height), title:(t.querySelector('h2')||t.querySelector('.label')).textContent.trim()};}); const bad=[]; document.querySelectorAll('body *').forEach(n=>{ if(n.closest('.tile-body')) return; const r=n.getBoundingClientRect(); if(r.width>0 && r.right>innerWidth+1) bad.push(n.tagName+'.'+n.className+':'+Math.round(r.right)); }); return {iw:innerWidth, ih:innerHeight, sw:d.scrollWidth, sh:d.scrollHeight, bodies, tiles, bad:bad.slice(0,5)};`;
 
@@ -604,8 +604,8 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
   await verifySprint(p, S, newF(), 'Changing the mid-sprint threshold in one place (5 days) updates the KPI, the markers and the legend', Object.assign({}, CTX, { thr: 5 }));
-  await run(p, `AF.config.midSprintThresholdDays = 2; AF.store.reset()`);
-  await verifySprint(p, S, newF(), 'Threshold back to 2 days', CTX);
+  await run(p, `AF.config.midSprintThresholdDays = 1; AF.store.reset()`);
+  await verifySprint(p, S, newF(), 'Threshold back to 1 day', CTX);
   check('Detail table does not show the approximate addedDate (nor doneDate or cycleTime)', !(await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(T)`)).some(h => /added|done date|cycle/i.test(h)));
   // layouts
   for (const [w, h, mode] of [[1440, 900, 'dash'], [1536, 864, 'dash'], [1366, 768, 'dash'], [1280, 720, 'fallback'], [1024, 768, 'fallback'], [800, 900, 'fallback'], [480, 900, 'fallback']]) {
@@ -802,7 +802,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   // =============== FIXTURE ===============
   console.log('\n--- Fixture edge cases (copy of the app) ---');
   p = await openPage('http://127.0.0.1:' + ports.fixture + '/index.html');
-  const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint || null, today: FJ.refreshedAt, thr: 2 }; let ff = newF();
+  const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint || null, today: FJ.refreshedAt, thr: 1 }; let ff = newF();
   await verifySprint(p, F, ff, 'Fixture: all tiles consistent (Other bucket, Unassigned merge, null points, burndown, new KPIs)', FCTX);
   const fd = await run(p, READ_SPRINT);
   { const fe = expectSprint(F, newF(), FCTX), un = fe.contribution['Unassigned'];
@@ -816,6 +816,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
 
   console.log('\n--- Burndown, cycle time, mid-sprint and carried over with hand-made data (copies of the app) ---');
   p = await openPage(`http://127.0.0.1:${ports.burn}/index.html`);
+  await run(p, `AF.config.midSprintThresholdDays = 2; AF.store.reset()`); // the hand-made sprint's expected numbers are worked out by hand for a 2-day threshold, independent of the app default
   { const BJ = JSON.parse(mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 } }, SP_OK))), BCTX = { sprint: BJ.sprint, today: BJ.refreshedAt, thr: 2 };
     await verifySprint(p, BURN_T, newF(), 'Hand-made sprint: every tile and the burndown equal the independent calculation', BCTX);
     const k = await run(p, READ_SPRINT), bd = await run(p, READ_BD);
@@ -874,6 +875,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   }
   console.log('\n--- Removed tickets (sprint.removed) with hand-made data ---');
   p = await openPage(`http://127.0.0.1:${ports.rem}/index.html`);
+  await run(p, `AF.config.midSprintThresholdDays = 2; AF.store.reset()`); // hand-made data worked out for a 2-day threshold
   { const RJ = JSON.parse(mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 }, removed: REMOVED }, SP_OK))), RCTX = { sprint: RJ.sprint, today: RJ.refreshedAt, thr: 2 };
     await verifySprint(p, BURN_T, newF(), 'Removed: every tile and the burndown equal the independent calculation (with sprint.removed)', RCTX);
     const bd = await run(p, READ_BD);
