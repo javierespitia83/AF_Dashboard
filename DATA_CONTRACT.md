@@ -161,7 +161,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Done % | Done-bucket story points ÷ story points, as a whole percent; `—` when story points is 0 |
 | No tester & Not Dev to Test | count of tickets whose `tester` is null, blank, missing, or `Unassigned` and whose `classifications`, split on `"; "`, does not include the exact value `Dev to Test` |
 | Avg cycle time | mean of `cycleTime` over tickets with bucket `Done` and a non-null `cycleTime`; shown with at most one decimal; `—` when there are none |
-| Added mid-sprint | tickets with a non-null `addedDate` later than `startDate` + `MID_SPRINT_THRESHOLD_DAYS` days (ISO date comparison); the setting is `AF.config.midSprintThresholdDays` in `dashboard.js`, default 2; reports the count and the points |
+| Added mid-sprint | tickets with a non-null `addedDate` later than `startDate` + `MID_SPRINT_THRESHOLD_DAYS` days (ISO date comparison); the setting is `AF.config.midSprintThresholdDays` in `dashboard.js`, default 1; reports the count and the points |
 | Carried over | `sprint.carriedOver` as exported (not filtered, not recalculated): count, percent, story points |
 | Tickets by status | per bucket: `N W.I \| P SP`; bar length = bucket work items ÷ tile work items; Total row = tile totals |
 | Tickets by type | exact type value (null grouped as `—`): count and sum of points as `N W.I \| P SP`; rows sort by work item count descending then type; bar length = share of work items; Total row = tile totals. The tile excludes its own Type filter, and clicking a row filters by that exact type value. |
