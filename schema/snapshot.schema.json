@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "af-dashboard-snapshot-export/snapshot.schema.json",
-  "title": "Dashboard snapshot (sprint.json / backlog.json)",
-  "description": "Shared schema for both dashboard snapshot files exported by export_dashboard_snapshots.py. The 'tickets' array's item shape differs between sprint.json (Daily-sheet fields) and backlog.json (Backlog Prioritized-sheet fields); this schema only requires the fields common to both, which is sufficient for the structural validation the exporter itself runs. A stricter per-file schema (sprintTicket vs backlogTicket) can be layered on top later if the dashboard needs it. sprint.json additionally carries a top-level 'sprint' object (added 10-01-2026) describing the active sprint, sourced from the tracker's Sprint Metrics tab; backlog.json has no such object.",
+  "title": "Dashboard snapshot (snapshots/sprint-<id>.json / backlog.json)",
+  "description": "Shared schema for both dashboard snapshot files exported by export_dashboard_snapshots.py. The 'tickets' array's item shape differs between the sprint snapshot (Daily-sheet fields) and backlog.json (Backlog Prioritized-sheet fields); this schema only requires the fields common to both, which is sufficient for the structural validation the exporter itself runs. A stricter per-file schema (sprintTicket vs backlogTicket) can be layered on top later if the dashboard needs it. the sprint snapshot additionally carries a top-level 'sprint' object (added 10-01-2026) describing the active sprint, sourced from the tracker's Sprint Metrics tab; backlog.json has no such object.",
   "type": "object",
   "required": [
     "refreshedAt",
@@ -59,7 +59,7 @@
               "null"
             ],
             "format": "date",
-            "description": "sprint.json only. YYYY-MM-DD or null. Set only when the ticket's current status is Done; a non-null value on a non-Done ticket is a non-fatal exporter warning, not a schema violation."
+            "description": "the sprint snapshot only. YYYY-MM-DD or null. Set only when the ticket's current status is Done; a non-null value on a non-Done ticket is a non-fatal exporter warning, not a schema violation."
           },
           "addedDate": {
             "type": [
@@ -67,14 +67,14 @@
               "null"
             ],
             "format": "date",
-            "description": "sprint.json only. YYYY-MM-DD or null \u2014 the date the ticket entered the active sprint, blank if it was already in the sprint at its start."
+            "description": "the sprint snapshot only. YYYY-MM-DD or null \u2014 the date the ticket entered the active sprint, blank if it was already in the sprint at its start."
           }
         }
       }
     },
     "sprint": {
       "type": "object",
-      "description": "sprint.json only. The active sprint's identity and date range, sourced from the Sprint Metrics tab's last (active-sprint) row. Not present in backlog.json.",
+      "description": "the sprint snapshot only. The active sprint's identity and date range, sourced from the Sprint Metrics tab's last (active-sprint) row. Not present in backlog.json.",
       "required": [
         "id"
       ],
@@ -94,7 +94,7 @@
         "state": {
           "type": "string",
           "enum": ["active", "closed"],
-          "description": "Optional. Written only in a frozen snapshot of a closed sprint (snapshots/sprint-<id>.json); absent in the live sprint.json."
+          "description": "Optional. Written only in a frozen snapshot of a closed sprint (snapshots/sprint-<id>.json); absent in the active sprint snapshot."
         },
         "completeDate": {
           "type": [
@@ -250,7 +250,7 @@
   "definitions": {
     "sprintTicket": {
       "type": "object",
-      "description": "The exact shape of each object in sprint.json's 'tickets' array.",
+      "description": "The exact shape of each object in the sprint snapshot's 'tickets' array.",
       "required": [
         "ticket"
       ],

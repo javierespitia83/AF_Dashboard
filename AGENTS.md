@@ -21,7 +21,7 @@ node scripts/run_acceptance.js
 
 Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and `ACCEPTANCE.md`. It must stay read-only with respect to the real data files and the tracker.
 
-**Run the acceptance harness whenever the app changes (rule of 2026-10-20).** After any change to `sprint.js`, `backlog.js`, `dashboard.js`, `dashboard.css`, the schema or the fixtures, run `node scripts/run_acceptance.js` in the same pass and report PASS/FAIL, instead of waiting for the next full sync. The harness derives every expected value (tile counts, carried-over keys, Team Contribution, filters) from the live `sprint.json`, `backlog.json`, `sprints.json` and the frozen snapshots; do not hard-code counts, ticket keys or sprint ids in it. The only fixed values allowed are layout expectations and the frozen closed-sprint snapshots. The harness only reads the data files, so it cannot hide a data problem: a data failure is fixed at the source (tracker or exporter), never by editing the expected values.
+**Run the acceptance harness whenever the app changes (rule of 2026-10-20).** After any change to `sprint.js`, `backlog.js`, `dashboard.js`, `dashboard.css`, the schema or the fixtures, run `node scripts/run_acceptance.js` in the same pass and report PASS/FAIL, instead of waiting for the next full sync. The harness derives every expected value (tile counts, carried-over keys, Team Contribution, filters) from the live the sprint snapshot, `backlog.json`, `sprints.json` and the frozen snapshots; do not hard-code counts, ticket keys or sprint ids in it. The only fixed values allowed are layout expectations and the frozen closed-sprint snapshots. The harness only reads the data files, so it cannot hide a data problem: a data failure is fixed at the source (tracker or exporter), never by editing the expected values.
 
 ## Read before coding
 
@@ -41,16 +41,16 @@ Keep `scripts/run_acceptance.js` in sync with `SPEC.md`, `DATA_CONTRACT.md` and 
 
 ## Data rules (hard)
 
-- The sprint page reads `sprints.json` when available, then only the selected sprint snapshot named by that validated local manifest entry; if the manifest is missing or invalid, it falls back to `sprint.json`. The backlog page reads `backlog.json`; Quality Intake reads `quality-intake.json`. All reads use relative local paths; the app never reads Excel or makes remote requests.
+- The sprint page reads `sprints.json` when available, then only the selected sprint snapshot named by that validated local manifest entry; if the manifest is missing or invalid it shows an error (no root the sprint snapshot since 2026-10-26). The backlog page reads `backlog.json`; Quality Intake reads `quality-intake.json`. All reads use relative local paths; the app never reads Excel or makes remote requests.
 - The app is read-only: it must not write to Excel, Jira, or the JSON snapshots.
-- Never hand-edit `sprint.json`, `backlog.json` or `quality-intake.json`. They are generated. If the data looks wrong, fix the tracker or the exporter, then re-export.
+- Never hand-edit the sprint snapshot, `backlog.json` or `quality-intake.json`. They are generated. If the data looks wrong, fix the tracker or the exporter, then re-export.
 - Never invent missing values. Show `—` or the documented placeholder instead.
 - Preserve ticket keys and names exactly as exported.
 - Do not recompute or change the exporter's rules in the UI. Display-layer mappings (for example `Open` shown as `To Do`) live in the UI and are listed in `DATA_CONTRACT.md`.
 
 ## Files you must not overwrite without inspecting first
 
-`sprint.json`, `backlog.json`, `quality-intake.json`, `sprints.json`, `snapshots/*.json`, schemas, fixtures, `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/05_Automation/export_dashboard_snapshots.py`, and `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`. These generated data files must not be hand-edited. If a mapping changes, update the exporter, its skill, the relevant schema, fixtures when applicable, and `DATA_CONTRACT.md` together.
+the sprint snapshot, `backlog.json`, `quality-intake.json`, `sprints.json`, `snapshots/*.json`, schemas, fixtures, `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/05_Automation/export_dashboard_snapshots.py`, and `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`. These generated data files must not be hand-edited. If a mapping changes, update the exporter, its skill, the relevant schema, fixtures when applicable, and `DATA_CONTRACT.md` together.
 
 ## Do not touch
 

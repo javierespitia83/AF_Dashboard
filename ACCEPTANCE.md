@@ -10,7 +10,7 @@ python3 -m http.server 8000
 # open http://localhost:8000/ (index.html) and http://localhost:8000/backlog.html
 ```
 
-Test at a **1920 x 1080** viewport first, then the other sizes in section 4. Test edge cases with copies of the app folder (data files swapped for `fixtures/sample_snapshot.json`, an empty snapshot, a missing file, an invalid file). Never overwrite `sprint.json` or `backlog.json` for a test.
+Test at a **1920 x 1080** viewport first, then the other sizes in section 4. Test edge cases with copies of the app folder (data files swapped for `fixtures/sample_snapshot.json`, an empty snapshot, a missing file, an invalid file). Never overwrite the sprint snapshot or `backlog.json` for a test.
 
 ## 2. Expected values
 
@@ -27,7 +27,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] `sprints.json`, the selected sprint snapshot, `backlog.json` and `daily_tracker.xlsx` are unchanged after use (file timestamps).
 - [ ] The sprint selector fetches `sprints.json` and only its selected snapshot; already loaded snapshots are reused when switching back. The backlog page stays on `backlog.json` only.
 - [ ] A valid manifest defaults to `current`; the select is labelled Sprint and shows each sprint name and state without repeating dates. Selecting a closed sprint updates `?sprint=<id>` with `history.replaceState`, resets filters, and loads it without a full page reload.
-- [ ] A direct `?sprint=<id>` opens the corresponding manifest entry. An unknown id shows a clear error and leaves the selector usable. Missing/invalid manifests silently fall back to `sprint.json` with no selector.
+- [ ] A direct `?sprint=<id>` opens the corresponding manifest entry. An unknown id shows a clear error and leaves the selector usable. A missing or invalid manifest shows a clear "Can’t load sprints.json" error, with no selector and no fallback.
 - [ ] Closed sprints show a high-contrast historical banner, subtly grayer page background, snapshot as-of date/time and optional manifest note; the burndown runs through sprint end and has no live Today marker. Null carried-over, removal, narrative, discussed and demo fields render using their documented placeholders/messages.
 - [ ] `sprints.json` and `fixtures/sprints.json` conform to `schema/sprints.schema.json`; active and closed snapshots conform to `schema/snapshot.schema.json`.
 - [ ] The footer shows "Internal — team only"; the top bar converts `exportedAt` to the browser's local date, time and UTC offset, falls back to `refreshedAt` for older snapshots, and marks the active page tab.
@@ -69,7 +69,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 **Burndown and the new KPIs (sprint)**
 - [ ] Avg cycle time equals the mean of `cycleTime` over filtered Done tickets with a value (one decimal at most, `—` when none); it changes with filters; the hint gives the number of tickets.
 - [ ] Added mid-sprint equals the count (and points) of filtered tickets with `addedDate` later than `startDate` + 1 day; changing the threshold setting in one place changes the KPI and the markers; current values are shown without an approximation label, with the older-snapshot caveat documented.
-- [ ] Carried over shows exactly `sprint.carriedOver` (count, percent, points) and does not change with filters; with `carriedOver: null` it shows "Not calculated yet for this sprint" and never 0; with no `sprint` object it shows "No sprint data in sprint.json". The percent shown is the exported one.
+- [ ] Carried over shows exactly `sprint.carriedOver` (count, percent, points) and does not change with filters; with `carriedOver: null` it shows "Not calculated yet for this sprint" and never 0; with no `sprint` object it shows "No sprint data in the sprint snapshot". The percent shown is the exported one.
 - [ ] Burndown: one point per calendar day from `startDate` to `endDate`; on every day up to today the scope equals the points of filtered tickets added on or before that day, and remaining equals that scope minus Done points with `doneDate` on or before that day (checked against an independent calculation, including a ticket added mid-sprint, a Done ticket dated before the start and a Done ticket with no date); the scope line steps up on the added dates and the remaining line starts at the starting scope, not at the final scope; no remaining value after today; the ideal line goes from the starting scope on day one to 0 on the last day, linear over calendar days; the subtitle uses the scope today.
 - [ ] With `sprint.removed`: the scope steps down on each removal date (and up on the entry date of each removed ticket), remaining and ideal follow the independent calculation, the y axis tops out at the largest scope; a red down-triangle with `−N` sits below the axis on each removal date, the date labels are moved below it (no overlap), the legend shows Removed; clicking it opens a panel "Removed <Mon. D, YYYY>" listing exactly those tickets; the Removed marker follows the filters; without `sprint.removed` (or with `[]`) there is no marker, no Removed legend and the footnote is the one in SPEC §6.3.
 - [ ] With removal markers at a narrow chart width, the legend wraps to two rows, every legend label stays inside the SVG bounds and above the plot, and no label is clipped.
@@ -122,7 +122,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Empty parent, epic, fix version, risk, cluster, linked work items show `—`; empty points and days show `—` and count as 0 in sums; empty tester and owner show `Unassigned`. No `null`, `undefined` or `NaN` appears in any tile or table.
 
 **Edge cases (copies of the app)**
-- [ ] With the fixture as `sprint.json`: an unknown status (`Blocked`) appears as **Other**, is counted in totals, can be clicked as a filter, and its original text shows in the table; null testers merge into one `Unassigned` row; a literal owner `Unassigned` is one `Unassigned` row; null points show `—`.
+- [ ] With the fixture as the sprint snapshot: an unknown status (`Blocked`) appears as **Other**, is counted in totals, can be clicked as a filter, and its original text shows in the table; null testers merge into one `Unassigned` row; a literal owner `Unassigned` is one `Unassigned` row; null points show `—`.
 - [ ] Missing file, invalid JSON, empty snapshot, and opening by `file://` each show the clear messages from `SPEC.md` §4.
 
 **Interaction quality**

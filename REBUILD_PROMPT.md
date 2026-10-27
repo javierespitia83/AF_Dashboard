@@ -12,7 +12,7 @@ Before coding, read:
 4. DECISIONS.md for settled choices and open questions; ask the user when an open decision blocks implementation.
 5. IMPLEMENTATION.md, ACCEPTANCE.md, and BUILD_PLAN.md for code structure, definition of done, and sequence.
 
-Build two static pages (`index.html`, `backlog.html`) using plain HTML, CSS and vanilla JavaScript. Keep the app read-only and local: it may fetch only `sprint.json` and `backlog.json`; it must not read Excel or write to Jira, Excel, or snapshots. User-clicked Jira links are allowed. Do not add frameworks, packages, CDNs, external fonts, backend services, or chart libraries. Serve with `python3 -m http.server`; `file://` is unsupported.
+Build two static pages (`index.html`, `backlog.html`) using plain HTML, CSS and vanilla JavaScript. Keep the app read-only and local: it may fetch only the sprint snapshot and `backlog.json`; it must not read Excel or write to Jira, Excel, or snapshots. User-clicked Jira links are allowed. Do not add frameworks, packages, CDNs, external fonts, backend services, or chart libraries. Serve with `python3 -m http.server`; `file://` is unsupported.
 
 Preserve the documented layout, filters, calculations, accessibility, and placeholders. Never invent missing values. Build DOM from text nodes; do not use `innerHTML`, `eval`, or `document.write`. Keep all UI text, comments, and filenames in English. Do not hand-edit generated snapshots.
 

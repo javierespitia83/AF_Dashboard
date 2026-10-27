@@ -8,7 +8,7 @@ Team-only, local dashboard for the App Foundation Agile Pilot (Jira project `APP
 
 | Part | State |
 |---|---|
-| Data layer: `sprint.json`, `backlog.json`, schema, fixture, exporter | Done |
+| Data layer: the sprint snapshot, `backlog.json`, schema, fixture, exporter | Done |
 | Documentation (this folder's `.md` files) | Done |
 | Web pages: `index.html` (sprint), `backlog.html` (backlog), `dashboard.css`, `dashboard.js`, `sprint.js`, `backlog.js` | v2 (BI-style, cross-filtering) built 2026-10-01; checks to run are in `ACCEPTANCE.md`; what was verified is in the `DECISIONS.md` log |
 
@@ -18,7 +18,7 @@ An earlier, separate attempt is archived in `AF_Snaplogic/07_Dashboard_Archive/`
 
 v2 is a full-screen dashboard for a **1920 x 1080** browser window (it also works from 1366 x 760 up; below that it falls back to a scrolling layout). Clicking any bar, person or cell filters every tile on the page (cross-filtering). Status rows can be selected one at a time with repeated clicks; other dimensions support modifier-click for multiple values. **Reset all** clears everything.
 
-- `index.html` — current and closed sprint review: a Sprint selector loads the active sprint by default or a closed sprint chosen from the manifest, then shows eight KPIs, including **Long-running work · 7+ days** (a ticket count for In Progress / In Review), the **burndown chart**, Tickets by status, Tickets by type (`N W.I | P SP`), a unified Team Contribution table, ticket detail and an assignee x tester grid. Team Contribution shows independent role W.I counts and the unique per-person `N W.I | P SP` total. Clicking a name filters tickets where that person is assignee or tester. Fix version and Parent selects remain in the filter bar. `?sprint=<id>` opens a sprint directly. `sprints.json` lists available sprints; each selected entry points to one local snapshot. If the manifest is missing or invalid, the page falls back silently to `sprint.json` without a selector.
+- `index.html` — current and closed sprint review: a Sprint selector loads the active sprint by default or a closed sprint chosen from the manifest, then shows eight KPIs, including **Long-running work · 7+ days** (a ticket count for In Progress / In Review), the **burndown chart**, Tickets by status, Tickets by type (`N W.I | P SP`), a unified Team Contribution table, ticket detail and an assignee x tester grid. Team Contribution shows independent role W.I counts and the unique per-person `N W.I | P SP` total. Clicking a name filters tickets where that person is assignee or tester. Fix version and Parent selects remain in the filter bar. `?sprint=<id>` opens a sprint directly. `sprints.json` lists available sprints; each selected entry points to one local snapshot. If the manifest is missing or invalid, the page falls back silently to the sprint snapshot without a selector.
 - `backlog.html` — backlog analysis: KPIs, readiness (DoR), priority, type, days-in-status buckets, a readiness x priority grid, and the ticket table. Search box in the filter bar (type `mis`, `wea` or `rea` to filter by readiness).
 
 ## How to run
@@ -32,7 +32,7 @@ Open `http://localhost:8000/` in a Chromium-based browser (VS Code's primary env
 
 ## How to refresh the data
 
-The sprint page reads `sprints.json` and only the selected snapshot from its manifest; without a valid manifest it reads `sprint.json`. The backlog page reads `backlog.json`. The pages never read Excel. Historical snapshots are frozen at sprint rotation; see `DATA_CONTRACT.md` for the rotation rule.
+The sprint page reads `sprints.json` and only the selected snapshot from its manifest; without a valid manifest it shows an error (there is no root the sprint snapshot any more). The backlog page reads `backlog.json`. The pages never read Excel. Historical snapshots are frozen at sprint rotation; see `DATA_CONTRACT.md` for the rotation rule.
 
 1. Update the tracker (`AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx`) and **close it in Excel** (the exporter refuses to run while the lock file `~$daily_tracker.xlsx` exists).
 2. From the `AF_Snaplogic` project root, run:
@@ -41,7 +41,7 @@ The sprint page reads `sprints.json` and only the selected snapshot from its man
    ```
 3. Reload the page in the browser.
 
-The export is manual, read-only, and writes the active latest snapshot (sprint.json, backlog.json); history lives in sprints.json and snapshots/ (frozen at sprint close, see DECISIONS). Full behavior: `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`.
+The export is manual, read-only, and writes the active sprint snapshot (`snapshots/sprint-<id>.json`) and backlog.json; history lives in sprints.json and snapshots/ (frozen at sprint close, see DECISIONS). Full behavior: `/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/06_Skills/af-dashboard-snapshot-export.md`.
 
 ## How to test
 
@@ -57,7 +57,7 @@ It needs Node 22 or newer, python3 and Google Chrome (set `CHROME_PATH` if Chrom
 
 | Path | What it is | Edit by hand? |
 |---|---|---|
-| `sprints.json`, `sprint.json`, `backlog.json`, `snapshots/*.json` | Sprint manifest and generated snapshots | No — generated by the exporter/rotation workflow |
+| `sprints.json`, the sprint snapshot, `backlog.json`, `snapshots/*.json` | Sprint manifest and generated snapshots | No — generated by the exporter/rotation workflow |
 | `schema/sprints.schema.json` | Sprint manifest contract | Yes, with its fixture and DATA_CONTRACT.md |
 | `fixtures/sprints.json` | Sprint manifest fixture | Yes, for edge cases |
 | `schema/snapshot.schema.json` | JSON Schema for sprint snapshots and backlog snapshot | Only with the exporter and skill, in the same pass |
@@ -84,4 +84,4 @@ It needs Node 22 or newer, python3 and Google Chrome (set `CHROME_PATH` if Chrom
 
 ## Recreating the app with another AI
 
-Everything needed is in this folder. Give the other agent `REBUILD_PROMPT.md` (it lists the reading order, the hard constraints and the deliverables), plus read access to the documents, `schema/`, `fixtures/` and a copy of `sprint.json` / `backlog.json`. For an independent rebuild in a clean folder, do not copy the existing `*.html`, `*.js`, `dashboard.css`; use `scripts/run_acceptance.js` as the judge.
+Everything needed is in this folder. Give the other agent `REBUILD_PROMPT.md` (it lists the reading order, the hard constraints and the deliverables), plus read access to the documents, `schema/`, `fixtures/` and a copy of the sprint snapshot / `backlog.json`. For an independent rebuild in a clean folder, do not copy the existing `*.html`, `*.js`, `dashboard.css`; use `scripts/run_acceptance.js` as the judge.
