@@ -93,12 +93,6 @@
     showLoading();
     snapshotCache[entry.file].then(function (data) { init(data, entry); }, function (err) { AF.showError(app, entry.file, err); });
   }
-  function loadFallback() {
-    AF.clear(pickerBox); sprintSelect = null;
-    AF.clear(banner); banner.hidden = true;
-    if (!snapshotCache['sprint.json']) snapshotCache['sprint.json'] = AF.loadSnapshot('sprint.json');
-    snapshotCache['sprint.json'].then(function (data) { init(data, null); }, function (err) { AF.showError(app, 'sprint.json', err); });
-  }
   function loadManifest() {
     AF.loadJson('sprints.json').then(function (data) {
       if (!validManifest(data)) throw new Error('invalid sprint manifest');
@@ -114,9 +108,9 @@
         return;
       }
       loadSprint(selected);
-    }, function () {
-      // Older deployments may not have the manifest yet. Keep the prior current sprint page quietly.
-      loadFallback();
+    }, function (err) {
+      // The manifest is the only way to find the active sprint's snapshot (no root sprint.json any more).
+      AF.showError(app, 'sprints.json', err);
     });
   }
   loadManifest();
@@ -172,7 +166,7 @@
     var kCycle = kpi('plain', 'Avg cycle time'), kMid = kpi('plain', 'Added mid-sprint'), kCarried = kpi('plain', 'Carried over');
     var kTime = kpi('plain', 'Long-running work · ' + AF.config.timeInStatusThresholdDays + '+ days');
     kTime.root.title = 'In Progress or In Review tickets that have stayed in the same status for ' + AF.config.timeInStatusThresholdDays + ' days or more. A neutral follow-up list, not a risk rating. Click to filter the lower section.';
-    kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in sprint.json.';
+    kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in the sprint snapshot.';
     kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
     var tBurn = AF.tile({ title: 'Burndown', sub: '' });
     tBurn.body.classList.add('chart');
@@ -315,15 +309,15 @@
       kCycle.hint.textContent = ct.n ? 'days, over ' + ct.n + ' Done ticket' + (ct.n === 1 ? '' : 's') : 'no Done tickets with a cycle time';
       var days = AF.config.midSprintThresholdDays, mid = AF.midSprintAdded(f, sprint, days);
       kMid.value.textContent = mid ? String(mid.count) : '\u2014';
-      kMid.hint.textContent = mid ? fmt(mid.points) + ' points, added after day ' + days : 'No sprint start date in sprint.json';
-      if (!sprint) { kCarried.value.textContent = '\u2014'; kCarried.hint.textContent = 'No sprint data in sprint.json'; }
+      kMid.hint.textContent = mid ? fmt(mid.points) + ' points, added after day ' + days : 'No sprint start date in the sprint snapshot';
+      if (!sprint) { kCarried.value.textContent = '\u2014'; kCarried.hint.textContent = 'No sprint data in the sprint snapshot'; }
       else if (!sprint.carriedOver) { kCarried.value.textContent = '\u2014'; kCarried.hint.textContent = 'Not calculated yet for this sprint'; }
       else {
         var c = sprint.carriedOver, parts = [];
         if (c.percent !== null && c.percent !== undefined) parts.push(fmt(c.percent) + '% of tickets');
         if (c.storyPoints !== null && c.storyPoints !== undefined) parts.push(fmt(c.storyPoints) + ' points');
         kCarried.value.textContent = c.count === null || c.count === undefined ? '\u2014' : String(c.count);
-        kCarried.hint.textContent = parts.length ? parts.join(', ') : 'No figures in sprint.json';
+        kCarried.hint.textContent = parts.length ? parts.join(', ') : 'No figures in the sprint snapshot';
       }
     }
 
@@ -387,7 +381,7 @@
         var sub = tBurn.head.querySelector('.sub');
         if (!m) {
           closePanel(); sub.textContent = '';
-          tBurn.body.appendChild(AF.emptyState('Sprint dates are not in sprint.json. Run the Jira sync and the export.'));
+          tBurn.body.appendChild(AF.emptyState('Sprint dates are not in the sprint snapshot. Run the Jira sync and the export.'));
           return;
         }
         if (!f.length) { closePanel(); sub.textContent = ''; tBurn.body.appendChild(AF.emptyState(EMPTY)); return; }

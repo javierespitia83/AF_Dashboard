@@ -28,6 +28,8 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// The active sprint's snapshot is found through the manifest (snapshots/sprint-<id>.json); there is no root sprint.json.
+const MANIFEST0 = J('sprints.json'); const ACTIVE_FILE = (MANIFEST0.sprints.find(x => x.id === MANIFEST0.current) || {}).file;
 const asOfLabel = snapshot => {
   const d = new Date(snapshot.exportedAt || '');
   if (!snapshot.exportedAt || isNaN(d.getTime())) return 'Data as of ' + snapshot.refreshedAt;
@@ -41,7 +43,16 @@ const APP = ['index.html', 'backlog.html', 'quality-intake.html', 'dashboard.css
 function variant(name, files) {
   const d = path.join(SP, 'var_' + name); fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true });
   APP.forEach(f => fs.copyFileSync(path.join(ROOT, f), path.join(d, f)));
-  Object.entries(files).forEach(([k, v]) => fs.writeFileSync(path.join(d, k), v));
+  Object.entries(files).forEach(([k, v]) => {
+    if (k !== 'sprint.json') { fs.writeFileSync(path.join(d, k), v); return; }
+    // The active sprint lives in snapshots/sprint-<id>.json and is found through sprints.json (no root sprint.json).
+    let data = null; try { data = JSON.parse(v); } catch (e) { /* keep the raw text: a deliberately invalid snapshot */ }
+    if (data && typeof data === 'object' && !data.sprint) { data.sprint = { id: 1, name: 'Test sprint', startDate: '2026-09-22', endDate: '2026-09-28' }; v = JSON.stringify(data); }
+    const sp = (data && data.sprint) || { id: 1, name: 'Test sprint', startDate: '2026-09-22', endDate: '2026-09-28' };
+    fs.mkdirSync(path.join(d, 'snapshots'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'snapshots', 'sprint-' + sp.id + '.json'), v);
+    if (!('sprints.json' in files)) fs.writeFileSync(path.join(d, 'sprints.json'), JSON.stringify({ current: sp.id, sprints: [{ id: sp.id, name: sp.name, startDate: sp.startDate, endDate: sp.endDate, state: 'active', file: 'snapshots/sprint-' + sp.id + '.json' }] }));
+  });
   return d;
 }
 const emptyJson = JSON.stringify({ refreshedAt: '2026-10-01', source: 'x', tickets: [] });
@@ -69,8 +80,7 @@ const dirs = { real: ROOT, missing: variant('missing', {}), invalid: variant('in
   czero: variant('czero', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 0, percent: 0, storyPoints: 0 } }, SP_OK)), 'backlog.json': emptyJson }),
   cpart: variant('cpart', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 5, percent: null, storyPoints: 12 } }, SP_OK)), 'backlog.json': emptyJson }),
   rem: variant('rem', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 }, removed: REMOVED }, SP_OK)), 'backlog.json': emptyJson }),
-  nodates: variant('nodates', { 'sprint.json': mkSprint({ id: 1, name: 'No dates', startDate: null, endDate: null, carriedOver: null }), 'backlog.json': emptyJson }),
-  noManifest: variant('no_manifest', { 'sprint.json': fixtureTxt }), badManifest: variant('bad_manifest', { 'sprint.json': fixtureTxt, 'sprints.json': '{not json' }) };
+  noManifest: variant('no_manifest', {}), badManifest: variant('bad_manifest', { 'sprints.json': '{not json' }) };
 const ports = { real: 8771, missing: 8772, invalid: 8773, empty: 8774, fixture: 8775, links: 8776, burn: 8777, cnull: 8778, czero: 8779, cpart: 8780, nodates: 8781, rem: 8782, noManifest: 8783, badManifest: 8784 };
 const servers = Object.keys(dirs).map(k => spawn('python3', ['-m', 'http.server', String(ports[k]), '--bind', '127.0.0.1', '--directory', dirs[k]], { stdio: 'ignore' }));
 
@@ -214,11 +224,11 @@ function expectSprint(S, f, ctx = CTX) {
   const cyc = all.filter(t => bucket(t.status) === 3 && typeof t.cycleTime === 'number'), avg = cyc.length ? cyc.reduce((a, t) => a + t.cycleTime, 0) / cyc.length : null;
   const tisAging0 = (a) => a.some(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number');
   const co = ctx.sprint ? ctx.sprint.carriedOver : undefined; let carriedV, carriedH;
-  if (!ctx.sprint) { carriedV = '—'; carriedH = 'No sprint data in sprint.json'; }
+  if (!ctx.sprint) { carriedV = '—'; carriedH = 'No sprint data in the sprint snapshot'; }
   else if (!co) { carriedV = '—'; carriedH = 'Not calculated yet for this sprint'; }
-  else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in sprint.json'; }
+  else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in the sprint snapshot'; }
   const midOk = ctx.sprint && !isNaN(dn(ctx.sprint.startDate));
-  const kh = { time: tisAging0(all) ? 'In Progress / In Review tickets' : 'Days in status not available yet', cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in sprint.json', carried: carriedH };
+  const kh = { time: tisAging0(all) ? 'In Progress / In Review tickets' : 'Days in status not available yet', cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in the sprint snapshot', carried: carriedH };
   const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—',
     midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
     String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
@@ -245,7 +255,7 @@ async function verifySprint(p, S, f, label, ctx = CTX) {
   if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
   if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
   { const bd = await run(p, READ_BD), x = e.bd;
-    if (!x) { if (bd.has || bd.empty !== 'Sprint dates are not in sprint.json. Run the Jira sync and the export.') errs.push(['burndown message', bd.has, bd.empty]); }
+    if (!x) { if (bd.has || bd.empty !== 'Sprint dates are not in the sprint snapshot. Run the Jira sync and the export.') errs.push(['burndown message', bd.has, bd.empty]); }
     else if (!e.all.length) { if (bd.has || bd.empty !== 'No work items match these filters. Remove a tag or use Reset all.') errs.push(['burndown empty-state', bd.has, bd.empty]); }
     else {
       if (!bd.has) errs.push(['burndown svg missing', bd.empty]);
@@ -401,8 +411,8 @@ function linkErrors(cells, values, structured) {
 }
 const mtime = f => fs.statSync(f).mtimeMs;
 const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx';
-const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
-const SPRJ = J('sprint.json'); const S = SPRJ.tickets, B = J('backlog.json').tickets;
+const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, ACTIVE_FILE)), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
+const SPRJ = J(ACTIVE_FILE); const S = SPRJ.tickets, B = J('backlog.json').tickets;
 const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
 const CLOSED_CO = CLOSED.sprint && CLOSED.sprint.carriedOver, CLOSED_CARRIED = CLOSED_CO ? [String(CLOSED_CO.count), `${CLOSED_CO.percent}% of tickets, ${CLOSED_CO.storyPoints} points`] : ['—','Not calculated yet for this sprint'];
 const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 1 };
@@ -417,11 +427,11 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   // =============== SPRINT ===============
   console.log('\n--- Sprint page (real data) ---');
   p = await openPage(base + 'index.html');
-  check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + 'sprint.json'] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
-  check('Shell: sprint tabs, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(tabs[2])==='Quality Intake' && T(document.querySelector('.snapshot-badge'))==='SNAPSHOT · NOT LIVE' && T(document.getElementById('asof'))===${J('sprint.json') && JSON.stringify(asOfLabel(J('sprint.json')))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname==='/jira/dashboards/18635' && live.target==='_blank' && live.rel.includes('noopener') && /LIVE/.test(T(live)) && /Internal — team only/.test(T(document.querySelector('.foot')))`));
+  check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + ACTIVE_FILE] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
+  check('Shell: sprint tabs, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(tabs[2])==='Quality Intake' && T(document.querySelector('.snapshot-badge'))==='SNAPSHOT · NOT LIVE' && T(document.getElementById('asof'))===${J(ACTIVE_FILE) && JSON.stringify(asOfLabel(J(ACTIVE_FILE)))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname==='/jira/dashboards/18635' && live.target==='_blank' && live.rel.includes('noopener') && /LIVE/.test(T(live)) && /Internal — team only/.test(T(document.querySelector('.foot')))`));
   check('Sprint manifest: accessible selector defaults to current and lists sprint name and state without repeated dates', await run(p, `const s=document.getElementById('sprint-select'), opts=s&&[...s.options].map(o=>T(o)); return s && document.querySelector('label[for="sprint-select"]') && T(document.querySelector('label[for="sprint-select"]'))==='Sprint' && s.value===String(${MANIFEST.current}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='active').name + ' (active)')}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='closed').name + ' (closed)')}) && document.getElementById('sprint-banner').hidden`));
   const sprintJsonRequests = () => p.reqs.filter(u => u.endsWith('.json'));
-  check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/sprint.json')) && !sprintJsonRequests().some(u => u.includes('/snapshots/')), p.reqs);
+  check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/' + ACTIVE_FILE)) && sprintJsonRequests().every(u => u.endsWith('/sprints.json') || u.endsWith('/' + ACTIVE_FILE)), p.reqs);
   await run(p, `window.__sprintSessionProbe='kept'; clickRow('Tickets by status','Done'); setSel('sprint-select','4697')`);
   for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='4697'`).catch(() => false)); i++) await sleep(100);
   const closedView = await run(p, `const det=tile('Ticket detail'), hdr=[...det.querySelectorAll('thead th')].map(T), rows=[...det.querySelectorAll('tbody tr')]; const ix=n=>hdr.indexOf(n), byKey=k=>{const r=rows.find(x=>T(x.children[0])===k);return r?{owner:T(r.children[ix('Owner')]),points:T(r.children[ix('Story points')]),situation:T(r.children[ix('Last sync update')])}:null}; const k=kpi('Carried over'),b=tile('Burndown'),svg=b.querySelector('svg.burndown'); return {url:location.search,probe:window.__sprintSessionProbe,selected:document.getElementById('sprint-select').value,count:rows.length,work:T(kpi('Work items').querySelector('.value')),closed:!document.getElementById('sprint-banner').hidden,historical:document.querySelector('.app').classList.contains('historical-sprint'),banner:T(document.getElementById('sprint-banner')),carried:[T(k.querySelector('.value')),T(k.querySelector('.hint'))],tags:document.querySelectorAll('.tags .tag').length,rowsNullSituation:rows.every(r=>T(r.children[ix('Last sync update')])==='—'),noToday:![...svg.querySelectorAll('text')].some(x=>T(x)==='Today'),days:svg.querySelectorAll('rect.bd-day').length,unassigned:byKey('APP-2983'),nullPoints:rows.filter(r=>T(r.children[ix('Story points')])==='—').length,note:document.querySelector('.sprint-banner-note')&&T(document.querySelector('.sprint-banner-note')),foot:T(b.querySelector('.tile-foot'))};`);
@@ -435,7 +445,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   await run(p, `setSel('sprint-select','${MANIFEST.current}')`);
   for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='${MANIFEST.current}'`).catch(() => false)); i++) await sleep(100);
   const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
-  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/sprint.json')).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector===String(MANIFEST.current), { requests:p.reqs, returned });
+  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/'+ACTIVE_FILE)).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector===String(MANIFEST.current), { requests:p.reqs, returned });
   let unknown = await openPage(base + 'index.html?sprint=999999');
   const unknownState = await run(unknown, `return {heading:T(document.querySelector('#app h2')),picker:!!document.getElementById('sprint-select'),options:document.getElementById('sprint-select')&&document.getElementById('sprint-select').options.length,value:document.getElementById('sprint-select')&&document.getElementById('sprint-select').value}`);
   check('Unknown sprint id: clear error and usable selector remain visible', unknownState.heading==='Sprint not found' && unknownState.picker && unknownState.options===MANIFEST.sprints.length+1, unknownState);
@@ -449,11 +459,10 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   check('Direct URL: ?sprint=4697 opens the closed snapshot from the manifest', directState.selected==='4697' && directState.count===CLOSED.tickets.length && directState.banner && direct.reqs.filter(u=>u.endsWith('.json')).length===2 && direct.reqs.some(u=>u.endsWith('/sprints.json')) && direct.reqs.some(u=>u.includes('/snapshots/sprint-4697.json')), { state:directState, requests:direct.reqs });
   await direct.close();
   for (const variantName of ['noManifest','badManifest']) {
-    const fallbackPage = await openPage('http://127.0.0.1:' + ports[variantName] + '/index.html');
-    const state = await run(fallbackPage, `return {selector:!!document.getElementById('sprint-select'),count:document.querySelectorAll('#app .lower .data tbody tr').length,errors:document.querySelectorAll('#app .message[role="alert"]').length}`);
-    const appLogs = fallbackPage.logs.filter(line => !(variantName === 'noManifest' && /sprints\.json/.test(line) && /404/.test(line)));
-    check(`Manifest ${variantName === 'noManifest' ? 'missing' : 'invalid'}: silently falls back to sprint.json without selector`, !state.selector && state.count===JSON.parse(fixtureTxt).tickets.length && state.errors===0 && appLogs.length===0 && fallbackPage.reqs.some(u=>u.endsWith('/sprint.json')), { state, logs:fallbackPage.logs, reqs:fallbackPage.reqs });
-    await fallbackPage.close();
+    const errPage = await openPage('http://127.0.0.1:' + ports[variantName] + '/index.html');
+    const state = await run(errPage, `return {selector:!!document.getElementById('sprint-select'),rows:document.querySelectorAll('#app .lower .data tbody tr').length,text:document.getElementById('app').innerText}`);
+    check(`Manifest ${variantName === 'noManifest' ? 'missing' : 'invalid'}: the page shows a clear error about sprints.json (no root sprint.json fallback), no selector, no JS exception`, !state.selector && state.rows===0 && /Can’t load sprints\.json/.test(state.text) && !errPage.logs.some(l => l.startsWith('exception')), { state: { selector: state.selector, rows: state.rows, text: state.text.slice(0, 160) }, logs: errPage.logs });
+    await errPage.close();
   }
   let f = newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
@@ -897,13 +906,6 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     { const b2 = await run(p, READ_BD); check('Removed, Bob only: scope [5,7,5,5,7,7,7] and one removal marker (APP-951, 2 points)', eq(b2.days.map(d => d.scope), [5, 7, 5, 5, 7, 7, 7]) && eq(b2.removed.map(r => [r.date, r.count, r.points]), [['2026-09-24', 1, 2]]), { s: b2.days.map(d => d.scope), r: b2.removed }); }
     check('Removed: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
-  p = await openPage(`http://127.0.0.1:${ports.nodates}/index.html`);
-  { const nd = { sprint: { id: 1, name: 'No dates', startDate: null, endDate: null, carriedOver: null }, today: '2026-09-25', thr: 2 };
-    await verifySprint(p, BURN_T, newF(), 'Sprint without dates: the page still works; burndown shows the message; Added mid-sprint and Carried over explain', nd);
-    const k = await run(p, READ_SPRINT), bd = await run(p, READ_BD);
-    check('Sprint without dates: exact messages (burndown, mid-sprint, carried over)', bd.empty === 'Sprint dates are not in sprint.json. Run the Jira sync and the export.' && !bd.has && k.kpis[3].value === '—' && k.kpis[3].hint === 'No sprint start date in sprint.json' && k.kpis[4].value === '—' && k.kpis[4].hint === 'Not calculated yet for this sprint', { bd: bd.empty, k3: k.kpis[3], k4: k.kpis[4] });
-    check('Sprint without dates: no console errors', p.logs.length === 0, p.logs); }
-  await p.close();
 
   console.log('\n--- Jira links with odd data (copy of the app) ---');
   p = await openPage('http://127.0.0.1:' + ports.links + '/index.html');
@@ -913,13 +915,13 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     check('Odd data: no injected elements; all hrefs start with the Jira address; no javascript: link', LO.badEls === 0 && LO.allLinks.every(h => h.startsWith('https://mysnaplogic.atlassian.net/browse/')) && !LO.allLinks.some(h => /javascript:/i.test(h)), LO.allLinks);
     check('Odd data: a Ticket value that is not a key stays plain text; Summary and Last sync update are never linked', LO.ticket[1].links.length === 0 && LO.ticket[1].text === 'not a key' && LO.ticket[0].links.length === 1 && LO.situation[0].text === 'blocked by APP-98' && [...LO.summary, ...LO.situation].every(c => c.links.length === 0), [LO.ticket, LO.summary[0], LO.situation[0]]);
     check('Odd data: no console errors', p.logs.length === 0, p.logs);
-    const nk = await run(p, READ_SPRINT), nb = await run(p, READ_BD);
-    check('No sprint object in sprint.json: burndown message, "No sprint data" on Carried over, no start date on Added mid-sprint; page still works', nb.empty === 'Sprint dates are not in sprint.json. Run the Jira sync and the export.' && nk.kpis[4].value === '—' && nk.kpis[4].hint === 'No sprint data in sprint.json' && nk.kpis[3].hint === 'No sprint start date in sprint.json', { nb: nb.empty, k: nk.kpis.slice(3, 5) }); }
+    // A snapshot without a sprint object cannot be opened any more: the manifest entry must match it (sprint.js throws), so the old 'No sprint object' states are unreachable.
+  }
   await p.close();
 
   // =============== ERROR / EMPTY ===============
   console.log('\n--- Error and empty states ---');
-  const states = [['missing', 'index', /Can’t load sprint\.json/, 'Missing sprint.json'], ['missing', 'backlog', /Can’t load backlog\.json/, 'Missing backlog.json'], ['invalid', 'index', /Can’t load sprint\.json[\s\S]*not valid JSON/, 'Invalid sprint.json'], ['invalid', 'backlog', /Can’t load backlog\.json/, 'Invalid backlog.json'], ['empty', 'index', /No tickets in this snapshot/, 'Empty sprint snapshot'], ['empty', 'backlog', /No backlog tickets in this snapshot/, 'Empty backlog snapshot']];
+  const states = [['missing', 'index', /Can’t load sprints\.json/, 'Missing sprints.json (manifest)'], ['missing', 'backlog', /Can’t load backlog\.json/, 'Missing backlog.json'], ['invalid', 'index', /Can’t load snapshots\/sprint-1\.json[\s\S]*not valid JSON/, 'Invalid sprint snapshot'], ['invalid', 'backlog', /Can’t load backlog\.json/, 'Invalid backlog.json'], ['empty', 'index', /No tickets in this snapshot/, 'Empty sprint snapshot'], ['empty', 'backlog', /No backlog tickets in this snapshot/, 'Empty backlog snapshot']];
   for (const [v, page, re, name] of states) {
     p = await openPage(`http://127.0.0.1:${ports[v]}/${page}.html`);
     const txt = await run(p, `return document.getElementById('app').innerText`);
@@ -943,7 +945,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
   const fetches = []; ['dashboard.js', 'sprint.js', 'backlog.js'].forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
   check('Only one fetch() code path, loading a local relative JSON path via loadJson', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
   check('No innerHTML / document.write / eval in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|document\.write|\beval\(/.test(strip(f))));
-  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, 'sprint.json')), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
+  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, ACTIVE_FILE)), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
   { const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'schema/snapshot.schema.json'), 'utf8'));
     const vType = (v, ty) => (Array.isArray(ty) ? ty : [ty]).some(x => x === 'null' ? v === null : x === 'integer' ? Number.isInteger(v) : x === 'number' ? typeof v === 'number' : x === 'string' ? typeof v === 'string' : x === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v)) : x === 'array' ? Array.isArray(v) : x === 'boolean' ? typeof v === 'boolean' : false);
     const vNode = (v, node, at, errs) => {
@@ -957,7 +959,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
       }
     };
     const conform = (obj, def) => { const errs = []; vNode(obj, Object.assign({}, schema, { properties: Object.assign({}, schema.properties, { tickets: { type: 'array' } }) }), 'root', errs); (obj.tickets || []).forEach((tk, i) => vNode(tk, schema.definitions[def], 'tickets[' + i + ']', errs)); return errs.slice(0, 4); };
-    check('sprint.json conforms to the schema (keys, types, dates, sprint and carriedOver objects)', conform(J('sprint.json'), 'sprintTicket').length === 0, conform(J('sprint.json'), 'sprintTicket'));
+    check('Active sprint snapshot conforms to the schema (keys, types, dates, sprint and carriedOver objects)', conform(J(ACTIVE_FILE), 'sprintTicket').length === 0, conform(J(ACTIVE_FILE), 'sprintTicket'));
     check('snapshots/sprint-4697.json conforms to the snapshot schema', conform(CLOSED, 'sprintTicket').length === 0, conform(CLOSED, 'sprintTicket'));
     check('snapshots/sprint-12119.json conforms to the snapshot schema (closed-sprint state and completeDate allowed)', conform(J('snapshots/sprint-12119.json'), 'sprintTicket').length === 0, conform(J('snapshots/sprint-12119.json'), 'sprintTicket'));
     check('backlog.json conforms to the schema', conform(J('backlog.json'), 'backlogTicket').length === 0, conform(J('backlog.json'), 'backlogTicket'));
@@ -1001,7 +1003,7 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     };
     const qualityErrors=[];vQuality(J('quality-intake.json'),qualitySchema,'quality-intake',qualityErrors);
     check('quality-intake.json conforms to schema/quality-intake.schema.json',qualityErrors.length===0,qualityErrors.slice(0,8)); }
-  check('manifest, selected snapshots, sprint.json, backlog.json, quality-intake.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
+  check('manifest, selected snapshots, the active sprint snapshot, backlog.json, quality-intake.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
 
   const failed = results.filter(r => !r.ok);
   console.log(`\nTOTAL ${results.length}  PASS ${results.length - failed.length}  FAIL ${failed.length}`);

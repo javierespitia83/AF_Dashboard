@@ -1,13 +1,23 @@
 {
-  "current": 12176,
+  "current": 12191,
   "sprints": [
+    {
+      "id": 12191,
+      "name": "App Sprint 11-06-2026",
+      "startDate": "2026-10-26",
+      "endDate": "2026-11-06",
+      "state": "active",
+      "file": "snapshots/sprint-12191.json",
+      "note": "Active since 2026-10-26 17:57 PT (start date converted from Jira's UTC timestamp). Tickets carried over from 12176 enter via Backlog (Prioritized)."
+    },
     {
       "id": 12176,
       "name": "App Sprint 10-23-2026",
       "startDate": "2026-10-12",
       "endDate": "2026-10-23",
-      "state": "active",
-      "file": "sprint.json"
+      "state": "closed",
+      "file": "snapshots/sprint-12176.json",
+      "note": "Frozen 2026-10-26 after the sprint was completed in Jira (completed 2026-10-26). 56 tickets, 51 Done; APP-1607, 2970, 3010, 3103 and 3153 (In Review) went to Backlog (Prioritized) at close."
     },
     {
       "id": 12119,
