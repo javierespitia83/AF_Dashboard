@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-28",
-  "exportedAt": "2026-10-28T13:03:48+00:00",
+  "exportedAt": "2026-10-28T15:37:04+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -1652,6 +1652,28 @@
       "statusAgingApprox": false,
       "summary": "[TechDebt] [Asset Catalog] Retire duplicate accounts and hourly models",
       "lastSyncUpdate": "In Progress since 10/27 (added to the sprint 10/27). No Jira comments yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3253",
+      "owner": "Salim Abdul",
+      "status": "In Progress",
+      "type": "Bug",
+      "tester": null,
+      "classifications": null,
+      "points": 2,
+      "parent": "APP-55 – App Foundation PSWAT",
+      "linkedWorkItems": null,
+      "fixVersion": "4.46.1.0",
+      "doneDate": null,
+      "addedDate": "2026-10-28",
+      "cycleTime": null,
+      "statusAging": 0,
+      "statusAgingApprox": false,
+      "summary": "Working Account returns HTTP : 500 \"Metadata failed to load\" without any user update and cause production failures.",
+      "lastSyncUpdate": "In Progress since 10/28 (added to the sprint 10/28). Root cause found 10/28: overlapping account updates write the same version file after the PR #6957 cleanup change; fix PR #7202 created.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
