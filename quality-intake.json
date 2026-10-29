@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T14:59:40+00:00",
-  "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
+  "exportedAt": "2026-10-29T13:38:46-07:00",
+  "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
       "sprintId": 4697,
@@ -731,11 +731,11 @@
       "weekdays": 4,
       "partial": true,
       "counts": {
-        "pswat": 4,
+        "pswat": 5,
         "appBugs": 2
       },
       "ratesPer10Weekdays": {
-        "pswat": 10.0,
+        "pswat": 12.5,
         "appBugs": 5.0
       },
       "tickets": [
@@ -780,7 +780,7 @@
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
           "type": "Bug",
-          "status": "Open",
+          "status": "To Do",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
         },
@@ -792,6 +792,15 @@
           "status": "Open",
           "created": "2026-10-28",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2769"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2770",
+          "summary": "Delete a Task",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2770"
         }
       ]
     }
