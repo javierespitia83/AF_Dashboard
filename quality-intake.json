@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-28",
-  "exportedAt": "2026-10-28T15:37:04+00:00",
+  "refreshedAt": "2026-10-29",
+  "exportedAt": "2026-10-29T01:43:39+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -731,11 +731,11 @@
       "weekdays": 3,
       "partial": true,
       "counts": {
-        "pswat": 2,
+        "pswat": 4,
         "appBugs": 1
       },
       "ratesPer10Weekdays": {
-        "pswat": 6.67,
+        "pswat": 13.33,
         "appBugs": 3.33
       },
       "tickets": [
@@ -765,6 +765,24 @@
           "status": "Open",
           "created": "2026-10-28",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2767"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2768",
+          "summary": "In memory Oauth 2 account token refresh issue",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-26",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2769",
+          "summary": "Update org.apache.activemq:activemq-broker to version to 5.19.7 or higher",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-28",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2769"
         }
       ]
     }
