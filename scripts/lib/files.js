@@ -73,16 +73,17 @@ function diffFingerprints(a, b) {
   return [...keys].filter(k => a[k] !== b[k]).sort();
 }
 
-// The tracker workbook, if it can be found: AF_TRACKER_PATH, then the older AF_SNAPLOGIC_TRACKER,
-// then $AF_SNAPLOGIC_ROOT/03_Team_Enablement/daily_tracker.xlsx, then the usual Google Drive location.
-// Returns null when there is no tracker on this machine (the check is then skipped, not failed).
+// The tracker workbook, if it can be found: AF_TRACKER_PATH, then the older AF_SNAPLOGIC_TRACKER, then
+// $AF_SNAPLOGIC_ROOT/03_Tracker/daily_tracker.xlsx (current location since 2026-10-29), then the former
+// 03_Team_Enablement/daily_tracker.xlsx, then the same two under the usual Google Drive location.
+// Returns { file: null } when there is no tracker on this machine (the check is then skipped, not failed).
 function findTracker() {
-  const rel = path.join('03_Team_Enablement', 'daily_tracker.xlsx');
-  const candidates = [process.env.AF_TRACKER_PATH, process.env.AF_SNAPLOGIC_TRACKER,
-    process.env.AF_SNAPLOGIC_ROOT && path.join(process.env.AF_SNAPLOGIC_ROOT, rel)].filter(Boolean);
+  const rels = [path.join('03_Tracker', 'daily_tracker.xlsx'), path.join('03_Team_Enablement', 'daily_tracker.xlsx')];
+  const candidates = [process.env.AF_TRACKER_PATH, process.env.AF_SNAPLOGIC_TRACKER].filter(Boolean);
+  if (process.env.AF_SNAPLOGIC_ROOT) rels.forEach(rel => candidates.push(path.join(process.env.AF_SNAPLOGIC_ROOT, rel)));
   const cloud = path.join(os.homedir(), 'Library', 'CloudStorage');
   if (fs.existsSync(cloud)) {
-    fs.readdirSync(cloud).filter(d => /^GoogleDrive-/.test(d)).forEach(d => candidates.push(path.join(cloud, d, 'My Drive', 'AF_Snaplogic', rel)));
+    fs.readdirSync(cloud).filter(d => /^GoogleDrive-/.test(d)).forEach(d => rels.forEach(rel => candidates.push(path.join(cloud, d, 'My Drive', 'AF_Snaplogic', rel))));
   }
   const explicit = !!(process.env.AF_TRACKER_PATH || process.env.AF_SNAPLOGIC_TRACKER || process.env.AF_SNAPLOGIC_ROOT);
   const found = candidates.find(f => fs.existsSync(f)) || null;
