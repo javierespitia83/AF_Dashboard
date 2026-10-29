@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T13:38:46-07:00",
+  "exportedAt": "2026-10-29T16:00:57-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1681,6 +1681,21 @@
       "risk": null,
       "quickCheck": "Repro steps, expected vs actual and affected scope are explicit.",
       "cluster": null,
+      "created": "2026-10-29"
+    },
+    {
+      "ticket": "APP-3266",
+      "summary": "Limit Workbench tabs to a maximum of 50 and warn when the limit is reached",
+      "type": "Story",
+      "priority": "Lowest",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": "Yes",
+      "days": 0,
+      "epic": "APP-3224 – Move settings in user object out and reduce size of snapshot",
+      "risk": null,
+      "quickCheck": "AC and scope are explicit in the ticket's own description (8 acceptance criteria); expected behavior covers both tab types, cap feedback, existing-tab reactivation and over-limit restore.",
+      "cluster": "APP-2981",
       "created": "2026-10-29"
     }
   ]
