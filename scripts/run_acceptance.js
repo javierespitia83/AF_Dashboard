@@ -2,34 +2,51 @@
 /*
  * run_acceptance.js — automated acceptance run for the AF_Dashboard web app (ACCEPTANCE.md).
  *
- * Drives a real headless Chrome over the DevTools protocol, clicks through all pages
- * and compares every tile, KPI, tag and table with an independent calculation from
- * the sprint manifest/snapshots and backlog.json. Read-only: it never modifies the real data files, the
- * tracker or the app; edge cases (fixture, empty, missing, invalid data) run on throwaway
- * copies of the app in a temp folder.
+ * Drives a real headless Chrome over the DevTools protocol, clicks through all three pages and compares
+ * every tile, KPI, tag and table with an independent calculation (scripts/lib/model.js) from the sprint
+ * manifest, the sprint snapshots, backlog.json and quality-intake.json. Every test target (people, epics,
+ * matrix cells, closed sprint) is derived from the loaded JSON; the only fixed values are layout
+ * expectations and the hand-made data below.
  *
- * Needs: Node 22+ (global fetch and WebSocket), python3 (for the local servers), Google Chrome.
- * Run from this app folder: node scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
- * Chrome location:     set CHROME_PATH if it is not the default macOS path.
- * Ports used:          8771-8784 (servers) on 127.0.0.1; Chrome debugging uses a free port (set ACCEPT_DEBUG_PORT to fix it). Extra Chrome flags: CHROME_ARGS (for example --no-sandbox).
- * Exit code:           0 when every check passes, 1 otherwise.
- * Keep it in sync:     if SPEC.md, DATA_CONTRACT.md or ACCEPTANCE.md change, update the
- *                      expectations here in the same pass.
+ * Read-only: it serves a staged copy of the app and data files (never the repository itself, so .env and
+ * .git/ are not exposed), runs edge cases on throwaway copies in a scratch folder, and at the end proves
+ * by content hash that no file under the repository changed (plus the tracker workbook, when found).
+ *
+ * Needs: Node 22+ (global fetch and WebSocket), python3 (local servers), Google Chrome.
+ * Run from this app folder:  node scripts/run_acceptance.js [dashboard_dir] [scratch_dir]
+ * Environment:  CHROME_PATH (Chrome binary), CHROME_ARGS (extra flags, e.g. --no-sandbox),
+ *               ACCEPT_DEBUG_PORT (fixed DevTools port), ACCEPT_CDP_TIMEOUT_MS (default 30000),
+ *               AF_TRACKER_PATH (tracker workbook for the read-only check; see lib/files.js findTracker).
+ * Exit code:    0 every check passed, 1 at least one check failed, 2 the harness itself failed.
+ *               Results are kept in the scratch folder whenever the run is not a clean pass.
+ * Modules:      lib/cdp.js (Chrome), lib/files.js (staging, servers, read-only proof), lib/schema.js (the
+ *               JSON Schema validator), lib/model.js (expected values), lib/page.js (in-page snippets),
+ *               lib/ui_text.js (every UI string the checks expect). Unit tests: scripts/unit.test.js.
+ * Keep it in sync: if SPEC.md, DATA_CONTRACT.md or ACCEPTANCE.md change, update the expectations here
+ *               in the same pass.
  */
-const { spawn } = require('child_process');
+'use strict';
+const { spawnSync } = require('child_process');
 const fs = require('fs'); const path = require('path'); const os = require('os');
+const { launchChrome, openPage, sleep } = require('./lib/cdp');
+const files = require('./lib/files');
+const { validate, unsupportedKeywords } = require('./lib/schema');
+const M = require('./lib/model');
+const { UI } = require('./lib/ui_text');
+const { run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, LAYOUT, SCROLL_REGIONS } = require('./lib/page');
+
 const ROOT = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const OWN_SCRATCH = !process.argv[3];
-const SP = process.argv[3] || fs.mkdtempSync(path.join(os.tmpdir(), 'af_dashboard_accept_'));
+const SP = path.resolve(process.argv[3] || fs.mkdtempSync(path.join(os.tmpdir(), 'af_dashboard_accept_')));
 const CH = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-if (!fs.existsSync(CH)) { console.error('Chrome not found at ' + CH + '. Set CHROME_PATH.'); process.exit(2); }
+const ST = UI.sprint.tiles, BT = UI.backlog.tiles, q = JSON.stringify;
+
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (!ok && detail !== undefined ? '  -> ' + JSON.stringify(detail).slice(0, 700) : '')); };
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+const skips = [];
+const skip = (name, why) => { skips.push({ name, why }); console.log('SKIP ' + name + ' (' + why + ')'); };
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-// The active sprint's snapshot is found through the manifest (snapshots/sprint-<id>.json); there is no root sprint.json.
-const MANIFEST0 = J('sprints.json'); const ACTIVE_FILE = (MANIFEST0.sprints.find(x => x.id === MANIFEST0.current) || {}).file;
+const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const asOfLabel = snapshot => {
   const d = new Date(snapshot.exportedAt || '');
   if (!snapshot.exportedAt || isNaN(d.getTime())) return 'Data as of ' + snapshot.refreshedAt;
@@ -38,30 +55,13 @@ const asOfLabel = snapshot => {
   return `Data as of ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} · ${pad(d.getHours())}:${pad(d.getMinutes())} UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 };
 
-// ---------- variants (copies; real data files never touched) ----------
-const APP = ['index.html', 'backlog.html', 'quality-intake.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js', 'quality-intake.js', 'quality-intake.json'];
-function variant(name, files) {
-  const d = path.join(SP, 'var_' + name); fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true });
-  APP.forEach(f => fs.copyFileSync(path.join(ROOT, f), path.join(d, f)));
-  Object.entries(files).forEach(([k, v]) => {
-    if (k !== 'sprint.json') { fs.writeFileSync(path.join(d, k), v); return; }
-    // The active sprint lives in snapshots/sprint-<id>.json and is found through sprints.json (no root sprint.json).
-    let data = null; try { data = JSON.parse(v); } catch (e) { /* keep the raw text: a deliberately invalid snapshot */ }
-    if (data && typeof data === 'object' && !data.sprint) { data.sprint = { id: 1, name: 'Test sprint', startDate: '2026-09-22', endDate: '2026-09-28' }; v = JSON.stringify(data); }
-    const sp = (data && data.sprint) || { id: 1, name: 'Test sprint', startDate: '2026-09-22', endDate: '2026-09-28' };
-    fs.mkdirSync(path.join(d, 'snapshots'), { recursive: true });
-    fs.writeFileSync(path.join(d, 'snapshots', 'sprint-' + sp.id + '.json'), v);
-    if (!('sprints.json' in files)) fs.writeFileSync(path.join(d, 'sprints.json'), JSON.stringify({ current: sp.id, sprints: [{ id: sp.id, name: sp.name, startDate: sp.startDate, endDate: sp.endDate, state: 'active', file: 'snapshots/sprint-' + sp.id + '.json' }] }));
-  });
-  return d;
-}
+// ---------- hand-made data (answers worked out by hand; see the burndown checks) ----------
+const SP_OK = { id: 1, name: 'Hand sprint', startDate: '2026-09-22', endDate: '2026-09-28' };
 const emptyJson = JSON.stringify({ refreshedAt: '2026-10-01', source: 'x', tickets: [] });
-const fixtureTxt = fs.readFileSync(path.join(ROOT, 'fixtures/sample_snapshot.json'), 'utf8');
 const linksSprint = JSON.stringify({ refreshedAt: '2026-10-01', source: 'x', tickets: [
   { ticket: 'APP-1', owner: 'A', status: 'Done', tester: null, points: 1, parent: 'APP-5/DOC-6 and lower-1 and APP- and xAPP-2 and APP-3y', linkedWorkItems: 'APP-7, <img src=x onerror=alert(1)> DOC-22, javascript:alert(1) PLATENG-9', fixVersion: '1', summary: 'UTF-8 and SHA-256 text, see APP-99', lastSyncUpdate: 'blocked by APP-98', blocker: 'Legacy blocker APP-97', demoOrSpike: null, discussed: null },
   { ticket: 'not a key', owner: 'B', status: 'Done', tester: null, points: null, parent: null, linkedWorkItems: null, fixVersion: null, summary: null, lastSyncUpdate: null, blocker: null, demoOrSpike: null, discussed: null }] });
-const TK = (o) => Object.assign({ owner: 'Ann', status: 'Done', tester: 'Tim', points: 1, parent: null, linkedWorkItems: null, fixVersion: '4.46', doneDate: null, addedDate: '2026-09-22', cycleTime: null, summary: 's', lastSyncUpdate: null, blocker: null, demoOrSpike: null, discussed: null }, o);
-// Hand-made sprint whose answers are computed by hand (see the "Burndown with hand-made data" checks).
+const TK = o => Object.assign({ owner: 'Ann', status: 'Done', tester: 'Tim', points: 1, parent: null, linkedWorkItems: null, fixVersion: '4.46', doneDate: null, addedDate: '2026-09-22', cycleTime: null, summary: 's', lastSyncUpdate: null, blocker: null, demoOrSpike: null, discussed: null }, o);
 const BURN_T = [
   TK({ ticket: 'APP-901', points: 5, doneDate: '2026-09-23', cycleTime: 2 }),
   TK({ ticket: 'APP-902', points: 3, doneDate: '2026-09-24', cycleTime: 3 }),
@@ -73,687 +73,658 @@ const mkSprint = (sprint, today = '2026-09-25', tickets = BURN_T) => JSON.string
 const REMOVED = [
   { ticket: 'APP-950', points: 3, addedDate: '2026-09-22', removedDate: '2026-09-24', status: 'In Progress', owner: 'Ann', tester: 'Tim', fixVersion: '4.46', parent: null, summary: 'gone one' },
   { ticket: 'APP-951', points: 2, addedDate: '2026-09-23', removedDate: '2026-09-24', status: 'To Do', owner: 'Bob', tester: null, fixVersion: '4.46', parent: null, summary: 'gone two' }];
-const SP_OK = { id: 1, name: 'Hand sprint', startDate: '2026-09-22', endDate: '2026-09-28' };
-const dirs = { real: ROOT, missing: variant('missing', {}), invalid: variant('invalid', { 'sprint.json': '{not json', 'backlog.json': '{not json' }), empty: variant('empty', { 'sprint.json': emptyJson, 'backlog.json': emptyJson }), fixture: variant('fixture', { 'sprint.json': fixtureTxt, 'backlog.json': emptyJson }), links: variant('links', { 'sprint.json': linksSprint, 'backlog.json': emptyJson }),
-  burn: variant('burn', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 } }, SP_OK)), 'backlog.json': emptyJson }),
-  cnull: variant('cnull', { 'sprint.json': mkSprint(Object.assign({ carriedOver: null }, SP_OK)), 'backlog.json': emptyJson }),
-  czero: variant('czero', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 0, percent: 0, storyPoints: 0 } }, SP_OK)), 'backlog.json': emptyJson }),
-  cpart: variant('cpart', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 5, percent: null, storyPoints: 12 } }, SP_OK)), 'backlog.json': emptyJson }),
-  rem: variant('rem', { 'sprint.json': mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 }, removed: REMOVED }, SP_OK)), 'backlog.json': emptyJson }),
-  noManifest: variant('no_manifest', {}), badManifest: variant('bad_manifest', { 'sprints.json': '{not json' }) };
-const ports = { real: 8771, missing: 8772, invalid: 8773, empty: 8774, fixture: 8775, links: 8776, burn: 8777, cnull: 8778, czero: 8779, cpart: 8780, nodates: 8781, rem: 8782, noManifest: 8783, badManifest: 8784 };
-const servers = Object.keys(dirs).map(k => spawn('python3', ['-m', 'http.server', String(ports[k]), '--bind', '127.0.0.1', '--directory', dirs[k]], { stdio: 'ignore' }));
+const CARRIED = { count: 3, percent: 20, storyPoints: 8 };
+const manifestFor = (sp, extraTop = {}, extraEntry = {}) => JSON.stringify(Object.assign({ current: sp.id, sprints: [Object.assign({ id: sp.id, name: sp.name, startDate: sp.startDate, endDate: sp.endDate, state: 'active', file: 'snapshots/sprint-' + sp.id + '.json' }, extraEntry)] }, extraTop));
 
-// ---------- CDP ----------
-let chrome;
-let DBG = 9333; // replaced at launch by a free port (or ACCEPT_DEBUG_PORT)
-const freePort = () => new Promise((res, rej) => { const srv = require('net').createServer(); srv.once('error', rej); srv.listen(0, '127.0.0.1', () => { const p = srv.address().port; srv.close(() => res(p)); }); });
-async function launch() {
-  fs.rmSync(path.join(SP, 'prof5'), { recursive: true, force: true });
-  DBG = Number(process.env.ACCEPT_DEBUG_PORT) || await freePort();
-  // CHROME_ARGS: extra flags, space separated (for example --no-sandbox in a container or a restricted sandbox).
-  const extra = (process.env.CHROME_ARGS || '').split(/\s+/).filter(Boolean);
-  let err = ''; let exited = null;
-  chrome = spawn(CH, ['--headless=new', '--disable-gpu', '--remote-debugging-port=' + DBG, '--user-data-dir=' + path.join(SP, 'prof5'), '--no-first-run', ...extra, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
-  chrome.stderr.on('data', d => { err = (err + d).slice(-2000); });
-  chrome.on('exit', (code, sig) => { exited = 'code ' + code + (sig ? ' signal ' + sig : ''); });
-  chrome.on('error', e => { exited = 'spawn error: ' + e.message; });
-  for (let i = 0; i < 150; i++) { // up to 30 s
-    try { await fetch('http://127.0.0.1:' + DBG + '/json/version'); return; } catch (e) { if (exited) break; await sleep(200); }
-  }
-  throw new Error('chrome did not start (debug port ' + DBG + (exited ? ', Chrome exited: ' + exited : ', no answer in 30 s') + ')' + (err ? '\nChrome stderr (last lines):\n' + err.trim().split('\n').slice(-8).join('\n') : '') + '\nHint: if this runs inside a sandbox or container, try CHROME_ARGS=--no-sandbox, or run the script from a normal Terminal.');
-}
-async function openPage(url, w = 1920, h = 1080) {
-  const t = await (await fetch('http://127.0.0.1:'+DBG+'/json/new?about:blank', { method: 'PUT' })).json();
-  const ws = new WebSocket(t.webSocketDebuggerUrl); await new Promise(r => ws.addEventListener('open', r));
-  let id = 0; const pend = {}; const logs = []; const reqs = []; const resp = {};
-  ws.addEventListener('message', m => {
-    const d = JSON.parse(m.data);
-    if (d.id && pend[d.id]) { pend[d.id](d); delete pend[d.id]; return; }
-    if (d.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(d.params.type)) logs.push(d.params.type + ': ' + d.params.args.map(a => a.value || a.description).join(' '));
-    if (d.method === 'Runtime.exceptionThrown') logs.push('exception: ' + (d.params.exceptionDetails.exception || {}).description);
-    if (d.method === 'Log.entryAdded' && ['error', 'warning'].includes(d.params.entry.level)) {
-      const line = 'log ' + d.params.entry.level + ': ' + d.params.entry.text + ' ' + (d.params.entry.url || '');
-      // A missing optional manifest necessarily produces an HTTP 404 in the browser's network log;
-      // sprint.js catches it and falls back without emitting a JavaScript console error.
-      if (!(/sprints\.json/.test(line) && /404/.test(line))) logs.push(line);
-    }
-    if (d.method === 'Network.requestWillBeSent') reqs.push(d.params.request.url);
-    if (d.method === 'Network.responseReceived') resp[d.params.response.url] = d.params.response.status;
+// A throwaway copy of the app. files: { snapshot, manifest, 'backlog.json', 'quality-intake.json', ... } as text.
+// `snapshot` is written to snapshots/sprint-<id>.json; without an explicit `manifest` a one-entry manifest is generated.
+function variant(name, spec) {
+  const d = path.join(SP, 'var_' + name); fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true });
+  files.APP_FILES.concat(['quality-intake.json']).forEach(f => fs.copyFileSync(path.join(ROOT, f), path.join(d, f)));
+  Object.entries(spec).forEach(([k, v]) => {
+    if (k === 'snapshot') {
+      let data = null; try { data = JSON.parse(v); } catch (e) { /* keep the raw text: a deliberately invalid snapshot */ }
+      if (data && typeof data === 'object' && !data.sprint) { data.sprint = Object.assign({}, SP_OK, { name: 'Test sprint' }); v = JSON.stringify(data); }
+      const sp = (data && data.sprint) || Object.assign({}, SP_OK, { name: 'Test sprint' });
+      fs.mkdirSync(path.join(d, 'snapshots'), { recursive: true });
+      fs.writeFileSync(path.join(d, 'snapshots', 'sprint-' + sp.id + '.json'), v);
+      if (!('manifest' in spec)) fs.writeFileSync(path.join(d, 'sprints.json'), manifestFor(sp));
+    } else if (k === 'manifest') fs.writeFileSync(path.join(d, 'sprints.json'), v);
+    else fs.writeFileSync(path.join(d, k), v);
   });
-  const send = (method, params = {}) => new Promise(res => { const i = ++id; pend[i] = res; ws.send(JSON.stringify({ id: i, method, params })); });
-  const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails.exception.description)); return r.result.result.value; };
-  await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable'); await send('Log.enable');
-  await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
-  await send('Page.navigate', { url });
-  await sleep(300);
-  for (let i = 0; i < 40; i++) { const ready = await ev("document.readyState==='complete' && !document.querySelector('#app .loading')").catch(() => false); if (ready) break; await sleep(150); }
-  await sleep(200);
-  const key = async (k, code, vk, text, modifiers = 0) => { await send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, text, modifiers }); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, modifiers }); };
-  const resize = async (ww, hh) => { await send('Emulation.setDeviceMetricsOverride', { width: ww, height: hh, deviceScaleFactor: 1, mobile: false }); await sleep(300); };
-  return { send, ev, logs, reqs, resp, key, resize, close: async () => { await fetch('http://127.0.0.1:'+DBG+'/json/close/' + t.id); ws.close(); } };
+  return d;
 }
 
-// ---------- page-side helpers ----------
-const H = `
-const T = n => { const c=n.cloneNode(true); c.querySelectorAll('.detail-sort-arrow').forEach(x=>x.remove()); return c.textContent.replace(/\\s+/g,' ').trim(); };
-const tile = t => [...document.querySelectorAll('section.tile')].find(s => { const h = s.querySelector('h2'); return h && h.textContent.trim() === t; });
-const kpi = t => [...document.querySelectorAll('.kpi')].find(k => T(k.querySelector('.label')) === t);
-const rowsOf = t => [...tile(t).querySelectorAll('.tile-body .rowbtn')];
-const clickEl = (el, o={}) => el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, ctrlKey: !!o.ctrl, metaKey: !!o.meta, shiftKey: !!o.shift}));
-const clickRow = (t, name, o) => { const r = rowsOf(t).find(r => T(r.querySelector('.person, .name')) === name); if(!r) throw new Error('row not found: '+t+' / '+name); clickEl(r, o); };
-const clickContribution = (dim, name, o) => { const b=[...tile('Team Contribution').querySelectorAll('[data-key]')].find(x=>x.dataset.key===dim+':'+name); if(!b) throw new Error('contribution cell not found: '+dim+' / '+name); clickEl(b,o); };
-const clickCell = (t, rowName, colName, o) => { const tl = tile(t); const hdr=[...tl.querySelectorAll('thead th')].map(T); const ci = hdr.indexOf(colName); const tr=[...tl.querySelectorAll('tbody tr')].find(tr => T(tr.querySelector('th'))===rowName); if(!tr) throw new Error('matrix row not found '+rowName); const td = tr.querySelectorAll('td')[ci-1]; const b = td && td.querySelector('button'); if(!b) throw new Error('cell not clickable '+rowName+'/'+colName); clickEl(b, o); };
-const clickReset = () => clickEl(document.querySelector('.resetall'));
-const clickTagX = i => clickEl(document.querySelectorAll('.tag .tag-x')[i]);
-const setSel = (id, v) => { const s=document.getElementById(id); s.value=v; s.dispatchEvent(new Event('change',{bubbles:true})); };
-const setQ = v => { const i=document.getElementById('q'); i.value=v; i.dispatchEvent(new Event('input',{bubbles:true})); };
-const readCommon = () => ({ kpis: [...document.querySelectorAll('.kpi')].map(k=>({label:T(k.querySelector('.label')),value:T(k.querySelector('.value')),hint:T(k.querySelector('.hint'))})), tags:[...document.querySelectorAll('.tags .tag > span')].map(T), noFilterMsg: !!document.querySelector('.nofilter'), resetDisabled: document.querySelector('.resetall').disabled, asof: T(document.getElementById('asof')) });
-const JIRA = 'https://mysnaplogic.atlassian.net/browse/';
-const colCells = (t, col) => { const tl = tile(t); const hdr=[...tl.querySelectorAll('thead th')].map(T); const ix=hdr.indexOf(col); return [...tl.querySelectorAll('tbody tr')].map(tr=>{ const td=tr.children[ix]; return { text: T(td), links: [...td.querySelectorAll('a')].map(a=>({ t:T(a), h:a.getAttribute('href'), target:a.getAttribute('target'), rel:a.getAttribute('rel'), cls:a.className })), foreign: td.querySelectorAll('img,script,iframe,style,svg').length }; }); };
-const emptyIn = t => { const e = tile(t).querySelector('.tile-body .empty'); return e ? T(e) : null; };
-const matrixOf = t => { const tl=tile(t); const hdr=[...tl.querySelectorAll('thead th')].map(T); const o={}; const sel=[]; const dim=[]; tl.querySelectorAll('tbody tr').forEach(tr=>{const rn=T(tr.querySelector('th')); o[rn]={}; [...tr.querySelectorAll('td')].forEach((td,i)=>{const b=td.querySelector('button'); if(b){o[rn][hdr[i+1]]=+T(b); if(b.classList.contains('sel')) sel.push(rn+'|'+hdr[i+1]); if(td.classList.contains('dim')) dim.push(rn+'|'+hdr[i+1]);}});}); return {o, sel, dim, hdr}; };
-`;
-const run = (p, body) => p.ev(`(()=>{${H}${body}})()`);
+async function main() {
+  // ---------- read-only baseline, then data (all inside main so a failure here still cleans up) ----------
+  const fingerprintBefore = files.treeFingerprint(ROOT, [SP]);
+  const tracker = files.findTracker();
+  const trackerBefore = tracker.file ? files.statSignature(tracker.file) : null;
 
-const READ_BD = `
-const b = tile('Burndown'); const s = b.querySelector('svg.burndown'); const body = b.querySelector('.tile-body'); const emp = body.querySelector('.empty'); const act = s && s.querySelector('polyline.bd-actual');
-return { sub: T(b.querySelector('.sub')), empty: emp ? T(emp) : null, has: !!s, label: s ? s.getAttribute('aria-label') : null,
-  days: s ? [...s.querySelectorAll('rect.bd-day')].map(r => ({ date: r.dataset.date, remaining: r.dataset.remaining === '' ? null : +r.dataset.remaining, ideal: +r.dataset.ideal, done: +r.dataset.done, scope: +r.dataset.scope, tip: r.querySelector('title').textContent })) : [],
-  removed: s ? [...s.querySelectorAll('g.bd-removed')].map(g => ({ date: g.dataset.date, count: +g.dataset.count, points: +g.dataset.points, labelY: +g.querySelector('text').getAttribute('y'), tip: g.querySelector('title').textContent })) : [],
-  dateLabelY: s ? Math.min(...[...s.querySelectorAll('text')].filter(x => /^\\d+\\/\\d+$/.test(x.textContent)).map(x => +x.getAttribute('y'))) : null,
-  added: s ? [...s.querySelectorAll('g.bd-added')].map(g => ({ date: g.dataset.date, count: +g.dataset.count, points: +g.dataset.points, early: g.dataset.early, fill: g.querySelector('path').getAttribute('fill'), tip: g.querySelector('title').textContent })) : [],
-  hasIdeal: !!(s && s.querySelector('polyline.bd-ideal')), scopeLine: (() => { const sl = s && s.querySelector('polyline.bd-scope'), il = s && s.querySelector('polyline.bd-ideal'); if (!sl || !il) return null;
-    const P = e => e.getAttribute('points').split(' ').map(q => q.split(',').map(Number)); const sp = P(sl), ip = P(il), r = [...s.querySelectorAll('rect.bd-day')];
-    const i0 = +r[0].dataset.ideal, i1 = +r[r.length - 1].dataset.ideal; if (!(i0 - i1 > 0)) return { vals: null, n: sp.length };
-    const k = (ip[0][1] - ip[ip.length - 1][1]) / (i0 - i1), val = y => Math.round((y - ip[ip.length - 1][1]) / k + i1); // value at the screen y
-    const steps = []; sp.forEach((q, i) => { if (i === 0 || i % 2 === 0 || sp.length === 1) steps.push(val(q[1])); }); return { vals: steps, n: sp.length }; })(),
-  actualPoints: act ? act.getAttribute('points').split(' ').length : 0, todayLabel: s ? [...s.querySelectorAll('text')].some(x => x.textContent === 'Today') : false,
-  legend: s ? [...s.querySelectorAll('text')].map(x => x.textContent).join('|') : '', foot: T(b.querySelector('.tile-foot')), svgW: s ? +s.getAttribute('width') : 0, bodyW: body.clientWidth, bodyOverflow: body.scrollHeight - body.clientHeight, bodyOv: getComputedStyle(body).overflowY };
-`;
-const READ_SPRINT = `
-const c = readCommon();
-const status = {}, statusRaw = {}, statusSel = [], statusDim = [], types = {}, typeRaw = {}, typeIcons = {}, typeSel = [], typeDim = [];
-rowsOf('Tickets by status').forEach(r => { const n=T(r.querySelector('.name')); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); status[n]=[parseInt(i,10),parseInt(pp,10)]; statusRaw[n]=raw; if(r.classList.contains('sel')) statusSel.push(n); if(r.classList.contains('dim')) statusDim.push(n); });
-rowsOf('Tickets by type').forEach(r => { const label=r.querySelector('.name'), n=T(label); const raw=T(r.querySelector('.pair')); const [i,pp]=raw.split(' | '); types[n]=[parseInt(i,10),parseFloat(pp)]; typeRaw[n]=raw; typeIcons[n]=label.querySelector('svg.ico')?.getAttribute('data-icon')||null; if(r.classList.contains('sel')) typeSel.push(n); if(r.classList.contains('dim')) typeDim.push(n); });
-const contribution = () => { const rows=[...tile('Team Contribution').querySelectorAll('.contribution-row')]; return rows.map(r=>({name:T(r.querySelector('.contribution-name')), assignee:+T(r.querySelector('[data-key^="assignee:"]')), tester:+T(r.querySelector('[data-key^="tester:"]')), total:T(r.querySelector('.contribution-total')), nameSelected:r.querySelector('.contribution-name').classList.contains('selected'), nameDimmed:r.querySelector('.contribution-name').classList.contains('dimmed')})); };
-const det = tile('Ticket detail'); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
-const statusFoot = T(tile('Tickets by status').querySelector('.tile-foot'));
-const cf=tile('Team Contribution').querySelector('.tile-foot .totalrow');
-return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile('Tickets by type').querySelector('.tile-foot')), contribution: contribution(), contributionFoot:cf?[...cf.children].map(T):[], matrix: matrixOf('Assignee x tester'), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn('Ticket detail'), empties: {status: emptyIn('Tickets by status'), type: emptyIn('Tickets by type'), contribution: emptyIn('Team Contribution'), matrix: emptyIn('Assignee x tester')}, contributionNote: (n => n ? T(n) : null)(tile('Team Contribution').querySelector('.footnote')), contributionHeaders: (h => h ? [...h.children].map(T) : [])(tile('Team Contribution').querySelector('.colhead.contribution-grid')), statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
-`;
+  const MANIFEST = J('sprints.json');
+  const ACTIVE = MANIFEST.sprints.find(x => x.id === MANIFEST.current);
+  if (!ACTIVE) throw new Error('sprints.json has no entry for current = ' + MANIFEST.current);
+  const ACTIVE_FILE = ACTIVE.file;
+  const SPRJ = J(ACTIVE_FILE); const S = SPRJ.tickets;
+  const BJ = J('backlog.json'), B = BJ.tickets;
+  const Q = J('quality-intake.json');
+  const CTX = { sprint: SPRJ.sprint, today: SPRJ.refreshedAt, thr: 1 };
+  // The closed sprint used by the closed-view checks: the oldest closed entry in the manifest (frozen data).
+  const closedEntries = MANIFEST.sprints.filter(x => x.state === 'closed');
+  const CLOSED_ENTRY = closedEntries[closedEntries.length - 1] || null;
+  const CLOSED = CLOSED_ENTRY ? J(CLOSED_ENTRY.file) : null;
+  const fixtureTxt = fs.readFileSync(path.join(ROOT, 'fixtures/sample_snapshot.json'), 'utf8');
 
-// ---------- independent sprint model ----------
-const BN = ['To Do/Open', 'In Progress', 'In Review', 'Done', 'Other'];
-const bucket = s => ({ 'To Do': 0, 'Open': 0, 'In Progress': 1, 'In Review': 2, 'Done': 3 }[s] ?? 4);
-const pt = v => typeof v === 'number' ? v : 0;
-const grpName = v => (v == null || String(v).trim() === '' || v === 'Unassigned') ? 'Unassigned' : v;
-const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim()==='' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: t => grpName(t.tester), contributor: t => null, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
-const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), contributor: new Set(), fix: new Set(), parent: new Set() });
-const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || (d === 'contributor' ? (f[d].has(grpName(t.owner)) || f[d].has(grpName(t.tester))) : f[d].has(keyMap[d](t)))) && (!pred || pred(t)));
-const group = (rows, kf) => { const m = {}; rows.forEach(t => { const k = kf(t); (m[k] = m[k] || { i: 0, p: 0 }); m[k].i++; m[k].p += pt(t.points); }); return m; };
-const sumP = rows => rows.reduce((a, t) => a + pt(t.points), 0);
+  // ---------- staged copies and servers ----------
+  const servers = [];
+  let chrome = null;
+  try {
+    const dirs = {
+      real: files.stageRealApp(ROOT, path.join(SP, 'real')),
+      missing: variant('missing', {}),
+      invalid: variant('invalid', { snapshot: '{not json', 'backlog.json': '{not json' }),
+      empty: variant('empty', { snapshot: emptyJson, 'backlog.json': emptyJson }),
+      fixture: variant('fixture', { snapshot: fixtureTxt, 'backlog.json': emptyJson }),
+      links: variant('links', { snapshot: linksSprint, 'backlog.json': emptyJson }),
+      burn: variant('burn', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK)), 'backlog.json': emptyJson }),
+      cnull: variant('cnull', { snapshot: mkSprint(Object.assign({ carriedOver: null }, SP_OK)), 'backlog.json': emptyJson }),
+      czero: variant('czero', { snapshot: mkSprint(Object.assign({ carriedOver: { count: 0, percent: 0, storyPoints: 0 } }, SP_OK)), 'backlog.json': emptyJson }),
+      cpart: variant('cpart', { snapshot: mkSprint(Object.assign({ carriedOver: { count: 5, percent: null, storyPoints: 12 } }, SP_OK)), 'backlog.json': emptyJson }),
+      rem: variant('rem', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED, removed: REMOVED }, SP_OK)), 'backlog.json': emptyJson }),
+      noManifest: variant('no_manifest', {}),
+      badManifest: variant('bad_manifest', { 'sprints.json': '{not json' }),
+      // unknown keys in the manifest are tolerated (D74)
+      manifestExtra: variant('manifest_extra', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK)), manifest: manifestFor(SP_OK, { generatedBy: 'future exporter' }, { color: 'blue' }), 'backlog.json': emptyJson }),
+      // a file outside snapshots/sprint-<id>.json is refused (D74)
+      manifestBadFile: variant('manifest_bad_file', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK)), manifest: manifestFor(SP_OK, {}, { file: 'backlog.json' }), 'backlog.json': emptyJson }),
+      // snapshot and manifest disagree on the end date (C8)
+      mismatch: variant('mismatch', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK)), manifest: manifestFor(Object.assign({}, SP_OK, { endDate: '2026-09-29' })), 'backlog.json': emptyJson }),
+      // valid JSON that makes every page's drawing code throw (C6, C7)
+      renderErr: variant('render_error', { snapshot: JSON.stringify({ refreshedAt: '2026-09-25', source: 'x', sprint: SP_OK, tickets: [null] }), 'backlog.json': JSON.stringify({ refreshedAt: '2026-09-25', source: 'x', tickets: [null] }), 'quality-intake.json': JSON.stringify({ refreshedAt: '2026-09-25', exportedAt: 'x', source: 'x', sprints: [null] }) })
+    };
+    const url = {};
+    for (const k of Object.keys(dirs)) { const s = await files.startServer(dirs[k]); servers.push(s); url[k] = s.url; }
+    const extra = (process.env.CHROME_ARGS || '').split(/\s+/).filter(Boolean);
+    chrome = await launchChrome({ chromePath: CH, profileDir: path.join(SP, 'chrome_profile'), debugPort: Number(process.env.ACCEPT_DEBUG_PORT) || 0, extraArgs: extra });
+    const open = (u, w, h) => openPage(chrome.port, u, w, h);
+    const base = url.real;
+    const isLocal = (u, b = base) => u.startsWith(b) || u.startsWith('data:');
+    await suites({ open, url, base, isLocal, MANIFEST, ACTIVE, ACTIVE_FILE, SPRJ, S, BJ, B, Q, CTX, CLOSED_ENTRY, CLOSED, fixtureTxt, dirs });
+  } finally {
+    if (chrome) chrome.kill();
+    servers.forEach(s => s.stop());
+  }
 
-const DAYMS = 86400000;
-const dn = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '')); return m ? Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / DAYMS) : NaN; };
-const isoN = n => new Date(n * DAYMS).toISOString().slice(0, 10);
-const md = iso => Number(iso.slice(5, 7)) + '/' + Number(iso.slice(8, 10));
-const f1 = x => String(Math.round(x * 10) / 10);
-// Independent burndown expectation (written separately from the page code).
-function expectBurn(all, ctx, thr, rem = []) {
-  const sp = ctx.sprint; if (!sp) return null;
-  const s = dn(sp.startDate), e = dn(sp.endDate); if (isNaN(s) || isNaN(e) || e < s) return null;
-  const n = e - s + 1, addOn = Array(n).fill(0), doneOn = Array(n).fill(0), cnt = Array(n).fill(0); let unplaced = 0;
-  all.forEach(t => { const a = dn(t.addedDate), ai = isNaN(a) ? 0 : Math.min(n - 1, Math.max(0, a - s)); addOn[ai] += pt(t.points);
-    if (bucket(t.status) !== 3) return; const d = dn(t.doneDate); if (isNaN(d)) { unplaced++; return; } let idx = Math.max(0, d - s); if (idx >= n) return; idx = Math.max(idx, ai); doneOn[idx] += pt(t.points); cnt[idx]++; });
-  const remOn = Array(n).fill(0), rby = {};
-  rem.forEach(r => { const rd = dn(r.removedDate); if (isNaN(rd)) return; const a = dn(r.addedDate), ai = isNaN(a) ? 0 : Math.min(n - 1, Math.max(0, a - s)), ri = Math.max(ai, Math.min(n - 1, Math.max(0, rd - s))); addOn[ai] += pt(r.points); remOn[ri] += pt(r.points); const k = isoN(s + ri); (rby[k] = rby[k] || { c: 0, p: 0 }); rby[k].c++; rby[k].p += pt(r.points); });
-  const td = dn(ctx.today), ti = isNaN(td) ? -1 : Math.max(-1, Math.min(n - 1, td - s)), inside = !isNaN(td) && td >= s && td <= e;
-  let cum = 0, sc = 0, mx = 0; const days = [];
-  for (let i = 0; i < n; i++) { cum += doneOn[i]; sc += addOn[i] - remOn[i]; mx = Math.max(mx, sc); days.push({ date: isoN(s + i), scope: sc, ideal: n > 1 ? (addOn[0] - remOn[0]) * (1 - i / (n - 1)) : 0, remaining: i <= ti ? sc - cum : null, done: doneOn[i], cnt: cnt[i] }); }
-  const total = mx;
-  const lim = isoN(s + thr), mid = all.filter(t => t.addedDate && String(t.addedDate) > lim), by = {};
-  all.filter(t => t.addedDate && String(t.addedDate) > sp.startDate).forEach(t => { const k = String(t.addedDate) > days[n - 1].date ? days[n - 1].date : String(t.addedDate); (by[k] = by[k] || { c: 0, p: 0 }); by[k].c++; by[k].p += pt(t.points); });
-  return { n, total, ti, inside, days, unplaced, mid: { count: mid.length, points: sumP(mid) }, by, rby, hasRemoved: Array.isArray(sp.removed), name: sp.name };
-}
-function expectSprint(S, f, ctx = CTX) {
-  const all = applyF(S, f, SKEY), P = sumP(all), TP = sumP(S);
-  const doneP = sumP(all.filter(t => bucket(t.status) === 3));
-  const active = Object.keys(f).some(d => f[d].size);
-  const thr = ctx.thr || 1, bd = expectBurn(all, ctx, thr, (ctx.sprint && Array.isArray(ctx.sprint.removed)) ? applyF(ctx.sprint.removed, f, SKEY) : []);
-  const cyc = all.filter(t => bucket(t.status) === 3 && typeof t.cycleTime === 'number'), avg = cyc.length ? cyc.reduce((a, t) => a + t.cycleTime, 0) / cyc.length : null;
-  const tisAging0 = (a) => a.some(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number');
-  const co = ctx.sprint ? ctx.sprint.carriedOver : undefined; let carriedV, carriedH;
-  if (!ctx.sprint) { carriedV = '—'; carriedH = 'No sprint data in the sprint snapshot'; }
-  else if (!co) { carriedV = '—'; carriedH = 'Not calculated yet for this sprint'; }
-  else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : 'No figures in the sprint snapshot'; }
-  const midOk = ctx.sprint && !isNaN(dn(ctx.sprint.startDate));
-  const kh = { time: tisAging0(all) ? 'In Progress / In Review tickets' : 'Days in status not available yet', cycle: cyc.length ? `days, over ${cyc.length} Done ticket${cyc.length === 1 ? '' : 's'}` : 'no Done tickets with a cycle time', mid: midOk ? `${sumP(all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)))} points, added after day ${thr}` : 'No sprint start date in the sprint snapshot', carried: carriedH };
-  const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—',
-    midOk ? String(bd ? bd.mid.count : all.filter(t => t.addedDate && String(t.addedDate) > isoN(dn(ctx.sprint.startDate) + thr)).length) : '—', carriedV,
-    String(all.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).length), avg === null ? '—' : f1(avg)];
-  const tisAging = all.filter(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number');
-  const tisKeys = tisAging.filter(t => t.statusAging >= 7).map(t => t.ticket);
-  kp.splice(6, 0, tisAging.length ? String(tisKeys.length) : '—');
-  const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
-  const typeBase = applyF(S, f, SKEY, ['type']); const typeG = group(typeBase, SKEY.type);
-  const cBase = applyF(S, f, SKEY, ['assignee', 'tester', 'contributor']);
-  const contrib = {}; cBase.forEach(t => { [...new Set([SKEY.assignee(t), SKEY.tester(t)])].forEach(n => { const r=contrib[n]||(contrib[n]={assignee:0,tester:0,keys:new Map()}); if(SKEY.assignee(t)===n) r.assignee++; if(SKEY.tester(t)===n) r.tester++; r.keys.set(t.ticket,t); }); });
-  Object.keys(contrib).forEach(n => { const r=contrib[n], u=[...r.keys.values()]; r.total=`${u.length} W.I | ${sumP(u)} SP`; });
-  const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {}; mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
-  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, contribution: contrib, cBase, matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
+  // ---------- the run changed nothing ----------
+  const changed = files.diffFingerprints(fingerprintBefore, files.treeFingerprint(ROOT, [SP]));
+  check('Read-only: no file under the repository changed during the run (content hash of every file except .git/; .env by size and time)', changed.length === 0, changed.slice(0, 10));
+  if (tracker.file) check('Read-only: the tracker workbook (daily_tracker.xlsx) is unchanged (size and modification time)', files.statSignature(tracker.file) === trackerBefore, { tracker: tracker.file });
+  else if (tracker.explicit) check('Read-only: tracker workbook found at the path given by AF_TRACKER_PATH / AF_SNAPLOGIC_ROOT', false, 'not found');
+  else skip('Read-only: tracker workbook unchanged', 'no tracker on this machine; set AF_TRACKER_PATH to include it');
 }
 
-async function verifySprint(p, S, f, label, ctx = CTX) {
-  const e = expectSprint(S, f, ctx); const d = await run(p, READ_SPRINT); const errs = [];
-  if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
-  if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
-  if (!e.active && d.kpis[0].hint !== 'tickets in the sprint') errs.push(['kpi hint', d.kpis[0].hint]);
-  if (d.kpis.length !== 8 || !eq(d.kpis.map(k => k.label), ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Long-running work · 7+ days', 'Avg cycle time'])) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
-  if (d.kpis[6].hint !== e.kpiHints.time) errs.push(['time hint', d.kpis[6].hint, e.kpiHints.time]);
-  if (d.kpis[7].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[7].hint, e.kpiHints.cycle]);
-  if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
-  if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
-  { const bd = await run(p, READ_BD), x = e.bd;
-    if (!x) { if (bd.has || bd.empty !== 'Sprint dates are not in the sprint snapshot. Run the Jira sync and the export.') errs.push(['burndown message', bd.has, bd.empty]); }
-    else if (!e.all.length) { if (bd.has || bd.empty !== 'No work items match these filters. Remove a tag or use Reset all.') errs.push(['burndown empty-state', bd.has, bd.empty]); }
-    else {
-      if (!bd.has) errs.push(['burndown svg missing', bd.empty]);
+async function suites(ctx) {
+  const { open, url, base, isLocal, MANIFEST, ACTIVE_FILE, SPRJ, S, B, Q, CTX, CLOSED_ENTRY, CLOSED, fixtureTxt } = ctx;
+  let p;
+
+  // =============== independent checks of one sprint page state ===============
+  async function verifySprint(page, Srows, f, label, c = CTX) {
+    const e = M.expectSprint(Srows, f, c); const d = await run(page, READ_SPRINT); const errs = [];
+    if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
+    if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
+    if (!e.active && d.kpis[0].hint !== UI.sprint.hints.itemsUnfiltered) errs.push(['kpi hint', d.kpis[0].hint]);
+    if (d.kpis.length !== 8 || !eq(d.kpis.map(k => k.label), UI.sprint.kpis)) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
+    if (d.kpis[6].hint !== e.kpiHints.time) errs.push(['time hint', d.kpis[6].hint, e.kpiHints.time]);
+    if (d.kpis[7].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[7].hint, e.kpiHints.cycle]);
+    if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
+    if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
+    { const bd = await run(page, READ_BD), x = e.bd, BDT = UI.sprint.burndown;
+      if (!e.all.length) { if (bd.has || bd.empty !== UI.sprint.empty) errs.push(['burndown empty-state', bd.has, bd.empty]); }
+      else if (!bd.has) errs.push(['burndown svg missing', bd.empty]);
       else {
-        if (!eq(bd.days.map(d => d.date), x.days.map(d => d.date))) errs.push(['burndown dates', bd.days.length, x.days.length]);
+        if (!eq(bd.days.map(z => z.date), x.days.map(z => z.date))) errs.push(['burndown dates', bd.days.length, x.days.length]);
         else {
           x.days.forEach((xd, i) => { const g = bd.days[i];
             if ((xd.remaining === null) !== (g.remaining === null) || (xd.remaining !== null && Math.abs(g.remaining - xd.remaining) > 1e-6)) errs.push(['remaining', xd.date, g.remaining, xd.remaining]);
             if (Math.abs(g.ideal - xd.ideal) > 0.002) errs.push(['ideal', xd.date, g.ideal, xd.ideal]);
             if (g.done !== xd.done) errs.push(['done that day', xd.date, g.done, xd.done]);
-            const wantTip = xd.remaining === null ? `${md(xd.date)}: ideal ${f1(xd.ideal)} points (future day)` : `${md(xd.date)}: ${xd.remaining} points remaining of ${xd.scope} in scope, ${xd.done} points done that day (${xd.cnt} tickets)`;
+            const wantTip = xd.remaining === null ? `${M.md(xd.date)}: ideal ${M.f1(xd.ideal)} points (future day)` : `${M.md(xd.date)}: ${xd.remaining} points remaining of ${xd.scope} in scope, ${xd.done} points done that day (${xd.cnt} tickets)`;
             if (g.tip !== wantTip) errs.push(['tooltip', g.tip, wantTip]); });
+          // the visually hidden data table repeats the per-day figures for screen readers (C19)
+          const dt = bd.dataTable;
+          if (!dt || !dt.hidden || !eq(dt.hdr, BDT.dataTableHeaders) || dt.rows.length !== x.days.length || !x.days.every((xd, i) => dt.rows[i][1] === String(xd.scope) && dt.rows[i][2] === (xd.remaining === null ? '—' : String(xd.remaining))))
+            errs.push(['burndown data table', dt && { hidden: dt.hidden, hdr: dt.hdr, n: dt.rows.length, first: dt.rows[0] }]);
         }
         const wantAdded = Object.keys(x.by).sort().map(k => [k, x.by[k].c, x.by[k].p]), gotAdded = bd.added.map(a => [a.date, a.count, a.points]).sort();
         if (!eq(gotAdded, wantAdded)) errs.push(['added markers', gotAdded, wantAdded]);
-        { const lim = isoN(dn(ctx.sprint.startDate) + (ctx.thr || 1)); const bad = bd.added.filter(a => (a.date <= lim) !== (a.early === '1') || (a.date <= lim) !== (a.fill === '#ffffff')); if (bad.length) errs.push(['early (hollow) vs after-threshold (filled) markers', bad.map(a => [a.date, a.early, a.fill])]); if (!bd.legend.includes('Earlier')) errs.push(['legend Earlier']); }
+        { const bad = bd.added.filter(a => (a.date <= x.limit) !== (a.early === '1') || (a.date <= x.limit) !== (a.fill === '#ffffff')); if (bad.length) errs.push(['early (hollow) vs after-threshold (filled) markers', bad.map(a => [a.date, a.early, a.fill])]); if (!bd.legend.includes(BDT.legend.earlier)) errs.push(['legend Earlier']); }
         if (!bd.added.every(a => !/approximate/i.test(a.tip))) errs.push(['marker tooltip still labels added dates approximate']);
         { const wantR = Object.keys(x.rby || {}).sort().map(k => [k, x.rby[k].c, x.rby[k].p]), gotR = bd.removed.map(a => [a.date, a.count, a.points]).sort();
           if (!eq(gotR, wantR)) errs.push(['removed markers', gotR, wantR]);
-          if (bd.legend.includes('Removed') !== (wantR.length > 0)) errs.push(['legend Removed', bd.legend]);
+          if (bd.legend.includes(BDT.legend.removed) !== (wantR.length > 0)) errs.push(['legend Removed', bd.legend]);
           if (wantR.length && !bd.removed.every(r => bd.dateLabelY - 9 >= r.labelY)) errs.push(['date labels touch the removal markers', bd.dateLabelY, bd.removed.map(r => r.labelY)]);
           if (!bd.removed.every(r => /removed/.test(r.tip))) errs.push(['removed tooltip']); }
         if (!bd.hasIdeal) errs.push(['ideal line missing']);
         if (bd.actualPoints !== x.ti + 1) errs.push(['actual line points', bd.actualPoints, x.ti + 1]);
         if (bd.todayLabel !== x.inside) errs.push(['today marker', bd.todayLabel, x.inside]);
-        const cur = x.ti >= 0 ? x.days[x.ti] : null, when = ctx.today <= x.days[x.n - 1].date ? 'today' : 'at sprint end';
-        const wantSub = cur ? `${cur.remaining} of ${cur.scope} points remaining ${when}, ideal ${f1(cur.ideal)}` : 'The sprint has not started yet';
+        const cur = x.ti >= 0 ? x.days[x.ti] : null, when = c.closed || c.today > x.days[x.n - 1].date ? 'at sprint end' : 'today';
+        const wantSub = cur ? `${cur.remaining} of ${cur.scope} points remaining ${when}, ideal ${M.f1(cur.ideal)}` : BDT.notStarted;
         if (bd.sub !== wantSub) errs.push(['burndown subtitle', bd.sub, wantSub]);
         if (cur && bd.label !== `Burndown chart for ${x.name || 'the sprint'}: ${wantSub}.`) errs.push(['aria-label', bd.label]);
-        if (!bd.legend.includes('Scope')) errs.push(['legend scope', bd.legend]);
-        { const want = x.days.slice(0, x.ti + 1).map(d => d.scope);
+        if (!bd.legend.includes(BDT.legend.scope)) errs.push(['legend scope', bd.legend]);
+        { const want = x.days.slice(0, x.ti + 1).map(z => z.scope);
           if (!bd.scopeLine) errs.push(['scope line missing']);
           else if (bd.scopeLine.n !== 2 * want.length - 1) errs.push(['scope line point count', bd.scopeLine.n, 2 * want.length - 1]);
           else if (bd.scopeLine.vals && !eq(bd.scopeLine.vals, want.map(Math.round))) errs.push(['scope line steps', bd.scopeLine.vals, want]); }
-        if (!bd.legend.includes('Added after day ' + (ctx.thr || 1)) || /approx/i.test(bd.legend)) errs.push(['legend threshold', bd.legend]);
-        if (!bd.foot.includes('Scope grows on each ticket') || (x.hasRemoved ? !bd.foot.includes('shrinks on the date a ticket left the sprint') : !bd.foot.includes('Tickets removed from the sprint and re-estimates are not reflected')) || /approx/i.test(bd.foot)) errs.push(['footnote', bd.foot]);
-        if (x.unplaced && !bd.foot.includes(`${x.unplaced} Done ticket${x.unplaced === 1 ? ' has' : 's have'} no done date`)) errs.push(['unplaced note', bd.foot]);
+        if (!bd.legend.includes(BDT.legend.added(c.thr)) || /approx/i.test(bd.legend)) errs.push(['legend threshold', bd.legend]);
+        if (!bd.foot.includes(BDT.footStart) || (x.hasRemoved ? !bd.foot.includes(BDT.footRemoved) : !bd.foot.includes(BDT.footNoRemoved)) || /approx/i.test(bd.foot)) errs.push(['footnote', bd.foot]);
+        if (x.unplaced && !bd.foot.includes(BDT.unplaced(x.unplaced))) errs.push(['unplaced note', bd.foot]);
         if (!x.unplaced && /no done date/.test(bd.foot)) errs.push(['unexpected unplaced note']);
         if (bd.bodyOv !== 'hidden') errs.push(['chart overflow', bd.bodyOv]);
-      } } }
-  if (e.stBase.length) {
-    BN.forEach(n => { const g = e.status[n] || { i: 0, p: 0 }; const got = d.status[n]; if (got === undefined) { if (n !== 'Other' || g.i) errs.push(['status row missing', n]); } else { if (got[0] !== g.i || got[1] !== g.p) errs.push(['status', n, got, [g.i, g.p]]); if(d.statusRaw[n]!==`${g.i} W.I | ${g.p} SP`) errs.push(['status metric format',n,d.statusRaw[n]]); } });
-    if (d.statusFoot.replace(/\s+/g, '') !== `Total${e.stBase.length}W.I|${sumP(e.stBase)}SP`) errs.push(['status total', d.statusFoot]);
-  } else if (!d.empties.status) errs.push(['status empty-state missing']);
-  if (e.typeBase.length) {
-    const names=Object.keys(e.types).sort((a,b)=>e.types[b].i-e.types[a].i||a.localeCompare(b));
-    const got=Object.keys(d.types);
-    if(!eq(got,names)) errs.push(['type row order',got,names]);
-    const iconTypes=new Set(['Story','Bug','Sub-Bug','Epic','Task','Sub-task','Initiative','Doc Task']);
-    names.forEach(n=>{const g=d.types[n],x=e.types[n],wantIcon=iconTypes.has(n)?'type:'+n:null;if(!g||g[0]!==x.i||g[1]!==x.p||d.typeRaw[n]!==`${x.i} W.I | ${x.p} SP`) errs.push(['type metrics',n,g,x,d.typeRaw[n]]);if(d.typeIcons[n]!==wantIcon) errs.push(['type icon',n,d.typeIcons[n],wantIcon]);});
-    if(d.typeFoot.replace(/\s+/g,'')!==`Total${e.typeBase.length}W.I|${sumP(e.typeBase)}SP`) errs.push(['type total',d.typeFoot]);
-  } else if (!d.empties.type) errs.push(['type empty-state missing']);
-  const cExp=e.contribution, cGot=d.contribution, cNames=Object.keys(cExp).sort((a,b)=>cExp[b].keys.size-cExp[a].keys.size||a.localeCompare(b));
-  if (!cNames.length) { if (!d.empties.contribution) errs.push(['Team Contribution empty-state missing']); }
-  else {
-    if (!eq(cGot.map(r=>r.name),cNames)) errs.push(['Team Contribution row order',cGot.map(r=>r.name),cNames]);
-    cNames.forEach((n,i)=>{const x=cExp[n],g=cGot[i]; if(!g||g.assignee!==x.assignee||g.tester!==x.tester||g.total!==x.total) errs.push(['Team Contribution row',n,g,x]); if(g&&(g.nameSelected!==f.contributor.has(n)||g.nameDimmed!==!!f.contributor.size&&!f.contributor.has(n))) errs.push(['Team Contribution name selection',n]);});
-    if(!eq(d.contributionHeaders,['Name','Assignee W.I','Tester W.I','Total W.I | SP'])) errs.push(['Team Contribution headers',d.contributionHeaders]);
-    if(d.contributionNote!=='Assignee and Tester work item counts can overlap. Story points are shared and count once.') errs.push(['Team Contribution note',d.contributionNote]);
-    const ao=group(e.cBase,SKEY.assignee),te=group(e.cBase,SKEY.tester);
-    if(!eq(d.contributionFoot,['Total',String(Object.values(ao).reduce((s,r)=>s+r.i,0)),String(Object.values(te).reduce((s,r)=>s+r.i,0)),`${e.cBase.length} W.I | ${sumP(e.cBase)} SP`])) errs.push(['Team Contribution total row',d.contributionFoot]);
+      } }
+    if (e.stBase.length) {
+      M.BN.forEach(n => { const g = e.status[n] || { i: 0, p: 0 }; const got = d.status[n]; if (got === undefined) { if (n !== 'Other' || g.i) errs.push(['status row missing', n]); } else { if (got[0] !== g.i || got[1] !== g.p) errs.push(['status', n, got, [g.i, g.p]]); if (d.statusRaw[n] !== `${g.i} W.I | ${g.p} SP`) errs.push(['status metric format', n, d.statusRaw[n]]); } });
+      if (d.statusFoot.replace(/\s+/g, '') !== `Total${e.stBase.length}W.I|${M.sumP(e.stBase)}SP`) errs.push(['status total', d.statusFoot]);
+      const wantSel = [...f.status].sort(); if (!eq([...d.statusSel].sort(), wantSel)) errs.push(['status selected', d.statusSel, wantSel]);
+      if (f.status.size ? !Object.keys(d.status).filter(n => !f.status.has(n)).every(n => d.statusDim.includes(n)) : d.statusDim.length) errs.push(['status dimming', d.statusDim]);
+    } else if (!d.empties.status) errs.push(['status empty-state missing']);
+    if (e.typeBase.length) {
+      const names = Object.keys(e.types).sort((a, b) => e.types[b].i - e.types[a].i || a.localeCompare(b));
+      const got = Object.keys(d.types);
+      if (!eq(got, names)) errs.push(['type row order', got, names]);
+      const iconTypes = new Set(['Story', 'Bug', 'Sub-Bug', 'Epic', 'Task', 'Sub-task', 'Initiative', 'Doc Task']);
+      names.forEach(n => { const g = d.types[n], x = e.types[n], wantIcon = iconTypes.has(n) ? 'type:' + n : null; if (!g || g[0] !== x.i || g[1] !== x.p || d.typeRaw[n] !== `${x.i} W.I | ${x.p} SP`) errs.push(['type metrics', n, g, x, d.typeRaw[n]]); if (d.typeIcons[n] !== wantIcon) errs.push(['type icon', n, d.typeIcons[n], wantIcon]); });
+      if (d.typeFoot.replace(/\s+/g, '') !== `Total${e.typeBase.length}W.I|${M.sumP(e.typeBase)}SP`) errs.push(['type total', d.typeFoot]);
+    } else if (!d.empties.type) errs.push(['type empty-state missing']);
+    const cExp = e.contribution, cGot = d.contribution, cNames = Object.keys(cExp).sort((a, b) => cExp[b].keys.size - cExp[a].keys.size || a.localeCompare(b));
+    if (!cNames.length) { if (!d.empties.contribution) errs.push(['Team Contribution empty-state missing']); }
+    else {
+      if (!eq(cGot.map(r => r.name), cNames)) errs.push(['Team Contribution row order', cGot.map(r => r.name), cNames]);
+      cNames.forEach((n, i) => { const x = cExp[n], g = cGot[i]; if (!g || g.assignee !== x.assignee || g.tester !== x.tester || g.total !== x.total) errs.push(['Team Contribution row', n, g, x]); if (g && (g.nameSelected !== f.contributor.has(n) || g.nameDimmed !== (!!f.contributor.size && !f.contributor.has(n)))) errs.push(['Team Contribution name selection', n]); });
+      if (!eq(d.contributionHeaders, UI.sprint.contribution.headers)) errs.push(['Team Contribution headers', d.contributionHeaders]);
+      if (d.contributionNote !== UI.sprint.contribution.note) errs.push(['Team Contribution note', d.contributionNote]);
+      const ao = M.group(e.cBase, M.SKEY.assignee), te = M.group(e.cBase, M.SKEY.tester);
+      if (!eq(d.contributionFoot, ['Total', String(Object.values(ao).reduce((s, r) => s + r.i, 0)), String(Object.values(te).reduce((s, r) => s + r.i, 0)), `${e.cBase.length} W.I | ${M.sumP(e.cBase)} SP`])) errs.push(['Team Contribution total row', d.contributionFoot]);
+    }
+    { const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(cc => { out[r + '|' + cc] = o[r][cc]; })); return out; };
+      const a = flat(d.matrix.o), b = flat(e.matrix);
+      if (!Object.keys(b).length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); }
+      else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells', Object.keys(a).length, Object.keys(b).length]); }
+    if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
+    if (d.detailSub !== `${e.all.length} of ${Srows.length} work items`) errs.push(['detail sub', d.detailSub]);
+    if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
+    const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(UI.sprint.tagLabels[dim] + ': ' + v)));
+    if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
+    if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
+    if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
+    const wantFix = f.fix.size === 0 ? '' : f.fix.size === 1 ? [...f.fix][0] : '__multi', wantPar = f.parent.size === 0 ? '' : f.parent.size === 1 ? [...f.parent][0] : '__multi';
+    if (d.fixSel !== wantFix || d.parentSel !== wantPar) errs.push(['select sync', d.fixSel, d.parentSel]);
+    check(label, errs.length === 0, errs.slice(0, 4));
+    return { e, d };
   }
-  { const mexp = e.matrix; const mg = d.matrix.o; const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(c => out[r + '|' + c] = o[r][c])); return out; };
-    const a = flat(mg), b = flat(mexp);
-    if (!Object.keys(b).length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); } else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells', Object.keys(a).length, Object.keys(b).length]);
-    if (Object.keys(b).length) { const sumM = Object.values(b).reduce((x, y) => x + y, 0); if (sumM !== e.stBase.length && !f.status.size && true) { /* base ignores assignee/tester only */ } } }
-  if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
-  if (d.detailSub !== `${e.all.length} of ${S.length} work items`) errs.push(['detail sub', d.detailSub]);
-  if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
-  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', contributor: 'Team member', fix: 'Fix version', parent: 'Parent' })[dim] + ': ' + v)));
-  if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
-  if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
-  if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
-  const wantFix = f.fix.size === 0 ? '' : f.fix.size === 1 ? [...f.fix][0] : '__multi', wantPar = f.parent.size === 0 ? '' : f.parent.size === 1 ? [...f.parent][0] : '__multi';
-  if (d.fixSel !== wantFix || d.parentSel !== wantPar) errs.push(['select sync', d.fixSel, d.parentSel]);
-  check(label, errs.length === 0, errs.slice(0, 4));
-  return { e, d };
-}
 
-// ---------- independent backlog model ----------
-const AGEB = ['0–30', '31–90', '91–180', '181–365', '366+', 'No value'];
-const ageOf = t => typeof t.days !== 'number' ? AGEB[5] : t.days <= 30 ? AGEB[0] : t.days <= 90 ? AGEB[1] : t.days <= 180 ? AGEB[2] : t.days <= 365 ? AGEB[3] : AGEB[4];
-const dv = v => (v == null || String(v).trim() === '') ? '—' : String(v);
-const BKEY = { dor: t => dv(t.dor), priority: t => dv(t.priority), type: t => dv(t.type), age: ageOf, epic: t => (t.epic === null || t.epic === undefined || String(t.epic).trim() === '') ? '(no epic)' : String(t.epic) };
-const newBF = () => ({ dor: new Set(), priority: new Set(), type: new Set(), age: new Set(), epic: new Set() });
-const hay = t => [t.ticket, t.summary, t.epic, t.cluster, t.risk].filter(v => v != null && String(v).trim() !== '').join('\n').toLowerCase();
-function predFor(q) { const s = String(q || '').trim().toLowerCase(); if (!s) return { pred: null, tag: '', dor: null }; for (const [w, L] of [['missing', 'Missing'], ['weak', 'Weak'], ['well-formed', 'Well-Formed'], ['n/a (epic)', 'N/A (Epic)'], ['ready', 'Ready']]) if (s.length >= 3 && w.startsWith(s)) return { pred: t => t.dor === L, tag: 'Search: DoR = ' + L, dor: L }; return { pred: t => hay(t).includes(s), tag: 'Search: “' + String(q).trim() + '”', dor: null }; }
-const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-
-const READ_EPIC = `
-const btn = document.getElementById('epic-btn'), pop = document.querySelector('.epicpop');
-return { btn: T(btn), expanded: btn.getAttribute('aria-expanded'), open: !!pop && !pop.hidden && getComputedStyle(pop).display !== 'none', haspopup: btn.getAttribute('aria-haspopup'),
-  opts: [...document.querySelectorAll('.epicopt')].map(l => ({ name: T(l.querySelector('.name')), n: +T(l.querySelector('.n')), checked: l.querySelector('input').checked, type: l.querySelector('input').type })) };
-`;
-const READ_BACKLOG = `
-const c = readCommon();
-const dist = t => { const o={}, sel=[], dim=[]; rowsOf(t).forEach(r=>{ const n=T(r.querySelector('.name')); o[n]=+T(r.querySelector('.n')); if(r.classList.contains('sel')) sel.push(n); if(r.classList.contains('dim')) dim.push(n); }); return {o, sel, dim, order:Object.keys(o)}; };
-const tb = tile('Backlog tickets'); const hdr=[...tb.querySelectorAll('thead th')].map(T);
-const rows=[...tb.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T));
-return Object.assign(c, { dor: dist('Readiness (DoR)'), priority: dist('Priority'), type: dist('Type'), age: dist('Days in status'), matrix: matrixOf('Readiness x priority'), hdr, keys: rows.map(r=>r[0]), rows, sub: T(tb.querySelector('.sub')), tableEmpty: emptyIn('Backlog tickets'), empties:{dor:emptyIn('Readiness (DoR)'),priority:emptyIn('Priority'),type:emptyIn('Type'),age:emptyIn('Days in status'),matrix:emptyIn('Readiness x priority')}, hint: T(document.querySelector('.dorhint')), q: document.getElementById('q').value });
-`;
-async function verifyBacklog(p, B, f, q, label) {
-  const ps = predFor(q); const all = applyF(B, f, BKEY, [], ps.pred); const d = await run(p, READ_BACKLOG); const errs = [];
-  const active = Object.keys(f).some(k => f[k].size) || !!ps.pred;
-  const days = all.map(t => t.days).filter(v => typeof v === 'number'); const med = median(days);
-  const kv = [String(all.length), String(sumP(all)), String(all.filter(t => t.dor === 'Weak' || t.dor === 'Missing').length), String(all.filter(t => t.needsSplitting != null && String(t.needsSplitting).trim() !== '').length), med === null ? '—' : String(med)];
-  if (!eq(d.kpis.map(k => k.value), kv)) errs.push(['kpi', d.kpis.map(k => k.value), kv]);
-  const whole = { dor: {}, priority: {}, type: {}, age: {} }; B.forEach(t => Object.keys(whole).forEach(k => { const v = BKEY[k](t); whole[k][v] = (whole[k][v] || 0) + 1; }));
-  for (const dim of ['dor', 'priority', 'type', 'age']) {
-    const base = applyF(B, f, BKEY, [dim], ps.pred); const cnt = {}; base.forEach(t => { const v = BKEY[dim](t); cnt[v] = (cnt[v] || 0) + 1; });
-    const got = d[dim];
-    if (!base.length) { if (!d.empties[dim]) errs.push([dim + ' empty-state missing']); continue; }
-    Object.keys(got.o).forEach(k => { if (got.o[k] !== (cnt[k] || 0)) errs.push([dim, k, got.o[k], cnt[k] || 0]); });
-    Object.keys(cnt).forEach(k => { if (got.o[k] === undefined) errs.push([dim + ' missing row', k]); });
-    const want = [...f[dim]].filter(v => got.o[v] !== undefined).sort(); if (!eq([...got.sel].sort(), want)) errs.push([dim + ' selected', got.sel, want]);
-    if (f[dim].size) { if (!got.order.filter(n => !f[dim].has(n)).every(n => got.dim.includes(n))) errs.push([dim + ' unselected not dimmed']); } else if (got.dim.length) errs.push([dim + ' dimmed w/o selection']);
+  // =============== independent checks of one backlog page state ===============
+  async function verifyBacklog(page, Brows, f, query, label) {
+    const ps = M.predFor(query); const all = M.applyF(Brows, f, M.BKEY, [], ps.pred); const d = await run(page, READ_BACKLOG); const errs = [];
+    const active = Object.keys(f).some(k => f[k].size) || !!ps.pred;
+    const days = all.map(t => t.days).filter(v => typeof v === 'number'); const med = M.median(days);
+    const kv = [String(all.length), String(M.sumP(all)), String(all.filter(t => t.dor === 'Weak' || t.dor === 'Missing').length), String(all.filter(t => t.needsSplitting != null && String(t.needsSplitting).trim() !== '').length), med === null ? '—' : String(med)];
+    if (!eq(d.kpis.map(k => k.value), kv)) errs.push(['kpi', d.kpis.map(k => k.value), kv]);
+    for (const dim of ['dor', 'priority', 'type', 'age']) {
+      const baseRows = M.applyF(Brows, f, M.BKEY, [dim], ps.pred); const cnt = {}; baseRows.forEach(t => { const v = M.BKEY[dim](t); cnt[v] = (cnt[v] || 0) + 1; });
+      const got = d[dim];
+      if (!baseRows.length) { if (!d.empties[dim]) errs.push([dim + ' empty-state missing']); continue; }
+      Object.keys(got.o).forEach(k => { if (got.o[k] !== (cnt[k] || 0)) errs.push([dim, k, got.o[k], cnt[k] || 0]); });
+      Object.keys(cnt).forEach(k => { if (got.o[k] === undefined) errs.push([dim + ' missing row', k]); });
+      const want = [...f[dim]].filter(v => got.o[v] !== undefined).sort(); if (!eq([...got.sel].sort(), want)) errs.push([dim + ' selected', got.sel, want]);
+      if (f[dim].size) { if (!got.order.filter(n => !f[dim].has(n)).every(n => got.dim.includes(n))) errs.push([dim + ' unselected not dimmed']); } else if (got.dim.length) errs.push([dim + ' dimmed w/o selection']);
+    }
+    { const baseRows = M.applyF(Brows, f, M.BKEY, ['dor', 'priority'], ps.pred); const mat = {}; baseRows.forEach(t => { const r = M.BKEY.priority(t), cc = M.BKEY.dor(t); (mat[r] = mat[r] || {})[cc] = ((mat[r] || {})[cc] || 0) + 1; });
+      const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(cc => { out[r + '|' + cc] = o[r][cc]; })); return out; }; const a = flat(d.matrix.o), b = flat(mat);
+      if (!baseRows.length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); } else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells']); }
+    { const E = await run(page, READ_EPIC), baseRows = M.applyF(Brows, f, M.BKEY, ['epic'], ps.pred), cnt = {}; baseRows.forEach(t => { const v = M.BKEY.epic(t); cnt[v] = (cnt[v] || 0) + 1; });
+      const whole = {}; Brows.forEach(t => { const v = M.BKEY.epic(t); whole[v] = (whole[v] || 0) + 1; });
+      const wantOrder = Object.keys(whole).filter(k => k !== UI.backlog.noEpic).sort((a, b) => whole[b] - whole[a] || a.localeCompare(b)).concat(whole[UI.backlog.noEpic] ? [UI.backlog.noEpic] : []);
+      if (!eq(E.opts.map(o => o.name), wantOrder)) errs.push(['epic option order', E.opts.map(o => o.name).slice(0, 5), wantOrder.slice(0, 5)]);
+      E.opts.forEach(o => { if (o.n !== (cnt[o.name] || 0)) errs.push(['epic option count', o.name, o.n, cnt[o.name] || 0]); if (o.checked !== f.epic.has(o.name)) errs.push(['epic checkbox', o.name, o.checked]); if (o.type !== 'checkbox') errs.push(['epic option is not a checkbox', o.name]); });
+      if (E.btn !== UI.backlog.epicButton(f.epic.size)) errs.push(['epic button label', E.btn]); }
+    if (!eq(d.keys, all.map(t => t.ticket))) errs.push(['table keys', d.keys.length, all.length]);
+    if (d.sub !== UI.backlog.sub(all.length, Brows.length)) errs.push(['table sub', d.sub]);
+    if (!all.length && !d.tableEmpty) errs.push(['table empty-state missing']);
+    const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(UI.backlog.tagLabels[dim] + ': ' + v))); if (ps.tag) wantTags.push(ps.tag);
+    if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
+    if (d.resetDisabled !== !active) errs.push(['reset disabled', d.resetDisabled]);
+    if (d.hint !== (ps.dor ? UI.backlog.dorHint(ps.dor) : '')) errs.push(['hint', d.hint]);
+    if (d.q !== query) errs.push(['input value', d.q, query]);
+    check(label, errs.length === 0, errs.slice(0, 4));
+    return { d, all };
   }
-  { const base = applyF(B, f, BKEY, ['dor', 'priority'], ps.pred); const mat = {}; base.forEach(t => { const r = BKEY.priority(t), c = BKEY.dor(t); (mat[r] = mat[r] || {})[c] = ((mat[r] || {})[c] || 0) + 1; });
-    const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(c => out[r + '|' + c] = o[r][c])); return out; }; const a = flat(d.matrix.o), b = flat(mat);
-    if (!base.length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); } else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells']); }
-  { const E = await run(p, READ_EPIC), base = applyF(B, f, BKEY, ['epic'], ps.pred), cnt = {}; base.forEach(t => { const v = BKEY.epic(t); cnt[v] = (cnt[v] || 0) + 1; });
-    const whole = {}; B.forEach(t => { const v = BKEY.epic(t); whole[v] = (whole[v] || 0) + 1; });
-    const wantOrder = Object.keys(whole).filter(k => k !== '(no epic)').sort((a, b) => whole[b] - whole[a] || a.localeCompare(b)).concat(whole['(no epic)'] ? ['(no epic)'] : []);
-    if (!eq(E.opts.map(o => o.name), wantOrder)) errs.push(['epic option order', E.opts.map(o => o.name).slice(0, 5), wantOrder.slice(0, 5)]);
-    E.opts.forEach(o => { if (o.n !== (cnt[o.name] || 0)) errs.push(['epic option count', o.name, o.n, cnt[o.name] || 0]); if (o.checked !== f.epic.has(o.name)) errs.push(['epic checkbox', o.name, o.checked]); if (o.type !== 'checkbox') errs.push(['epic option is not a checkbox', o.name]); });
-    if (E.btn !== 'Epic' + (f.epic.size ? ' (' + f.epic.size + ')' : '') + ' \u25be') errs.push(['epic button label', E.btn]); }
-  if (!eq(d.keys, all.map(t => t.ticket))) errs.push(['table keys', d.keys.length, all.length]);
-  if (d.sub !== `Showing ${all.length} of ${B.length} tickets`) errs.push(['table sub', d.sub]);
-  if (!all.length && !d.tableEmpty) errs.push(['table empty-state missing']);
-  const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(({ dor: 'DoR', priority: 'Priority', type: 'Type', age: 'Age', epic: 'Epic' })[dim] + ': ' + v))); if (ps.tag) wantTags.push(ps.tag);
-  if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
-  if (d.resetDisabled !== !active) errs.push(['reset disabled', d.resetDisabled]);
-  if (d.hint !== (ps.dor ? `Searching by readiness: DoR = ${ps.dor}.` : '')) errs.push(['hint', d.hint]);
-  if (d.q !== q) errs.push(['input value', d.q, q]);
-  check(label, errs.length === 0, errs.slice(0, 4));
-  return { d, all };
-}
 
-const KEYRE = /\b[A-Z][A-Z0-9]+-[0-9]+\b/g;
-const keysIn = s => (s == null ? [] : String(s).match(KEYRE) || []);
-function linkErrors(cells, values, structured) {
-  const errs = [];
-  cells.forEach((c, i) => {
-    const v = values[i], want = structured === 'ticket' ? (/^[A-Z][A-Z0-9]+-[0-9]+$/.test(String(v)) ? [String(v)] : []) : keysIn(v);
-    const got = c.links.map(l => l.t);
-    if (!eq(got, want)) errs.push(['keys', i, got, want]);
-    c.links.forEach(l => { if (l.h !== 'https://mysnaplogic.atlassian.net/browse/' + encodeURIComponent(l.t) || l.target !== '_blank' || !/noopener/.test(l.rel || '')) errs.push(['link attrs', l]); });
-    const wantText = v == null || String(v).trim() === '' ? '—' : String(v);
-    if (c.text !== wantText.replace(/\s+/g, ' ').trim()) errs.push(['text changed', i, c.text, wantText]);
-    if (c.foreign) errs.push(['foreign element', i]);
-  });
-  return errs.slice(0, 4);
-}
-const mtime = f => fs.statSync(f).mtimeMs;
-const TRACKER = process.env.AF_SNAPLOGIC_TRACKER || '/Users/cespitia/Library/CloudStorage/GoogleDrive-cespitia@snaplogic.com/My Drive/AF_Snaplogic/03_Team_Enablement/daily_tracker.xlsx';
-const before = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, ACTIVE_FILE)), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
-const SPRJ = J(ACTIVE_FILE); const S = SPRJ.tickets, B = J('backlog.json').tickets;
-const MANIFEST = J('sprints.json'), CLOSED = J('snapshots/sprint-4697.json');
-const CLOSED_CO = CLOSED.sprint && CLOSED.sprint.carriedOver, CLOSED_CARRIED = CLOSED_CO ? [String(CLOSED_CO.count), `${CLOSED_CO.percent}% of tickets, ${CLOSED_CO.storyPoints} points`] : ['—','Not calculated yet for this sprint'];
-const CTX = { sprint: SPRJ.sprint || null, today: SPRJ.refreshedAt, thr: 1 };
-
-const layoutJs = `const d=document.scrollingElement; const bodies=[...document.querySelectorAll('.tile-body')].map(b=>({sh:b.scrollHeight,ch:b.clientHeight,ov:getComputedStyle(b).overflowY})); const tiles=[...document.querySelectorAll('section.tile')].map(t=>{const r=t.getBoundingClientRect(); return {l:Math.round(r.left), r:Math.round(r.right), t:Math.round(r.top), b:Math.round(r.bottom), w:Math.round(r.width), h:Math.round(r.height), title:(t.querySelector('h2')||t.querySelector('.label')).textContent.trim()};}); const bad=[]; document.querySelectorAll('body *').forEach(n=>{ if(n.closest('.tile-body')) return; const r=n.getBoundingClientRect(); if(r.width>0 && r.right>innerWidth+1) bad.push(n.tagName+'.'+n.className+':'+Math.round(r.right)); }); return {iw:innerWidth, ih:innerHeight, sw:d.scrollWidth, sh:d.scrollHeight, bodies, tiles, bad:bad.slice(0,5)};`;
-
-(async () => {
-  await launch();
-  const base = 'http://127.0.0.1:' + ports.real + '/';
-  let p;
+  // in-page contrast of text-bearing controls (heat cells, rows, Team Contribution); ratio computed in Node
+  const readContrast = async page => (await run(page, `return [...document.querySelectorAll('table.heat .cell, .rowbtn .name, .rowbtn .pair, .rowbtn .n, .contribution-name, .contribution-value')].map(n => ({ cls: n.className, text: n.textContent.trim().slice(0, 20), fg: rgbOf(getComputedStyle(n).color).slice(0, 3), bg: paintedBg(n), opacity: effOpacity(n), dimmed: !!n.closest('.is-dimmed') }))`))
+    .map(r => Object.assign(r, { ratio: M.contrast(r.fg, r.bg) }));
+  const lowContrast = list => list.filter(r => r.ratio < 4.5 || r.opacity < 0.999).map(r => [r.cls, r.text, Math.round(r.ratio * 100) / 100, r.opacity]);
 
   // =============== SPRINT ===============
   console.log('\n--- Sprint page (real data) ---');
-  p = await openPage(base + 'index.html');
-  check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + ACTIVE_FILE] === 200 && p.logs.length === 0 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, logs: p.logs, reqs: p.reqs });
-  check('Shell: sprint tabs, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[0])==='Current sprint' && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])==='Backlog' && T(tabs[2])==='Quality Intake' && T(document.querySelector('.snapshot-badge'))==='SNAPSHOT · NOT LIVE' && T(document.getElementById('asof'))===${J(ACTIVE_FILE) && JSON.stringify(asOfLabel(J(ACTIVE_FILE)))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname==='/jira/dashboards/18635' && live.target==='_blank' && live.rel.includes('noopener') && /LIVE/.test(T(live)) && /Internal — team only/.test(T(document.querySelector('.foot')))`));
-  check('Sprint manifest: accessible selector defaults to current and lists sprint name and state without repeated dates', await run(p, `const s=document.getElementById('sprint-select'), opts=s&&[...s.options].map(o=>T(o)); return s && document.querySelector('label[for="sprint-select"]') && T(document.querySelector('label[for="sprint-select"]'))==='Sprint' && s.value===String(${MANIFEST.current}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='active').name + ' (active)')}) && opts.some(x=>x===${JSON.stringify(MANIFEST.sprints.find(x=>x.state==='closed').name + ' (closed)')}) && document.getElementById('sprint-banner').hidden`));
+  p = await open(base + 'index.html');
+  check('Sprint: manifest and default snapshot return 200, no console errors/warnings, only localhost requests', p.resp[base + 'sprints.json'] === 200 && p.resp[base + ACTIVE_FILE] === 200 && p.logs.length === 0 && p.reqs.every(u => isLocal(u)), { resp: p.resp, logs: p.logs, reqs: p.reqs });
+  check('Shell: sprint tabs, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[0])===${q(UI.shell.tabs[0])} && tabs[0].classList.contains('active') && tabs[0].getAttribute('aria-current')==='page' && T(tabs[1])===${q(UI.shell.tabs[1])} && T(tabs[2])===${q(UI.shell.tabs[2])} && T(document.querySelector('.snapshot-badge'))===${q(UI.shell.badge)} && T(document.getElementById('asof'))===${q(asOfLabel(SPRJ))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname===${q(UI.shell.liveDashboardPath)} && live.target==='_blank' && live.rel.includes('noopener') && ${UI.shell.liveText}.test(T(live)) && ${UI.shell.footer}.test(T(document.querySelector('.foot')))`));
+  { const h = await run(p, `const h=[...document.querySelectorAll('h1')]; return h.map(x=>({text:T(x), hidden:x.classList.contains('visually-hidden') && x.getBoundingClientRect().width<=1}))`);
+    check('Sprint: the page has exactly one h1 (visually hidden, read by screen readers)', h.length === 1 && h[0].text === UI.shell.h1.sprint && h[0].hidden, h); }
+  { const a = await run(p, `const live=document.querySelector('.live-dashboard-link'), badges=[...document.querySelectorAll('.snapshot-badge, .live-dashboard-badge, .qi-partial, .qi-complete')]; return { fg: rgbOf(getComputedStyle(live).color).slice(0,3), bg: rgbOf(getComputedStyle(live).backgroundColor).slice(0,3), sizes: badges.map(b => parseFloat(getComputedStyle(b).fontSize)) }`);
+    check('Contrast: the Jira dashboard · LIVE link text has at least 4.5:1 and every badge is at least 10px', M.contrast(a.fg, a.bg) >= 4.5 && a.sizes.every(s => s >= 10), { ratio: M.contrast(a.fg, a.bg), sizes: a.sizes }); }
+  check('Colours: AF.COLORS (used for SVG and the heat ramp) equal their CSS custom properties in dashboard.css', await run(p, `const cs=getComputedStyle(document.documentElement); return Object.keys(AF.COLOR_TOKENS).every(k => cs.getPropertyValue(AF.COLOR_TOKENS[k]).trim().toLowerCase() === AF.COLORS[k].toLowerCase())`));
+  check('AF.el accepts style only as an object and event handlers only as functions (CSP: no inline style or handler strings)', await run(p, `const throws = f => { try { f(); return false; } catch (e) { return true; } }; const d = AF.el('div', { style: { width: '10px' }, onclick: function () {} }); return d.style.width === '10px' && !d.hasAttribute('onclick') && throws(() => AF.el('div', { style: 'color:red' })) && throws(() => AF.el('div', { onclick: 'alert(1)' })) && throws(() => AF.el('div', { onmouseover: 'x' }))`));
+  check('Sprint manifest: accessible selector defaults to current and lists sprint name and state without repeated dates', await run(p, `const s=document.getElementById('sprint-select'), opts=s&&[...s.options].map(o=>T(o)); return s && document.querySelector('label[for="sprint-select"]') && T(document.querySelector('label[for="sprint-select"]'))===${q(UI.shell.sprintSelectLabel)} && s.value===String(${MANIFEST.current}) && opts.some(x=>x===${q(MANIFEST.sprints.find(x => x.state === 'active').name + ' (active)')}) && (${!CLOSED_ENTRY} || opts.some(x=>x===${q(CLOSED_ENTRY ? CLOSED_ENTRY.name + ' (closed)' : '')})) && document.getElementById('sprint-banner').hidden`));
   const sprintJsonRequests = () => p.reqs.filter(u => u.endsWith('.json'));
-  check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/' + ACTIVE_FILE)) && sprintJsonRequests().every(u => u.endsWith('/sprints.json') || u.endsWith('/' + ACTIVE_FILE)), p.reqs);
-  await run(p, `window.__sprintSessionProbe='kept'; clickRow('Tickets by status','Done'); setSel('sprint-select','4697')`);
-  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='4697'`).catch(() => false)); i++) await sleep(100);
-  const closedView = await run(p, `const det=tile('Ticket detail'), hdr=[...det.querySelectorAll('thead th')].map(T), rows=[...det.querySelectorAll('tbody tr')]; const ix=n=>hdr.indexOf(n), byKey=k=>{const r=rows.find(x=>T(x.children[0])===k);return r?{owner:T(r.children[ix('Owner')]),points:T(r.children[ix('Story points')]),situation:T(r.children[ix('Last sync update')])}:null}; const k=kpi('Carried over'),b=tile('Burndown'),svg=b.querySelector('svg.burndown'); return {url:location.search,probe:window.__sprintSessionProbe,selected:document.getElementById('sprint-select').value,count:rows.length,work:T(kpi('Work items').querySelector('.value')),closed:!document.getElementById('sprint-banner').hidden,historical:document.querySelector('.app').classList.contains('historical-sprint'),banner:T(document.getElementById('sprint-banner')),carried:[T(k.querySelector('.value')),T(k.querySelector('.hint'))],tags:document.querySelectorAll('.tags .tag').length,rowsNullSituation:rows.every(r=>T(r.children[ix('Last sync update')])==='—'),noToday:![...svg.querySelectorAll('text')].some(x=>T(x)==='Today'),days:svg.querySelectorAll('rect.bd-day').length,unassigned:byKey('APP-2983'),nullPoints:rows.filter(r=>T(r.children[ix('Story points')])==='—').length,note:document.querySelector('.sprint-banner-note')&&T(document.querySelector('.sprint-banner-note')),foot:T(b.querySelector('.tile-foot'))};`);
-  check('Closed sprint: selection uses SPA navigation, updates the URL, resets filters and loads all 73 tickets', closedView.url === '?sprint=4697' && closedView.probe === 'kept' && closedView.selected === '4697' && closedView.count === CLOSED.tickets.length && closedView.work === String(CLOSED.tickets.length) && closedView.tags === 0 && closedView.closed, closedView);
-  check('Closed sprint: historical banner and gray view, snapshot date and note, null carriedOver/narratives and no Today marker', closedView.banner.includes('HISTORICAL VIEW · CLOSED SPRINT') && closedView.banner.includes('Snapshot as of ' + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.historical && closedView.note === MANIFEST.sprints.find(x=>x.id===4697).note && eq(closedView.carried, CLOSED_CARRIED) && closedView.rowsNullSituation === CLOSED.tickets.every(t => !t.lastSyncUpdate) && closedView.noToday && closedView.days === 13 && closedView.foot.includes('Tickets removed from the sprint and re-estimates are not reflected'), closedView);
-  check('Closed sprint: null owner displays Unassigned and all three null point values display —', closedView.unassigned && closedView.unassigned.owner === 'Unassigned' && closedView.nullPoints === 3, { unassigned: closedView.unassigned, nullPoints: closedView.nullPoints });
-  { const shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_1920.png'),Buffer.from(shot.result.data,'base64')); }
-  await p.resize(480,900);
-  { const l=await run(p,layoutJs), pick=await run(p,`const r=document.getElementById('sprint-picker').getBoundingClientRect(),s=document.getElementById('sprint-select').getBoundingClientRect(); return {picker:[r.left,r.right,r.width],select:[s.left,s.right,s.width],text:document.getElementById('sprint-select').value}`), shot=await p.send('Page.captureScreenshot',{format:'png'}); fs.writeFileSync(path.join(SP,'sprint_closed_480.png'),Buffer.from(shot.result.data,'base64')); check('Closed sprint: selector remains visible at narrow width without page-level horizontal overflow', pick.select[2]>0 && l.sw<=l.iw && l.bad.length===0, { scrollWidth:l.sw, innerWidth:l.iw, bad:l.bad, picker:pick }); }
-  await p.resize(1920,1080);
-  await run(p, `setSel('sprint-select','${MANIFEST.current}')`);
-  for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='${MANIFEST.current}'`).catch(() => false)); i++) await sleep(100);
-  const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
-  check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u=>u.endsWith('/'+ACTIVE_FILE)).length===1 && p.reqs.filter(u=>u.includes('/snapshots/sprint-4697.json')).length===1 && p.reqs.filter(u=>u.endsWith('/sprints.json')).length===1 && returned.banner && returned.tags===0 && returned.selector===String(MANIFEST.current), { requests:p.reqs, returned });
-  let unknown = await openPage(base + 'index.html?sprint=999999');
-  const unknownState = await run(unknown, `return {heading:T(document.querySelector('#app h2')),picker:!!document.getElementById('sprint-select'),options:document.getElementById('sprint-select')&&document.getElementById('sprint-select').options.length,value:document.getElementById('sprint-select')&&document.getElementById('sprint-select').value}`);
-  check('Unknown sprint id: clear error and usable selector remain visible', unknownState.heading==='Sprint not found' && unknownState.picker && unknownState.options===MANIFEST.sprints.length+1, unknownState);
+  check('Sprint manifest: initial load requests only the manifest and current snapshot', sprintJsonRequests().length === 2 && sprintJsonRequests().some(u => u.endsWith('/sprints.json')) && sprintJsonRequests().some(u => u.endsWith('/' + ACTIVE_FILE)), p.reqs);
+  { const SR = await run(p, SCROLL_REGIONS);
+    check('Scroll regions: a tile body is a focusable, labelled region (tabindex 0, role region, aria-label) exactly when it scrolls; others add no tab stop', SR.every(r => r.scrolls ? r.tabindex === '0' && r.role === 'region' && !!r.label : r.tabindex === null && r.role === null) && SR.some(r => r.scrolls) && SR.some(r => !r.scrolls), SR); }
+  if (CLOSED_ENTRY) {
+    const CID = String(CLOSED_ENTRY.id);
+    await run(p, `window.__sprintSessionProbe='kept'; clickRow(${q(ST.status)},'Done'); setSel('sprint-select',${q(CID)})`);
+    for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value===${q(CID)}`).catch(() => false)); i++) await sleep(100);
+    const closedView = await run(p, `const det=tile(${q(ST.detail)}), hdr=[...det.querySelectorAll('thead th')].map(T), rows=[...det.querySelectorAll('tbody tr')]; const ix=n=>hdr.indexOf(n), byKey=k=>{const r=rows.find(x=>T(x.children[0])===k);return r?{owner:T(r.children[ix('Owner')]),points:T(r.children[ix('Story points')])}:null}; const k=kpi(${q(UI.sprint.kpi.carried)}),b=tile(${q(ST.burndown)}),svg=b.querySelector('svg.burndown'); return {url:location.search,probe:window.__sprintSessionProbe,selected:document.getElementById('sprint-select').value,count:rows.length,work:T(kpi('Work items').querySelector('.value')),closed:!document.getElementById('sprint-banner').hidden,historical:document.querySelector('.app').classList.contains('historical-sprint'),banner:T(document.getElementById('sprint-banner')),carried:[T(k.querySelector('.value')),T(k.querySelector('.hint'))],tags:document.querySelectorAll('.tags .tag').length,rowsNullSituation:rows.every(r=>T(r.children[ix('Last sync update')])==='—'),noToday:![...svg.querySelectorAll('text')].some(x=>T(x)==='Today'),days:svg.querySelectorAll('rect.bd-day').length,unassigned:${q((CLOSED.tickets.find(t => M.grpName(t.owner) === 'Unassigned') || {}).ticket || null)} && byKey(${q((CLOSED.tickets.find(t => M.grpName(t.owner) === 'Unassigned') || {}).ticket || '')}),nullPoints:rows.filter(r=>T(r.children[ix('Story points')])==='—').length,note:document.querySelector('.sprint-banner-note')&&T(document.querySelector('.sprint-banner-note')),foot:T(b.querySelector('.tile-foot'))};`);
+    const co = CLOSED.sprint.carriedOver;
+    const wantCarried = co ? [co.count == null ? '—' : String(co.count), [co.percent != null ? co.percent + '% of tickets' : null, co.storyPoints != null ? co.storyPoints + ' points' : null].filter(Boolean).join(', ') || UI.sprint.hints.carriedNoFigures] : ['—', UI.sprint.hints.carriedNull];
+    const wantDays = M.dn(CLOSED.sprint.endDate) - M.dn(CLOSED.sprint.startDate) + 1;
+    const wantFoot = Array.isArray(CLOSED.sprint.removed) ? UI.sprint.burndown.footRemoved : UI.sprint.burndown.footNoRemoved;
+    check(`Closed sprint: selection uses SPA navigation, updates the URL, resets filters and loads all ${CLOSED.tickets.length} tickets of sprint ${CID}`, closedView.url === '?sprint=' + CID && closedView.probe === 'kept' && closedView.selected === CID && closedView.count === CLOSED.tickets.length && closedView.work === String(CLOSED.tickets.length) && closedView.tags === 0 && closedView.closed, closedView);
+    check('Closed sprint: historical banner and gray view, snapshot date and note, carried over as exported, narratives as exported and no Today marker', closedView.banner.includes(UI.sprint.closed.banner) && closedView.banner.includes(UI.sprint.closed.asOf + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.historical && closedView.note === (CLOSED_ENTRY.note || null) && eq(closedView.carried, wantCarried) && closedView.rowsNullSituation === CLOSED.tickets.every(t => !t.lastSyncUpdate) && closedView.noToday && closedView.days === wantDays && closedView.foot.includes(wantFoot), { closedView, wantCarried, wantDays });
+    check('Closed sprint: a null owner displays Unassigned and every null point value displays —', (closedView.unassigned === null || closedView.unassigned.owner === 'Unassigned') && closedView.nullPoints === CLOSED.tickets.filter(t => t.points == null).length, { unassigned: closedView.unassigned, nullPoints: closedView.nullPoints });
+    await verifySprint(p, CLOSED.tickets, M.newF(), 'Closed sprint: every tile and the burndown (through sprint end) equal the independent calculation', { sprint: CLOSED.sprint, today: CLOSED.refreshedAt, thr: 1, closed: true });
+    await p.screenshot(path.join(SP, 'sprint_closed_1920.png'));
+    await p.resize(480, 900);
+    { const l = await run(p, LAYOUT), pick = await run(p, `const s=document.getElementById('sprint-select').getBoundingClientRect(); return {select:[s.left,s.right,s.width]}`); await p.screenshot(path.join(SP, 'sprint_closed_480.png')); check('Closed sprint: selector remains visible at narrow width without page-level horizontal overflow', pick.select[2] > 0 && l.sw <= l.iw && l.bad.length === 0, { scrollWidth: l.sw, innerWidth: l.iw, bad: l.bad, picker: pick }); }
+    await p.resize(1920, 1080);
+    await run(p, `setSel('sprint-select','${MANIFEST.current}')`);
+    for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='${MANIFEST.current}'`).catch(() => false)); i++) await sleep(100);
+    const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
+    check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u => u.endsWith('/' + ACTIVE_FILE)).length === 1 && p.reqs.filter(u => u.endsWith('/' + CLOSED_ENTRY.file)).length === 1 && p.reqs.filter(u => u.endsWith('/sprints.json')).length === 1 && returned.banner && returned.tags === 0 && returned.selector === String(MANIFEST.current), { requests: p.reqs, returned });
+    // C2: no ResizeObserver is left drawing into a detached chart after sprint switches
+    await run(p, `window.__detachedDraws = 0; const orig = AF.drawBurndown; AF.drawBurndown = function (c) { if (!document.contains(c)) window.__detachedDraws++; return orig.apply(this, arguments); }`);
+    for (const id of [CID, String(MANIFEST.current), CID, String(MANIFEST.current)]) { await run(p, `setSel('sprint-select', ${q(id)})`); await sleep(400); }
+    await p.resize(1500, 900); await p.resize(1920, 1080); await sleep(300);
+    check('Sprint switch: the previous burndown ResizeObserver is disconnected (no redraw into a detached chart after four switches and two resizes)', (await run(p, `return window.__detachedDraws`)) === 0, await run(p, `return window.__detachedDraws`));
+    await p.close();
+    // C2: a slow response for an earlier selection never replaces the later one
+    p = await open(base + 'index.html');
+    await run(p, `setSel('sprint-select', ${q(CID)}); setSel('sprint-select', ${q(String(MANIFEST.current))})`);
+    await sleep(1200);
+    { const r = await run(p, `return { selected: document.getElementById('sprint-select').value, url: location.search, banner: document.getElementById('sprint-banner').hidden, historical: document.querySelector('.app').classList.contains('historical-sprint'), rows: tile(${q(ST.detail)}).querySelectorAll('tbody tr').length }`);
+      check('Sprint switch race: choosing a closed sprint and then the active one shows the active one, even though the closed snapshot arrives last', r.selected === String(MANIFEST.current) && r.url === '?sprint=' + MANIFEST.current && r.banner && !r.historical && r.rows === S.length, r); }
+    await p.close();
+    p = await open(base + 'index.html');
+  } else skip('Closed sprint checks', 'the manifest lists no closed sprint');
+  let unknown = await open(base + 'index.html?sprint=999999');
+  const unknownState = await run(unknown, `return {heading:T(document.querySelector('#app h2')),picker:!!document.getElementById('sprint-select'),options:document.getElementById('sprint-select')&&document.getElementById('sprint-select').options.length}`);
+  check('Unknown sprint id: clear error and usable selector remain visible', unknownState.heading === UI.sprint.sprintNotFound && unknownState.picker && unknownState.options === MANIFEST.sprints.length + 1, unknownState);
   await run(unknown, `setSel('sprint-select','${MANIFEST.current}')`);
-  for (let i=0;i<40 && !(await run(unknown,`!!document.querySelector('.kpis')`).catch(()=>false));i++) await sleep(100);
-  const recovered = await run(unknown, `return {kpis:!!document.querySelector('.kpis'),value:document.getElementById('sprint-select').value,search:location.search,heading:document.querySelector('#app h2')&&T(document.querySelector('#app h2')),rows:document.querySelectorAll('#app tbody tr').length}`);
-  check('Unknown sprint id: choosing a valid option recovers', recovered.kpis && recovered.value===String(MANIFEST.current) && recovered.search==='?sprint='+MANIFEST.current, recovered);
+  for (let i = 0; i < 40 && !(await run(unknown, `!!document.querySelector('.kpis')`).catch(() => false)); i++) await sleep(100);
+  const recovered = await run(unknown, `return {kpis:!!document.querySelector('.kpis'),value:document.getElementById('sprint-select').value,search:location.search}`);
+  check('Unknown sprint id: choosing a valid option recovers', recovered.kpis && recovered.value === String(MANIFEST.current) && recovered.search === '?sprint=' + MANIFEST.current, recovered);
   await unknown.close();
-  let direct = await openPage(base + 'index.html?sprint=4697');
-  const directState = await run(direct, `return {selected:document.getElementById('sprint-select').value,count:tile('Ticket detail').querySelectorAll('tbody tr').length,banner:!document.getElementById('sprint-banner').hidden}`);
-  check('Direct URL: ?sprint=4697 opens the closed snapshot from the manifest', directState.selected==='4697' && directState.count===CLOSED.tickets.length && directState.banner && direct.reqs.filter(u=>u.endsWith('.json')).length===2 && direct.reqs.some(u=>u.endsWith('/sprints.json')) && direct.reqs.some(u=>u.includes('/snapshots/sprint-4697.json')), { state:directState, requests:direct.reqs });
-  await direct.close();
-  for (const variantName of ['noManifest','badManifest']) {
-    const errPage = await openPage('http://127.0.0.1:' + ports[variantName] + '/index.html');
+  if (CLOSED_ENTRY) {
+    const direct = await open(base + 'index.html?sprint=' + CLOSED_ENTRY.id);
+    const directState = await run(direct, `return {selected:document.getElementById('sprint-select').value,count:tile(${q(ST.detail)}).querySelectorAll('tbody tr').length,banner:!document.getElementById('sprint-banner').hidden}`);
+    check(`Direct URL: ?sprint=${CLOSED_ENTRY.id} opens the closed snapshot from the manifest`, directState.selected === String(CLOSED_ENTRY.id) && directState.count === CLOSED.tickets.length && directState.banner && direct.reqs.filter(u => u.endsWith('.json')).length === 2 && direct.reqs.some(u => u.endsWith('/sprints.json')) && direct.reqs.some(u => u.endsWith('/' + CLOSED_ENTRY.file)), { state: directState, requests: direct.reqs });
+    await direct.close();
+  }
+  for (const [variantName, desc, extraRe] of [['noManifest', 'missing', null], ['badManifest', 'invalid', null], ['manifestBadFile', 'pointing at a file outside snapshots/sprint-<id>.json', UI.errors.invalidManifest]]) {
+    const errPage = await open(url[variantName] + 'index.html');
     const state = await run(errPage, `return {selector:!!document.getElementById('sprint-select'),rows:document.querySelectorAll('#app .lower .data tbody tr').length,text:document.getElementById('app').innerText}`);
-    check(`Manifest ${variantName === 'noManifest' ? 'missing' : 'invalid'}: the page shows a clear error about sprints.json (no root sprint.json fallback), no selector, no JS exception`, !state.selector && state.rows===0 && /Can’t load sprints\.json/.test(state.text) && !errPage.logs.some(l => l.startsWith('exception')), { state: { selector: state.selector, rows: state.rows, text: state.text.slice(0, 160) }, logs: errPage.logs });
+    check(`Manifest ${desc}: the page shows a clear error about sprints.json (no fallback), no selector, no JS exception`, !state.selector && state.rows === 0 && UI.errors.cantLoad('sprints.json').test(state.text) && (!extraRe || extraRe.test(state.text)) && !errPage.logs.some(l => l.startsWith('exception')) && (variantName !== 'manifestBadFile' || !errPage.reqs.some(u => u.endsWith('/backlog.json'))), { state: { selector: state.selector, rows: state.rows, text: state.text.slice(0, 200) }, logs: errPage.logs, reqs: errPage.reqs });
     await errPage.close();
   }
-  let f = newF();
+  { const pe = await open(url.manifestExtra + 'index.html');
+    const r = await run(pe, `return { kpis: !!document.querySelector('.kpis'), select: document.getElementById('sprint-select') && document.getElementById('sprint-select').value }`);
+    check('Manifest with unknown extra keys (top level and entry): tolerated, the sprint loads normally', r.kpis && r.select === String(SP_OK.id) && pe.logs.length === 0, { r, logs: pe.logs });
+    await pe.close(); }
+  { const pm = await open(url.mismatch + 'index.html');
+    const txt = await run(pm, `return document.getElementById('app').innerText`);
+    check('Snapshot that does not match its manifest entry: the error says so (not "missing or not valid JSON")', UI.errors.cantLoad('snapshots/sprint-1.json').test(txt) && UI.errors.mismatch.test(txt) && !/not valid JSON/.test(txt), txt.slice(0, 240));
+    await pm.close(); }
+
+  let f = M.newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
-  { const typeName = Object.keys(expectSprint(S, f).types)[0];
-    await run(p, `clickRow('Tickets by type', ${JSON.stringify(typeName)})`); f.type = new Set([typeName]);
+  { const opts = await run(p, `return {fix:[...document.getElementById('f-fix').options].map(o=>o.value), parent:[...document.getElementById('f-parent').options].map(o=>o.value)}`);
+    const want = vals => { const k = [...new Set(vals.map(v => v == null || String(v).trim() === '' ? '(none)' : String(v)))]; const named = k.filter(x => x !== '(none)').sort(M.natural); return [''].concat(named, k.includes('(none)') ? ['(none)'] : [], ['__multi']); };
+    check('Fix version and Parent options are in natural order (4.9 before 4.10), (none) last', eq(opts.fix, want(S.map(t => t.fixVersion))) && eq(opts.parent, want(S.map(t => t.parent))), opts); }
+  { const typeName = Object.keys(M.expectSprint(S, f, CTX).types)[0];
+    await run(p, `clickRow(${q(ST.type)}, ${q(typeName)})`); f.type = new Set([typeName]);
     await verifySprint(p, S, f, `Click Type "${typeName}": filters the dashboard and preserves the type distribution`);
-    await run(p, `clickReset()`); f = newF();
+    await run(p, `clickReset()`); f = M.newF();
     await verifySprint(p, S, f, 'Reset all clears the Type selection'); }
-  const noTesterKeys = S.filter(t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !String(t.classifications || '').split('; ').includes('Dev to Test')).map(t => t.ticket);
-  const noTesterKpi = await run(p, `const k=kpi('No tester & Not Dev to Test'); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
-  check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith('no tester, excluding Dev to Test'), { count: noTesterKeys.length, hint: noTesterKpi.hint });
-  { const tisKeys = S.filter(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number' && t.statusAging >= 7).map(t => t.ticket);
+  const noTesterKeys = S.filter(M.noTester).map(t => t.ticket);
+  const noTesterKpi = await run(p, `const k=kpi(${q(UI.sprint.kpi.noTester)}); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
+  check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith(UI.sprint.hints.noTesterPrefix), { count: noTesterKeys.length, hint: noTesterKpi.hint });
+  const detailKeys = () => run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  { const tisKeys = S.filter(M.longRunning).map(t => t.ticket);
     await run(p, `clickReset()`);
-    await run(p, `clickEl(kpi('Long-running work · 7+ days'))`);
-    const got = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.querySelector('td')))`);
-    const hdr = await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(T)`);
-    check('Click Long-running work lists exactly the In Progress / In Review tickets with 7 or more days, and the table has a Days in status column', eq([...got].sort(), [...tisKeys].sort()) && hdr.some(h => /Days in status/.test(h)), { expected: tisKeys, got });
+    await run(p, `clickEl(kpi(${q(UI.sprint.kpi.time)}))`);
+    const got = await detailKeys();
+    const hdr = await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T)`);
+    const tags = await run(p, `return readCommon().tags`);
+    check('Click Long-running work lists exactly the In Progress / In Review tickets with 7 or more days, adds the KPI tag, and the table has a Days in status column', eq([...got].sort(), [...tisKeys].sort()) && hdr.includes('Days in status') && eq(tags, [UI.sprint.kpiTag(UI.sprint.kpi.time)]), { expected: tisKeys, got, tags });
     await run(p, `clickReset()`); }
-  await run(p, `clickEl(kpi('No tester & Not Dev to Test'))`);
-  let lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+  await run(p, `clickEl(kpi(${q(UI.sprint.kpi.noTester)}))`);
+  let lowerKeys = await detailKeys();
   const resetEnabled = await run(p, `return !document.querySelector('.resetall').disabled`);
   check('Click No tester & Not Dev to Test filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
+  { // removing the KPI tag clears only the KPI filter and keeps a regular filter
+    await run(p, `clickRow(${q(ST.status)}, 'Done')`);
+    const tags = await run(p, `return readCommon().tags`);
+    await run(p, `clickTagX(${tags.indexOf(UI.sprint.kpiTag(UI.sprint.kpi.noTester))})`);
+    const after = await run(p, `return { tags: readCommon().tags, selected: kpi(${q(UI.sprint.kpi.noTester)}).classList.contains('is-selected'), pressed: kpi(${q(UI.sprint.kpi.noTester)}).getAttribute('aria-pressed') }`);
+    check('Removing the KPI tag clears only the KPI filter and keeps the regular Status filter', eq(after.tags, ['Status: Done']) && !after.selected && after.pressed === 'false' && eq(await detailKeys(), S.filter(t => t.status === 'Done').map(t => t.ticket)), after);
+    await run(p, `clickEl(kpi(${q(UI.sprint.kpi.noTester)}))`); }
   await run(p, `clickReset()`);
-  lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  const noTesterSelected = await run(p, `return kpi('No tester & Not Dev to Test').classList.contains('selected')`);
+  lowerKeys = await detailKeys();
+  const noTesterSelected = await run(p, `return kpi(${q(UI.sprint.kpi.noTester)}).classList.contains('is-selected')`);
   check('Reset all clears the KPI filter and restores the lower section', lowerKeys.length === S.length && !noTesterSelected, lowerKeys.length);
-  const carriedKeys = SPRJ.sprint.carriedOver.ticketKeys;
-  await run(p, `clickEl(kpi('Carried over'))`);
-  lowerKeys = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
-  check('Click Carried Over filters the lower section to exactly the exported carried-over keys (keys never exceed sprint.carriedOver.count; fewer is allowed when a carried ticket left the sprint)', carriedKeys.length <= SPRJ.sprint.carriedOver.count && eq([...lowerKeys].sort(), [...carriedKeys].sort()), { expected: carriedKeys, actual: lowerKeys });
-  await run(p, `clickEl(kpi('Carried over'))`);
+  const carriedKeys = SPRJ.sprint.carriedOver && Array.isArray(SPRJ.sprint.carriedOver.ticketKeys) ? SPRJ.sprint.carriedOver.ticketKeys : null;
+  if (carriedKeys) {
+    await run(p, `clickEl(kpi(${q(UI.sprint.kpi.carried)}))`);
+    lowerKeys = await detailKeys();
+    check('Click Carried Over filters the lower section to exactly the exported carried-over keys (keys never exceed sprint.carriedOver.count; fewer is allowed when a carried ticket left the sprint)', carriedKeys.length <= SPRJ.sprint.carriedOver.count && eq([...lowerKeys].sort(), [...carriedKeys].filter(k => S.some(t => t.ticket === k)).sort()), { expected: carriedKeys, actual: lowerKeys });
+    await run(p, `clickEl(kpi(${q(UI.sprint.kpi.carried)}))`);
+  } else {
+    const k = await run(p, `const k=kpi(${q(UI.sprint.kpi.carried)}); return { clickable: k.classList.contains('clickable'), role: k.getAttribute('role'), pressed: k.getAttribute('aria-pressed') }`);
+    check('Carried Over KPI (real data has no carriedOver.ticketKeys): shown, not clickable, no button role or aria-pressed', !k.clickable && k.role === null && k.pressed === null, k);
+  }
+  check('Non-clickable KPI tiles carry no button role or aria-pressed', await run(p, `return [...document.querySelectorAll('.kpi:not(.clickable)')].every(k => !k.hasAttribute('role') && !k.hasAttribute('aria-pressed') && !k.hasAttribute('tabindex'))`));
   await verifySprint(p, S, f, 'KPI filters clear on second click');
-  const L = await run(p, layoutJs);
+  const L = await run(p, LAYOUT);
   check('Layout 1920x1080: no page scroll (width and height)', L.sh <= L.ih && L.sw <= L.iw, L);
   check('Layout 1920x1080: 8 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 14 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
-  check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 40px of the footer)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
+  check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 60px of the viewport bottom)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
   check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(8, 12).map(t => t.h)).size === 1 && new Set(L.tiles.slice(12, 14).map(t => t.h)).size === 1 && L.tiles[12].w + L.tiles[13].w + 10 >= L.iw - 30 && L.tiles[13].w >= 440 && L.tiles[13].w <= 0.32 * L.iw, L.tiles.slice(8));
   const rowRatio = L.tiles[8].h / L.tiles[12].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(8).map(t => t.title), ['Burndown', 'Tickets by status', 'Tickets by type', 'Team Contribution', 'Ticket detail', 'Assignee x tester']) && L.tiles[9].w >= 250 && L.tiles[10].w >= 250, L.tiles.slice(8).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(8).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[9].w >= 250 && L.tiles[10].w >= 250, L.tiles.slice(8).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
-  const st = await run(p, `const out={}; for (const [k,t] of [['contribution','Team Contribution'],['detail','Ticket detail'],['matrix','Assignee x tester']]) { const b=tile(t).querySelector('.tile-body'); const th=tile(t).querySelector('.colhead.contribution-grid')||b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile('Team Contribution').querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile('Team Contribution').getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
-  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update width and horizontal scroll, Total line pinned', st.contribution.scrolls && st.contribution.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 340 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
+  const st = await run(p, `const out={}; for (const [k,t] of [['contribution',${q(ST.contribution)}],['detail',${q(ST.detail)}],['matrix',${q(ST.matrix)}]]) { const b=tile(t).querySelector('.tile-body'); const th=tile(t).querySelector('.colhead.contribution-grid')||b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile(${q(ST.contribution)}).querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile(${q(ST.contribution)}).getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
+  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Total line pinned', st.contribution.scrolls && st.contribution.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
+  check('Team Contribution: every name and role count is a button whose accessible name says whose count it is and what it filters', await run(p, `return [...tile(${q(ST.contribution)}).querySelectorAll('.contribution-row')].every(r => { const n = T(r.querySelector('.contribution-name')); return [...r.querySelectorAll('button')].length === 3 && [...r.querySelectorAll('button')].every(b => (b.getAttribute('aria-label')||'').startsWith(n) && /filter|show/i.test(b.getAttribute('aria-label'))); })`));
 
-  const owners = Object.keys(group(S, SKEY.assignee)).sort((a, b) => group(S, SKEY.assignee)[b].p - group(S, SKEY.assignee)[a].p || a.localeCompare(b));
-  const pick = owners[2], pick2 = owners[5], pick3 = owners[1];
-  // click an assignee
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); f.assignee = new Set([pick]);
-  await verifySprint(p, S, f, `Click Assignee W.I "${pick}": filters ticket detail and other tiles`);
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); f.assignee = new Set();
-  await verifySprint(p, S, f, 'Click the same assignee again: cleared');
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)})`); await run(p, `clickContribution('assignee', ${JSON.stringify(pick2)})`); f.assignee = new Set([pick2]);
-  await verifySprint(p, S, f, 'Plain click on another assignee replaces the selection');
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick3)}, {ctrl:true})`); f.assignee.add(pick3);
-  await verifySprint(p, S, f, 'Ctrl+click adds a second assignee (OR within dimension)');
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick3)}, {meta:true})`); f.assignee.delete(pick3);
-  await verifySprint(p, S, f, 'Cmd+click toggles a value off');
-  await run(p, `clickContribution('assignee', ${JSON.stringify(pick)}, {shift:true})`); f.assignee.add(pick);
-  await verifySprint(p, S, f, 'Shift+click also multi-selects');
-  await run(p, `clickReset()`); f = newF();
-  await verifySprint(p, S, f, 'Reset all clears everything; Reset is disabled again');
-  const member=Object.keys(expectSprint(S,newF()).contribution).find(n=>S.some(t=>grpName(t.owner)===n&&grpName(t.tester)===n))||Object.keys(expectSprint(S,newF()).contribution)[0];
-  await run(p, `clickContribution('contributor', ${JSON.stringify(member)})`); f.contributor=new Set([member]);
-  await verifySprint(p,S,f,`Click Team Contribution name "${member}": ticket detail includes assignee OR tester matches`);
-  check('Team member filter directly matches owner or tester',eq(expectSprint(S,f).all.map(t=>t.ticket).sort(),S.filter(t=>grpName(t.owner)===member||grpName(t.tester)===member).map(t=>t.ticket).sort()));
-  await run(p,`clickReset()`); f=newF(); await verifySprint(p,S,f,'Reset all clears Team member filter');
+  const ownerGroups = M.group(S, M.SKEY.assignee);
+  const owners = Object.keys(ownerGroups).sort((a, b) => ownerGroups[b].p - ownerGroups[a].p || a.localeCompare(b));
+  if (owners.length >= 3) {
+    const [pick, pick2, pick3] = owners;
+    await run(p, `clickContribution('assignee', ${q(pick)})`); f.assignee = new Set([pick]);
+    await verifySprint(p, S, f, `Click Assignee W.I "${pick}": filters ticket detail and other tiles`);
+    await run(p, `clickContribution('assignee', ${q(pick)})`); f.assignee = new Set();
+    await verifySprint(p, S, f, 'Click the same assignee again: cleared');
+    await run(p, `clickContribution('assignee', ${q(pick)})`); await run(p, `clickContribution('assignee', ${q(pick2)})`); f.assignee = new Set([pick2]);
+    await verifySprint(p, S, f, 'Plain click on another assignee replaces the selection');
+    await run(p, `clickContribution('assignee', ${q(pick3)}, {ctrl:true})`); f.assignee.add(pick3);
+    await verifySprint(p, S, f, 'Ctrl+click adds a second assignee (OR within dimension)');
+    await run(p, `clickContribution('assignee', ${q(pick3)}, {meta:true})`); f.assignee.delete(pick3);
+    await verifySprint(p, S, f, 'Cmd+click toggles a value off');
+    await run(p, `clickContribution('assignee', ${q(pick)}, {shift:true})`); f.assignee.add(pick);
+    await verifySprint(p, S, f, 'Shift+click also multi-selects');
+    await run(p, `clickReset()`); f = M.newF();
+    await verifySprint(p, S, f, 'Reset all clears everything; Reset is disabled again');
+  } else skip('Assignee click, replace and multi-select checks', 'the active sprint has fewer than three assignees');
+  const contribNames = Object.keys(M.expectSprint(S, M.newF(), CTX).contribution);
+  const member = contribNames.find(n => S.some(t => M.grpName(t.owner) === n && M.grpName(t.tester) === n)) || contribNames[0];
+  await run(p, `clickContribution('contributor', ${q(member)})`); f.contributor = new Set([member]);
+  await verifySprint(p, S, f, `Click Team Contribution name "${member}": ticket detail includes assignee OR tester matches`);
+  check('Team member filter directly matches owner or tester', eq(M.expectSprint(S, f, CTX).all.map(t => t.ticket).sort(), S.filter(t => M.grpName(t.owner) === member || M.grpName(t.tester) === member).map(t => t.ticket).sort()));
+  await run(p, `clickReset()`); f = M.newF(); await verifySprint(p, S, f, 'Reset all clears Team member filter');
 
-  // AND across dimensions
-  await run(p, `clickRow('Tickets by status', 'In Review')`); f.status = new Set(['In Review']);
+  // AND across dimensions (tester: Unassigned when some ticket has no tester, else the most common tester)
+  const testerPick = S.some(t => M.grpName(t.tester) === 'Unassigned') ? 'Unassigned' : M.mostCommon(S, M.SKEY.tester)[0];
+  await run(p, `clickRow(${q(ST.status)}, 'In Review')`); f.status = new Set(['In Review']);
   await verifySprint(p, S, f, 'Click status "In Review"');
-  await run(p, `clickContribution('tester', 'Unassigned')`); f.tester = new Set(['Unassigned']);
-  await verifySprint(p, S, f, 'Click tester "Unassigned" on top: In Review tickets with no tester (AND)');
-  const exp1 = expectSprint(S, f);
-  check('That combination equals the In Review tickets without a tester (direct count)', exp1.all.length === S.filter(t => t.status === 'In Review' && t.tester == null).length, exp1.all.length);
-  await run(p, `clickRow('Tickets by status', 'Done')`); f.status.add('Done');
+  await run(p, `clickContribution('tester', ${q(testerPick)})`); f.tester = new Set([testerPick]);
+  await verifySprint(p, S, f, `Click tester "${testerPick}" on top: In Review tickets with that tester (AND)`);
+  { const exp1 = M.expectSprint(S, f, CTX);
+    check(`That combination equals the In Review tickets with tester ${testerPick} (direct count)`, exp1.all.length === S.filter(t => t.status === 'In Review' && M.grpName(t.tester) === testerPick).length, exp1.all.length); }
+  await run(p, `clickRow(${q(ST.status)}, 'Done')`); f.status.add('Done');
   await verifySprint(p, S, f, 'Plain click adds Done: status OR, still AND tester');
-  await run(p, `clickRow('Tickets by status', 'In Review')`); f.status.delete('In Review');
+  { const c = await readContrast(p);
+    check('Contrast: with a selection active, every row, count and Team Contribution value (dimmed or not) keeps text at full opacity and at least 4.5:1', lowContrast(c).length === 0 && c.some(r => r.dimmed), lowContrast(c).slice(0, 6)); }
+  await run(p, `clickRow(${q(ST.status)}, 'In Review')`); f.status.delete('In Review');
   await verifySprint(p, S, f, 'Plain click clears one selected status while retaining the other');
   await run(p, `clickTagX(0)`); const firstTag = [...f.status][0]; f.status.delete(firstTag);
   await verifySprint(p, S, f, 'Tag × removes only that one value');
-  await run(p, `clickReset()`); f = newF();
+  await run(p, `clickReset()`); f = M.newF();
 
-  // matrix cell
-  const mm = expectSprint(S, newF()).matrix; const rA = Object.keys(mm)[3]; const cT = Object.keys(mm[rA])[0];
-  await run(p, `clickCell('Assignee x tester', ${JSON.stringify(rA)}, ${JSON.stringify(cT)})`); f.assignee = new Set([rA]); f.tester = new Set([cT]);
-  const r1 = await verifySprint(p, S, f, `Matrix cell "${rA} / ${cT}" sets both assignee and tester`);
-  check('Matrix cell shows the highlighted state and the pair count equals the detail row count', r1.d.matrix.sel.length === 1 && r1.d.detailKeys.length === mm[rA][cT], { sel: r1.d.matrix.sel, n: r1.d.detailKeys.length });
-  await run(p, `clickCell('Assignee x tester', ${JSON.stringify(rA)}, ${JSON.stringify(cT)})`); f.assignee = new Set(); f.tester = new Set();
-  await verifySprint(p, S, f, 'Clicking the same matrix cell again clears both');
+  // matrix cell: the pair with the most tickets
+  { const mm = M.expectSprint(S, M.newF(), CTX).matrix;
+    const cells = []; Object.keys(mm).forEach(r => Object.keys(mm[r]).forEach(cc => cells.push([r, cc, mm[r][cc]])));
+    cells.sort((a, b) => b[2] - a[2] || a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+    const [rA, cT, nA] = cells[0];
+    { const c = await readContrast(p); check('Contrast: every heat-grid cell uses ink text at full opacity with at least 4.5:1 against its shade', lowContrast(c.filter(r => /\bcell\b/.test(r.cls))).length === 0 && c.some(r => /\bcell\b/.test(r.cls)), lowContrast(c).slice(0, 6)); }
+    await run(p, `clickCell(${q(ST.matrix)}, ${q(rA)}, ${q(cT)})`); f.assignee = new Set([rA]); f.tester = new Set([cT]);
+    const r1 = await verifySprint(p, S, f, `Matrix cell "${rA} / ${cT}" sets both assignee and tester`);
+    check('Matrix cell shows the highlighted state and the pair count equals the detail row count', r1.d.matrix.sel.length === 1 && r1.d.detailKeys.length === nA, { sel: r1.d.matrix.sel, n: r1.d.detailKeys.length });
+    { const c = await readContrast(p); const cellsC = c.filter(r => /\bcell\b/.test(r.cls));
+      check('Contrast: dimmed heat-grid cells (outside the selection) keep their text at full opacity with at least 4.5:1', lowContrast(cellsC).length === 0 && (cellsC.length < 2 || cellsC.some(r => r.dimmed)), lowContrast(cellsC).slice(0, 6)); }
+    await run(p, `clickCell(${q(ST.matrix)}, ${q(rA)}, ${q(cT)})`); f.assignee = new Set(); f.tester = new Set();
+    await verifySprint(p, S, f, 'Clicking the same matrix cell again clears both'); }
   // selects
-  const fixes = [...new Set(S.map(t => t.fixVersion).filter(Boolean))].sort(), pars = [...new Set(S.map(t => t.parent).filter(Boolean))].sort();
-  await run(p, `setSel('f-fix', ${JSON.stringify(fixes[0])})`); f.fix = new Set([fixes[0]]);
-  await verifySprint(p, S, f, `Fix version select "${fixes[0]}" filters every tile and shows a tag`);
-  await run(p, `setSel('f-parent', ${JSON.stringify(pars[0])})`); f.parent = new Set([pars[0]]);
-  await verifySprint(p, S, f, `Parent select "${pars[0]}" combines with Fix version (AND)`);
-  await run(p, `setSel('f-fix', '')`); f.fix = new Set();
-  await verifySprint(p, S, f, 'Fix version "All" clears that dimension');
-  const hasNoneFix = S.some(t => !t.fixVersion), hasNonePar = S.some(t => !t.parent);
-  if (hasNonePar) { await run(p, `setSel('f-parent', '(none)')`); f.parent = new Set(['(none)']); await verifySprint(p, S, f, 'Parent "(none)" selects tickets without a parent'); }
-  await run(p, `clickReset()`); f = newF();
-  await verifySprint(p, S, f, 'Reset all also resets the selects');
+  const fixes = [...new Set(S.map(t => t.fixVersion).filter(Boolean))].sort(M.natural), pars = [...new Set(S.map(t => t.parent).filter(Boolean))].sort(M.natural);
+  if (fixes.length && pars.length) {
+    await run(p, `setSel('f-fix', ${q(fixes[0])})`); f.fix = new Set([fixes[0]]);
+    await verifySprint(p, S, f, `Fix version select "${fixes[0]}" filters every tile and shows a tag`);
+    await run(p, `setSel('f-parent', ${q(pars[0])})`); f.parent = new Set([pars[0]]);
+    await verifySprint(p, S, f, `Parent select "${pars[0]}" combines with Fix version (AND)`);
+    await run(p, `setSel('f-fix', '')`); f.fix = new Set();
+    await verifySprint(p, S, f, 'Fix version "All" clears that dimension');
+    if (S.some(t => !t.parent)) { await run(p, `setSel('f-parent', '(none)')`); f.parent = new Set(['(none)']); await verifySprint(p, S, f, 'Parent "(none)" selects tickets without a parent'); }
+    await run(p, `clickReset()`); f = M.newF();
+    await verifySprint(p, S, f, 'Reset all also resets the selects');
+  } else skip('Fix version and Parent select checks', 'the active sprint has no fix version or no parent values');
   // zero results
   let zero = null;
-  for (const sName of BN) { if (!S.some(t => BN[bucket(t.status)] === sName)) continue; for (const fx of fixes) if (!S.some(t => BN[bucket(t.status)] === sName && t.fixVersion === fx)) { zero = [sName, 'f-fix', 'fix', fx]; break; } if (zero) break; }
-  if (!zero) for (const sName of BN) { if (!S.some(t => BN[bucket(t.status)] === sName)) continue; for (const pr of pars) if (!S.some(t => BN[bucket(t.status)] === sName && t.parent === pr)) { zero = [sName, 'f-parent', 'parent', pr]; break; } if (zero) break; }
+  for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const fx of fixes) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.fixVersion === fx)) { zero = [sName, 'f-fix', 'fix', fx]; break; } if (zero) break; }
+  if (!zero) for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const pr of pars) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.parent === pr)) { zero = [sName, 'f-parent', 'parent', pr]; break; } if (zero) break; }
   if (zero) {
-    await run(p, `clickRow('Tickets by status', ${JSON.stringify(zero[0])})`); await run(p, `setSel(${JSON.stringify(zero[1])}, ${JSON.stringify(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
+    await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setSel(${q(zero[1])}, ${q(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
     const z = await verifySprint(p, S, f, `Zero results (${zero[0]} + ${zero[2]} ${zero[3]}): KPIs 0, empty-state in tiles and table, no errors`);
-    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === 'No work items match these filters. Remove a tag or use Reset all.' && z.d.empties.contribution === z.d.detailEmpty, z.d.detailEmpty);
-    await run(p, `clickReset()`); f = newF();
+    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.contribution === z.d.detailEmpty, z.d.detailEmpty);
+    await run(p, `clickReset()`); f = M.newF();
   } else check('Zero results case available in data', false, 'no empty combination');
   // scroll position kept
-  await run(p, `tile('Team Contribution').querySelector('.tile-body').scrollTop = 150`);
+  await run(p, `tile(${q(ST.contribution)}).querySelector('.tile-body').scrollTop = 150`);
   const rowName = owners[Math.min(9, owners.length - 1)];
-  await run(p, `clickContribution('contributor', ${JSON.stringify(rowName)})`); f.contributor = new Set([rowName]);
-  const kept = await run(p, `return tile('Team Contribution').querySelector('.tile-body').scrollTop`);
+  await run(p, `clickContribution('contributor', ${q(rowName)})`); f.contributor = new Set([rowName]);
+  const kept = await run(p, `return tile(${q(ST.contribution)}).querySelector('.tile-body').scrollTop`);
   check('Scroll position inside a tile is kept when a filter changes', kept >= 100, kept);
-  await run(p, `clickReset()`); f = newF();
+  await run(p, `clickReset()`); f = M.newF();
   // keyboard
   await run(p, `document.activeElement && document.activeElement.blur()`);
-  let focused = null; for (let i = 0; i < 40 && !focused; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile('Tickets by status').contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth, pressed:a.getAttribute('aria-pressed'), tag:a.tagName} : null`); if (r) focused = r; }
+  let focused = null; for (let i = 0; i < 40 && !focused; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile(${q(ST.status)}).contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth, pressed:a.getAttribute('aria-pressed'), tag:a.tagName} : null`); if (r) focused = r; }
   check('Keyboard: Tab reaches a status row (a real button) with a visible focus outline', focused && focused.tag === 'BUTTON' && focused.outline !== 'none' && parseFloat(focused.w) >= 2, focused);
-  await p.key('Enter', 'Enter', 13, '\r');
-  f.status = new Set([focused.name]);
-  await verifySprint(p, S, f, 'Keyboard: Enter selects the focused status; aria-pressed and tag reflect it');
-  check('Selection exposed with aria-pressed=true', await run(p, `return rowsOf('Tickets by status').filter(r=>r.getAttribute('aria-pressed')==='true').length===1`));
-  await p.key(' ', 'Space', 32, ' ');
-  f.status = new Set();
-  await verifySprint(p, S, f, 'Keyboard: Space on the same row clears it');
-  await run(p, `clickReset()`); f = newF();
+  if (focused) {
+    await p.key('Enter', 'Enter', 13, '\r');
+    f.status = new Set([focused.name]);
+    await verifySprint(p, S, f, 'Keyboard: Enter selects the focused status; aria-pressed and tag reflect it');
+    check('Selection exposed with aria-pressed=true', await run(p, `return rowsOf(${q(ST.status)}).filter(r=>r.getAttribute('aria-pressed')==='true').length===1`));
+    await p.key(' ', 'Space', 32, ' ');
+    f.status = new Set();
+    await verifySprint(p, S, f, 'Keyboard: Space on the same row clears it');
+  }
+  await run(p, `clickReset()`); f = M.newF();
   check('Controls are real elements (rows and cells are buttons, selects and inputs)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall')].every(b=>b.tagName==='BUTTON') && document.getElementById('f-fix').tagName==='SELECT'`));
   check('Light mode, no external fonts', await run(p, `const m=getComputedStyle(document.body).backgroundColor.match(/\\d+/g).map(Number); return m.every(x=>x>200) && getComputedStyle(document.documentElement).colorScheme!=='dark'`));
   check('Empty values: no null/undefined/NaN text in tiles or tables (excluding ticket prose)', await run(p, `const t=[...document.querySelectorAll('.kpis, .main')].map(n=>n.textContent).join(' ') + [...document.querySelectorAll('.tile-body tbody td:not(.wrap)')].map(n=>n.textContent).join(' '); return !/NaN|undefined|\\bnull\\b/.test(t)`));
-  const dt = await run(p, `const hdr=[...tile('Ticket detail').querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), devToTest:T(tr.children[ix('Dev to Test')]), owner:T(tr.children[ix('Owner')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
-  check('Detail table: exact summary and last sync update are preserved; Dev to Test reflects exact classification; required columns; empty values and original status text', eq(dt[0].hdr, ['Ticket', 'Summary', 'Owner', 'Tester', 'Dev to Test', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version', 'Linked work items', 'Last sync update']) && dt.every((r, i) => r.summary === (S[i].summary || '—') && r.situation === (S[i].lastSyncUpdate || '—') && r.pts === (S[i].points == null ? '—' : String(S[i].points)) && r.tester === grpName(S[i].tester) && r.devToTest === (String(S[i].classifications || '').split('; ').includes('Dev to Test') ? 'Yes' : '—') && r.status === S[i].status && r.parent === (S[i].parent || '—') && r.fix === (S[i].fixVersion || '—')));
-  { const L1 = await run(p, `return {ticket: colCells('Ticket detail','Ticket'), parent: colCells('Ticket detail','Parent'), linked: colCells('Ticket detail','Linked work items'), summary: colCells('Ticket detail','Summary'), situation: colCells('Ticket detail','Last sync update')}`);
-    check('Jira links (sprint): every Ticket cell is a link with the exact href, new tab, noopener', linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket').length === 0 && L1.ticket.every(c => c.links.length === 1), linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket'));
-    check('Jira links (sprint): every key in Parent is its own link, text unchanged, none when no key', linkErrors(L1.parent, S.map(t => t.parent)).length === 0, linkErrors(L1.parent, S.map(t => t.parent)));
-    check('Jira links (sprint): every key in Linked work items is its own link, text unchanged', linkErrors(L1.linked, S.map(t => t.linkedWorkItems)).length === 0 && L1.linked.some(c => c.links.length > 1), linkErrors(L1.linked, S.map(t => t.linkedWorkItems)));
+  const dt = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), devToTest:T(tr.children[ix('Dev to Test')]), days:T(tr.children[ix('Days in status')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
+  check('Detail table: exact summary and last sync update are preserved; Dev to Test reflects exact classification; Days in status with * when approximate; required columns; empty values and original status text', eq(dt[0].hdr, UI.sprint.detailHeaders) && dt.every((r, i) => r.summary === (S[i].summary || '—') && r.situation === (S[i].lastSyncUpdate || '—') && r.pts === (S[i].points == null ? '—' : String(S[i].points)) && r.tester === M.grpName(S[i].tester) && r.devToTest === (M.isDevToTest(S[i]) ? 'Yes' : '—') && r.days === (typeof S[i].statusAging === 'number' ? S[i].statusAging + (S[i].statusAgingApprox ? '*' : '') : '—') && r.status === S[i].status && r.parent === (S[i].parent || '—') && r.fix === (S[i].fixVersion || '—')));
+  { const L1 = await run(p, `return {ticket: colCells(${q(ST.detail)},'Ticket'), parent: colCells(${q(ST.detail)},'Parent'), linked: colCells(${q(ST.detail)},'Linked work items'), summary: colCells(${q(ST.detail)},'Summary'), situation: colCells(${q(ST.detail)},'Last sync update')}`);
+    check('Jira links (sprint): every Ticket cell is a link with the exact href, new tab, noopener', M.linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket').length === 0 && L1.ticket.every(c => c.links.length === 1), M.linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket'));
+    check('Jira links (sprint): every key in Parent is its own link, text unchanged, none when no key', M.linkErrors(L1.parent, S.map(t => t.parent)).length === 0, M.linkErrors(L1.parent, S.map(t => t.parent)));
+    check('Jira links (sprint): every key in Linked work items is its own link, text unchanged', M.linkErrors(L1.linked, S.map(t => t.linkedWorkItems)).length === 0 && (L1.linked.some(c => c.links.length > 1) || !S.some(t => M.keysIn(t.linkedWorkItems).length > 1)), M.linkErrors(L1.linked, S.map(t => t.linkedWorkItems)));
     check('Jira links (sprint): Summary and Last sync update cells have no links', [...L1.summary, ...L1.situation].every(c => c.links.length === 0)); }
-  await run(p, `window.__prevented = 0; document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a.jira')) { e.preventDefault(); window.__prevented++; } }, true); const a = tile('Ticket detail').querySelector('a.jira'); a.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));`);
-  check('Jira links (sprint): clicking a link changes no filter, tag or KPI', await verifySprint(p, S, newF(), 'Sprint: state unchanged after clicking a Jira link').then(r => r.d.tags.length === 0) && (await run(p, `return window.__prevented`)) === 1);
+  await run(p, `window.__prevented = 0; document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a.jira')) { e.preventDefault(); window.__prevented++; } }, true); const a = tile(${q(ST.detail)}).querySelector('a.jira'); a.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));`);
+  check('Jira links (sprint): clicking a link changes no filter, tag or KPI', await verifySprint(p, S, M.newF(), 'Sprint: state unchanged after clicking a Jira link').then(r => r.d.tags.length === 0) && (await run(p, `return window.__prevented`)) === 1);
   await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
-  { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth, inDetail: tile('Ticket detail').contains(a)} : null`); }
+  { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); }
     check('Jira links: Tab reaches a link and it shows a visible focus outline', li && li.outline !== 'none' && parseFloat(li.w) >= 2, li); }
-  check('Team Contribution wording: combined title, Jira role subtitle, explicit headers and shared-points note', await run(p, `const t=tile('Team Contribution'); return !!t && T(t.querySelector('.sub'))==='Work Items (W.I) by Jira role' && [...t.querySelector('.colhead.contribution-grid').children].map(T).join('|')==='Name|Assignee W.I|Tester W.I|Total W.I | SP' && T(t.querySelector('.footnote'))==='Assignee and Tester work item counts can overlap. Story points are shared and count once.' && !T(t).includes('Total W.I counts each ticket once')`));
+  check('Team Contribution wording: combined title, Jira role subtitle, explicit headers and shared-points note', await run(p, `const t=tile(${q(ST.contribution)}); return !!t && T(t.querySelector('.sub'))===${q(UI.sprint.contribution.sub)} && [...t.querySelector('.colhead.contribution-grid').children].map(T).join('|')===${q(UI.sprint.contribution.headers.join('|'))} && T(t.querySelector('.footnote'))===${q(UI.sprint.contribution.note)} && !T(t).includes(${q(UI.sprint.contribution.removedWording)})`));
   check('Sprint: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
-  await verifySprint(p, S, newF(), 'Changing the mid-sprint threshold in one place (5 days) updates the KPI, the markers and the legend', Object.assign({}, CTX, { thr: 5 }));
+  await verifySprint(p, S, M.newF(), 'Changing the mid-sprint threshold in one place (5 days) updates the KPI, the markers and the legend', Object.assign({}, CTX, { thr: 5 }));
   await run(p, `AF.config.midSprintThresholdDays = 1; AF.store.reset()`);
-  await verifySprint(p, S, newF(), 'Threshold back to 1 day', CTX);
-  check('Detail table does not show the approximate addedDate (nor doneDate or cycleTime)', !(await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(T)`)).some(h => /added|done date|cycle/i.test(h)));
+  await verifySprint(p, S, M.newF(), 'Threshold back to 1 day', CTX);
+  check('Detail table does not show the approximate addedDate (nor doneDate or cycleTime)', !(await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T)`)).some(h => /added|done date|cycle/i.test(h)));
   // layouts
   for (const [w, h, mode] of [[1440, 900, 'dash'], [1536, 864, 'dash'], [1366, 768, 'dash'], [1280, 720, 'fallback'], [1024, 768, 'fallback'], [800, 900, 'fallback'], [480, 900, 'fallback']]) {
-    await p.resize(w, h); const r = await run(p, layoutJs);
+    await p.resize(w, h); const r = await run(p, LAYOUT);
     if (mode === 'dash') check(`Layout ${w}x${h}: dashboard mode, no page scroll, nothing beyond the viewport`, r.sh <= r.ih && r.sw <= r.iw && r.bad.length === 0 && r.tiles.every(t => t.r <= r.iw && t.b <= r.ih), { sh: r.sh, ih: r.ih, sw: r.sw, bad: r.bad });
     else check(`Layout ${w}x${h}: fallback scrolling layout, no page-level horizontal scroll, nothing beyond the viewport outside tile scroll areas`, r.sw <= r.iw && r.bad.length === 0 && r.sh > r.ih, { sw: r.sw, iw: r.iw, bad: r.bad, sh: r.sh, ih: r.ih });
     { const bdf = await run(p, READ_BD); check(`Layout ${w}x${h}: burndown redraws to fit its tile (svg as wide as the tile, no scroll bars)`, bdf.has && Math.abs(bdf.svgW - bdf.bodyW) <= 2 && bdf.bodyOverflow <= 1, { svgW: bdf.svgW, bodyW: bdf.bodyW, o: bdf.bodyOverflow }); }
-    if (w === 1440 || w === 800) { const shot = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SP, `acc2_sprint_${w}.png`), Buffer.from(shot.result.data, 'base64')); }
+    if (w === 480) { const b = await run(p, `return [...document.querySelectorAll('.snapshot-badge, .live-dashboard-badge')].map(x => parseFloat(getComputedStyle(x).fontSize))`); check('Layout 480x900: badges stay at least 10px on narrow screens', b.every(s => s >= 10), b); }
+    if (w === 1440 || w === 800) await p.screenshot(path.join(SP, `acc2_sprint_${w}.png`));
   }
-  const sortableHeaders = ['Ticket', 'Owner', 'Tester', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version'];
-  const sortHeaderState = await run(p, `return [...tile('Ticket detail').querySelectorAll('thead th')].map(th=>({label:T(th),button:!!th.querySelector('button.detail-sort'),sort:th.getAttribute('aria-sort'),arrow:th.querySelector('.detail-sort-arrow')&&T(th.querySelector('.detail-sort-arrow'))}))`);
-  check('Ticket detail: only the requested eight headers have accessible sort buttons and direction arrows', eq(sortHeaderState.filter(x=>x.button).map(x=>x.label),sortableHeaders) && sortHeaderState.filter(x=>x.button).every(x=>x.sort==='none'&&x.arrow==='↕') && sortHeaderState.filter(x=>!x.button).every(x=>x.sort===null), sortHeaderState);
-  const naturalAsc = S.map(t=>t.ticket).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
-  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
-  const ticketAsc = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Ticket"]').closest('th').getAttribute('aria-sort'),arrow:T(tile('Ticket detail').querySelector('thead th .detail-sort-arrow'))}`);
-  check('Ticket detail: Ticket sorts naturally ascending (APP-9 before APP-10)', eq(ticketAsc.keys,naturalAsc) && ticketAsc.sort==='ascending' && ticketAsc.arrow==='↑', ticketAsc);
-  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
-  const ticketDesc = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Ticket"]').closest('th').getAttribute('aria-sort'),arrow:T(tile('Ticket detail').querySelector('thead th .detail-sort-arrow'))}`);
-  check('Ticket detail: clicking the active header reverses the sort direction', eq(ticketDesc.keys,naturalAsc.slice().reverse()) && ticketDesc.sort==='descending' && ticketDesc.arrow==='↓', ticketDesc);
-  const pointAsc = S.map((t,i)=>({t,i})).sort((a,b)=>a.t.points==null?b.t.points==null?a.i-b.i:1:b.t.points==null?-1:a.t.points-b.t.points).map(x=>x.t.ticket);
-  await run(p, `tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Story points"]').click()`);
-  const pointsSorted = await run(p, `return {keys:[...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile('Ticket detail').querySelector('thead th button[data-sort-key="Story points"]').closest('th').getAttribute('aria-sort')}`);
-  check('Ticket detail: Story points sort numerically and missing points remain last', eq(pointsSorted.keys,pointAsc) && pointsSorted.sort==='ascending', pointsSorted);
-  const textSortCases = [
-    ['Owner',t=>grpName(t.owner)], ['Tester',t=>grpName(t.tester)],
-    ['Status',t=>t.status], ['Parent',t=>t.parent], ['Fix version',t=>t.fixVersion]
-  ];
-  for (const [label,getValue] of textSortCases) {
-    await run(p, `tile('Ticket detail').querySelector(${JSON.stringify('.detail-sort[data-sort-key="'+label+'"]')}).click()`);
-    const expected = S.map((t,i)=>({key:t.ticket,value:getValue(t),i})).sort((a,b)=>{
-      const am=a.value==null||String(a.value).trim()==='',bm=b.value==null||String(b.value).trim()==='';
-      if(am||bm)return am===bm?a.i-b.i:am?1:-1;
-      return String(a.value).localeCompare(String(b.value),undefined,{numeric:true,sensitivity:'base'})||a.i-b.i;
-    }).map(x=>x.key);
-    const actual = await run(p, `return [...tile('Ticket detail').querySelectorAll('tbody tr')].map(r=>T(r.children[0]))`);
-    check(`Ticket detail: ${label} sorts in natural ascending order`,eq(actual,expected),{actual,expected});
+  const sortableHeaders = UI.sprint.sortableHeaders;
+  const sortHeaderState = await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(th=>({label:T(th),button:!!th.querySelector('button.detail-sort'),sort:th.getAttribute('aria-sort'),arrow:th.querySelector('.detail-sort-arrow')&&T(th.querySelector('.detail-sort-arrow'))}))`);
+  check('Ticket detail: only the eight specified headers (incl. Days in status) have accessible sort buttons and direction arrows', eq(sortHeaderState.filter(x => x.button).map(x => x.label), sortableHeaders) && sortHeaderState.filter(x => x.button).every(x => x.sort === 'none' && x.arrow === '↕') && sortHeaderState.filter(x => !x.button).every(x => x.sort === null), sortHeaderState);
+  const naturalAsc = S.map(t => t.ticket).sort(M.natural);
+  await run(p, `tile(${q(ST.detail)}).querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
+  const readSort = k => run(p, `return {keys:[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(r=>T(r.children[0])),sort:tile(${q(ST.detail)}).querySelector('thead th button[data-sort-key=${q(k)}]').closest('th').getAttribute('aria-sort'),arrow:T(tile(${q(ST.detail)}).querySelector('thead th button[data-sort-key=${q(k)}] .detail-sort-arrow'))}`);
+  const ticketAsc = await readSort('Ticket');
+  check('Ticket detail: Ticket sorts naturally ascending (APP-9 before APP-10)', eq(ticketAsc.keys, naturalAsc) && ticketAsc.sort === 'ascending' && ticketAsc.arrow === '↑', ticketAsc);
+  await run(p, `tile(${q(ST.detail)}).querySelector('.detail-sort[data-sort-key="Ticket"]').click()`);
+  const ticketDesc = await readSort('Ticket');
+  check('Ticket detail: clicking the active header reverses the sort direction', eq(ticketDesc.keys, naturalAsc.slice().reverse()) && ticketDesc.sort === 'descending' && ticketDesc.arrow === '↓', ticketDesc);
+  const numericAsc = get => S.map((t, i) => ({ t, i, v: get(t) })).sort((a, b) => (typeof a.v !== 'number') ? (typeof b.v !== 'number' ? a.i - b.i : 1) : (typeof b.v !== 'number' ? -1 : a.v - b.v || a.i - b.i)).map(x => x.t.ticket);
+  for (const [label, get] of [['Story points', t => t.points], ['Days in status', t => t.statusAging]]) {
+    await run(p, `tile(${q(ST.detail)}).querySelector(${q('.detail-sort[data-sort-key="' + label + '"]')}).click()`);
+    const r = await readSort(label);
+    check(`Ticket detail: ${label} sorts numerically and missing values remain last`, eq(r.keys, numericAsc(get)) && r.sort === 'ascending', r);
   }
-  await run(p, `clickReset(); clickRow('Tickets by status','In Progress'); tile('Ticket detail').querySelector('.detail-sort[data-sort-key="Owner"]').click()`);
-  const filteredOwnerSort = await run(p, `const tl=tile('Ticket detail'),h=[...tl.querySelectorAll('thead th')].map(T),oi=h.indexOf('Owner'),rows=[...tl.querySelectorAll('tbody tr')];return {owners:rows.map(r=>T(r.children[oi])),statuses:rows.map(r=>T(r.children[h.indexOf('Status')])),tags:document.querySelectorAll('.tags .tag').length}`);
-  const ownerAsc = S.filter(t=>t.status==='In Progress').map(t=>grpName(t.owner)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
-  check('Ticket detail: sorting respects the active status filter', eq(filteredOwnerSort.owners,ownerAsc) && filteredOwnerSort.statuses.every(x=>x==='In Progress') && filteredOwnerSort.tags===1, filteredOwnerSort);
+  for (const [label, getValue] of [['Owner', t => M.grpName(t.owner)], ['Tester', t => M.grpName(t.tester)], ['Status', t => t.status], ['Parent', t => t.parent], ['Fix version', t => t.fixVersion]]) {
+    await run(p, `tile(${q(ST.detail)}).querySelector(${q('.detail-sort[data-sort-key="' + label + '"]')}).click()`);
+    const expected = S.map((t, i) => ({ key: t.ticket, value: getValue(t), i })).sort((a, b) => {
+      const am = a.value == null || String(a.value).trim() === '', bm = b.value == null || String(b.value).trim() === '';
+      if (am || bm) return am === bm ? a.i - b.i : am ? 1 : -1;
+      return M.natural(a.value, b.value) || a.i - b.i;
+    }).map(x => x.key);
+    const actual = await detailKeys();
+    check(`Ticket detail: ${label} sorts in natural ascending order`, eq(actual, expected), { actual, expected });
+  }
+  await run(p, `clickReset(); clickRow(${q(ST.status)},'In Progress'); tile(${q(ST.detail)}).querySelector('.detail-sort[data-sort-key="Owner"]').click()`);
+  const filteredOwnerSort = await run(p, `const tl=tile(${q(ST.detail)}),h=[...tl.querySelectorAll('thead th')].map(T),oi=h.indexOf('Owner'),rows=[...tl.querySelectorAll('tbody tr')];return {owners:rows.map(r=>T(r.children[oi])),statuses:rows.map(r=>T(r.children[h.indexOf('Status')])),tags:document.querySelectorAll('.tags .tag').length}`);
+  const ownerAsc = S.filter(t => t.status === 'In Progress').map(t => M.grpName(t.owner)).sort(M.natural);
+  check('Ticket detail: sorting respects the active status filter', eq(filteredOwnerSort.owners, ownerAsc) && filteredOwnerSort.statuses.every(x => x === 'In Progress') && filteredOwnerSort.tags === 1, filteredOwnerSort);
   await p.close();
 
   // =============== BACKLOG ===============
   console.log('\n--- Backlog page (real data) ---');
-  p = await openPage(base + 'backlog.html');
+  p = await open(base + 'backlog.html');
   const backlogShell = await run(p, `return !document.getElementById('sprint-select')`);
-  check('Backlog: JSON 200, no selector or manifest request, no console errors/warnings', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && backlogShell && p.reqs.filter(u=>u.endsWith('.json')).length===1 && p.reqs.some(u=>u.endsWith('/backlog.json')) && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { logs: p.logs, reqs:p.reqs });
-  check('Shell: backlog tab, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.querySelector('.snapshot-badge'))==='SNAPSHOT · NOT LIVE' && T(document.getElementById('asof'))===${JSON.stringify(asOfLabel(J('backlog.json')))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname==='/jira/dashboards/18635' && live.target==='_blank' && live.rel.includes('noopener') && /LIVE/.test(T(live)) && /Internal — team only/.test(T(document.querySelector('.foot')))`));
-  let bf = newBF(), q = '';
-  await verifyBacklog(p, B, bf, q, 'Backlog: no filters, every tile = independent calculation');
-  const LB = await run(p, layoutJs);
+  check('Backlog: JSON 200, no selector or manifest request, no console errors/warnings', p.resp[base + 'backlog.json'] === 200 && p.logs.length === 0 && backlogShell && p.reqs.filter(u => u.endsWith('.json')).length === 1 && p.reqs.some(u => u.endsWith('/backlog.json')) && p.reqs.every(u => isLocal(u)), { logs: p.logs, reqs: p.reqs });
+  check('Shell: backlog tab, snapshot label and time, Jira live link, footer', await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs[1].classList.contains('active') && !tabs[0].classList.contains('active') && T(document.querySelector('.snapshot-badge'))===${q(UI.shell.badge)} && T(document.getElementById('asof'))===${q(asOfLabel(ctx.BJ))} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname===${q(UI.shell.liveDashboardPath)} && live.target==='_blank' && live.rel.includes('noopener') && ${UI.shell.liveText}.test(T(live)) && ${UI.shell.footer}.test(T(document.querySelector('.foot')))`));
+  check('Backlog: the page has exactly one h1 (visually hidden)', await run(p, `const h=[...document.querySelectorAll('h1')]; return h.length===1 && T(h[0])===${q(UI.shell.h1.backlog)} && h[0].classList.contains('visually-hidden')`));
+  let bf = M.newBF(), query = '';
+  await verifyBacklog(p, B, bf, query, 'Backlog: no filters, every tile = independent calculation');
+  { const SR = await run(p, SCROLL_REGIONS); check('Backlog scroll regions: focusable and labelled exactly when they scroll', SR.every(r => r.scrolls ? r.tabindex === '0' && r.role === 'region' && !!r.label : r.tabindex === null && r.role === null), SR); }
+  const LB = await run(p, LAYOUT);
   check('Layout 1920x1080 (backlog): no page scroll; 5 KPI + 5 main + 1 table tiles; fills width and height', LB.sh <= LB.ih && LB.sw <= LB.iw && LB.tiles.length === 11 && Math.max(...LB.tiles.map(t => t.r)) >= LB.iw - 16 && Math.max(...LB.tiles.map(t => t.b)) >= LB.ih - 60, LB);
-  const sb = await run(p, `const b=tile('Backlog tickets').querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=200; const d=Math.round(th.getBoundingClientRect().top-b.getBoundingClientRect().top); const r={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, sticky:getComputedStyle(th).position, d}; b.scrollTop=0; return r;`);
+  const sb = await run(p, `const b=tile(${q(BT.table)}).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=200; const d=Math.round(th.getBoundingClientRect().top-b.getBoundingClientRect().top); const r={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, sticky:getComputedStyle(th).position, d}; b.scrollTop=0; return r;`);
   check('Backlog table: scrolls inside its tile, visible scrollbar, sticky header', sb.scrolls && sb.sb > 0 && sb.sticky === 'sticky' && Math.abs(sb.d) <= 2, sb);
   const D0 = await run(p, READ_BACKLOG);
-  const backlogSummaries = await run(p, `const tileBody=tile('Backlog tickets'); const hdr=[...tileBody.querySelectorAll('thead th')].map(T); const ix=hdr.indexOf('Summary'); return [...tileBody.querySelectorAll('tbody tr')].map(tr=>tr.children[ix].textContent)`);
-  check('Backlog: exact summary is preserved; columns present; empty points/days/epic/risk/cluster/splitting show "—"; table in sheet order; exact keys', ['Ticket', 'Summary', 'DoR status', 'Priority', 'Type', 'Story points', 'Days in status', 'Epic', 'Needs splitting', 'Risk / open question', 'Related / cluster'].every(h => D0.hdr.includes(h)) && eq(D0.keys, B.map(t => t.ticket)) && eq(backlogSummaries, B.map(t => t.summary || '—')) && D0.rows.every((r, i) => { const x = B[i]; const ix = h => D0.hdr.indexOf(h); return r[ix('Story points')] === (x.points == null ? '—' : String(x.points)) && r[ix('Days in status')] === (x.days == null ? '—' : String(x.days)) && r[ix('Epic')] === (x.epic || '—') && r[ix('Risk / open question')] === (x.risk || '—') && r[ix('Related / cluster')] === (x.cluster || '—') && r[ix('Needs splitting')] === (x.needsSplitting || '—'); }));
+  const backlogSummaries = await run(p, `const tb=tile(${q(BT.table)}); const hdr=[...tb.querySelectorAll('thead th')].map(T); const ix=hdr.indexOf('Summary'); return [...tb.querySelectorAll('tbody tr')].map(tr=>tr.children[ix].textContent)`);
+  check('Backlog: exact summary is preserved; columns present; empty points/days/epic/risk/cluster/splitting show "—"; table in sheet order; exact keys', UI.backlog.headers.every(h => D0.hdr.includes(h)) && eq(D0.keys, B.map(t => t.ticket)) && eq(backlogSummaries, B.map(t => t.summary || '—')) && D0.rows.every((r, i) => { const x = B[i]; const ix = h => D0.hdr.indexOf(h); return r[ix('Story points')] === (x.points == null ? '—' : String(x.points)) && r[ix('Days in status')] === (x.days == null ? '—' : String(x.days)) && r[ix('Epic')] === (x.epic || '—') && r[ix('Risk / open question')] === (x.risk || '—') && r[ix('Related / cluster')] === (x.cluster || '—') && r[ix('Needs splitting')] === (x.needsSplitting || '—'); }));
   check('DoR pills: Well-Formed/Ready #C6EFCE, Weak #FFEB9C, Missing #FFC7CE; N/A (Epic) neutral', await run(p, `const c={}; document.querySelectorAll('.pill').forEach(x=>c[T(x)]=getComputedStyle(x).backgroundColor); return (c['Well-Formed'] === undefined || c['Well-Formed']==='rgb(198, 239, 206)') && (c.Ready === undefined || c.Ready==='rgb(198, 239, 206)') && (c['N/A (Epic)'] === undefined || c['N/A (Epic)']==='rgb(232, 236, 241)') && (c.Weak === undefined || c.Weak==='rgb(255, 235, 156)') && (c.Missing === undefined || c.Missing==='rgb(255, 199, 206)')`));
-  { const L2 = await run(p, `return {ticket: colCells('Backlog tickets','Ticket'), epic: colCells('Backlog tickets','Epic'), cluster: colCells('Backlog tickets','Related / cluster'), summary: colCells('Backlog tickets','Summary'), risk: colCells('Backlog tickets','Risk / open question')}`);
-    check('Jira links (backlog): every Ticket cell is a link with the exact href, new tab, noopener', linkErrors(L2.ticket, B.map(t => t.ticket), 'ticket').length === 0 && L2.ticket.every(c => c.links.length === 1), linkErrors(L2.ticket, B.map(t => t.ticket), 'ticket'));
-    check('Jira links (backlog): every key in Epic is its own link, text unchanged', linkErrors(L2.epic, B.map(t => t.epic)).length === 0, linkErrors(L2.epic, B.map(t => t.epic)));
-    check('Jira links (backlog): every key in Related / cluster is its own link, text unchanged', linkErrors(L2.cluster, B.map(t => t.cluster)).length === 0 && L2.cluster.some(c => c.links.length > 1), linkErrors(L2.cluster, B.map(t => t.cluster)));
+  { const L2 = await run(p, `return {ticket: colCells(${q(BT.table)},'Ticket'), epic: colCells(${q(BT.table)},'Epic'), cluster: colCells(${q(BT.table)},'Related / cluster'), summary: colCells(${q(BT.table)},'Summary'), risk: colCells(${q(BT.table)},'Risk / open question')}`);
+    check('Jira links (backlog): every Ticket cell is a link with the exact href, new tab, noopener', M.linkErrors(L2.ticket, B.map(t => t.ticket), 'ticket').length === 0 && L2.ticket.every(c => c.links.length === 1), M.linkErrors(L2.ticket, B.map(t => t.ticket), 'ticket'));
+    check('Jira links (backlog): every key in Epic is its own link, text unchanged', M.linkErrors(L2.epic, B.map(t => t.epic)).length === 0, M.linkErrors(L2.epic, B.map(t => t.epic)));
+    check('Jira links (backlog): every key in Related / cluster is its own link, text unchanged', M.linkErrors(L2.cluster, B.map(t => t.cluster)).length === 0 && (L2.cluster.some(c => c.links.length > 1) || !B.some(t => M.keysIn(t.cluster).length > 1)), M.linkErrors(L2.cluster, B.map(t => t.cluster)));
     check('Jira links (backlog): Summary and Risk cells have no links', [...L2.summary, ...L2.risk].every(c => c.links.length === 0)); }
-  await run(p, `window.__prevented = 0; document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a.jira')) { e.preventDefault(); window.__prevented++; } }, true); tile('Backlog tickets').querySelector('a.jira').dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));`);
-  await verifyBacklog(p, B, newBF(), '', 'Backlog: state unchanged after clicking a Jira link');
+  await run(p, `window.__prevented = 0; document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a.jira')) { e.preventDefault(); window.__prevented++; } }, true); tile(${q(BT.table)}).querySelector('a.jira').dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));`);
+  await verifyBacklog(p, B, M.newBF(), '', 'Backlog: state unchanged after clicking a Jira link');
   check('Jira links (backlog): the click did not change filters', (await run(p, `return window.__prevented`)) === 1 && (await run(p, `return readCommon().tags.length`)) === 0);
-  const click = async (t, name, o) => run(p, `clickRow(${JSON.stringify(t)}, ${JSON.stringify(name)}, ${JSON.stringify(o || {})})`);
-  await click('Readiness (DoR)', 'Missing'); bf.dor = new Set(['Missing']);
-  await verifyBacklog(p, B, bf, q, 'Click DoR "Missing": KPIs, other tiles, matrix and table filtered; DoR tile keeps alternatives');
-  await click('Priority', 'High'); bf.priority = new Set(['High']);
-  await verifyBacklog(p, B, bf, q, 'Add Priority "High" (AND across dimensions)');
-  await click('Priority', 'Medium', { ctrl: true }); bf.priority.add('Medium');
-  await verifyBacklog(p, B, bf, q, 'Ctrl+click adds Priority "Medium" (OR within dimension)');
-  await click('Type', 'Story'); bf.type = new Set(['Story']);
-  await verifyBacklog(p, B, bf, q, 'Add Type "Story"');
-  const ageRow = AGEB.find(a => B.some(t => ageOf(t) === a));
-  await click('Days in status', ageRow); bf.age = new Set([ageRow]);
-  await verifyBacklog(p, B, bf, q, `Add age bucket "${ageRow}"`);
-  await run(p, `clickReset()`); bf = newBF();
-  await verifyBacklog(p, B, bf, q, 'Reset all clears the backlog filters');
-  const bm = {}; B.forEach(t => { const r = BKEY.priority(t), c = BKEY.dor(t); (bm[r] = bm[r] || {})[c] = 1; });
-  await run(p, `clickCell('Readiness x priority', 'Lowest', 'Weak')`); bf.priority = new Set(['Lowest']); bf.dor = new Set(['Weak']);
-  await verifyBacklog(p, B, bf, q, 'Matrix cell Lowest / Weak sets priority and DoR');
-  await run(p, `clickCell('Readiness x priority', 'Lowest', 'Weak')`); bf.priority = new Set(); bf.dor = new Set();
-  await verifyBacklog(p, B, bf, q, 'Same cell again clears both');
+  const click = async (t, name, o) => run(p, `clickRow(${q(t)}, ${q(name)}, ${q(o || {})})`);
+  // targets from the data: the most common DoR value, the two most common priorities, the most common type
+  const dor1 = M.mostCommon(B, M.BKEY.dor, ['—'])[0], prios = M.mostCommon(B, M.BKEY.priority, ['—']), type1 = M.mostCommon(B, M.BKEY.type, ['—'])[0];
+  await click(BT.dor, dor1); bf.dor = new Set([dor1]);
+  await verifyBacklog(p, B, bf, query, `Click DoR "${dor1}": KPIs, other tiles, matrix and table filtered; DoR tile keeps alternatives`);
+  await click(BT.priority, prios[0]); bf.priority = new Set([prios[0]]);
+  await verifyBacklog(p, B, bf, query, `Add Priority "${prios[0]}" (AND across dimensions)`);
+  if (prios[1]) { await click(BT.priority, prios[1], { ctrl: true }); bf.priority.add(prios[1]);
+    await verifyBacklog(p, B, bf, query, `Ctrl+click adds Priority "${prios[1]}" (OR within dimension)`); }
+  else skip('Backlog Ctrl+click on a second priority', 'the backlog has only one priority value');
+  await click(BT.type, type1); bf.type = new Set([type1]);
+  await verifyBacklog(p, B, bf, query, `Add Type "${type1}"`);
+  const ageRow = M.AGEB.find(a => B.some(t => M.ageOf(t) === a));
+  await click(BT.age, ageRow); bf.age = new Set([ageRow]);
+  await verifyBacklog(p, B, bf, query, `Add age bucket "${ageRow}"`);
+  await run(p, `clickReset()`); bf = M.newBF();
+  await verifyBacklog(p, B, bf, query, 'Reset all clears the backlog filters');
+  { // matrix: the populated priority/DoR cell with the fewest tickets
+    const cells = {}; B.forEach(t => { const k = M.BKEY.priority(t) + '\u0000' + M.BKEY.dor(t); cells[k] = (cells[k] || 0) + 1; });
+    const [pr, dr] = Object.keys(cells).sort((a, b) => cells[a] - cells[b] || a.localeCompare(b))[0].split('\u0000');
+    await run(p, `clickCell(${q(BT.matrix)}, ${q(pr)}, ${q(dr)})`); bf.priority = new Set([pr]); bf.dor = new Set([dr]);
+    await verifyBacklog(p, B, bf, query, `Matrix cell ${pr} / ${dr} sets priority and DoR`);
+    await run(p, `clickCell(${q(BT.matrix)}, ${q(pr)}, ${q(dr)})`); bf.priority = new Set(); bf.dor = new Set();
+    await verifyBacklog(p, B, bf, query, 'Same cell again clears both'); }
   // search
-  for (const s of ['mis', 'miss', 'missi', 'missing', ' MISSING ', 'Wea', 'weak', 'wel', 'well', 'WELL-FORMED', 'n/a', 'rea', 'ready']) { await run(p, `setQ(${JSON.stringify(s)})`); q = s; await verifyBacklog(p, B, bf, q, `Search "${s}" -> DoR prefix filter, hint and tag, all tiles consistent`); }
-  for (const s of ['mi', 'w', 'r', 'missingx', 'asset', 'APP-11']) { await run(p, `setQ(${JSON.stringify(s)})`); q = s; await verifyBacklog(p, B, bf, q, `Search "${s}" -> normal text search`); }
-  await run(p, `setQ('weak')`); q = 'weak'; await click('Priority', 'High'); bf.priority = new Set(['High']);
-  await verifyBacklog(p, B, bf, q, 'Search "weak" AND Priority High');
-  await run(p, `setQ('miss')`); q = 'miss';
-  await verifyBacklog(p, B, bf, q, 'Search "miss" AND Priority High (DoR Missing + High)');
-  await click('Readiness (DoR)', 'Weak'); bf.dor = new Set(['Weak']);
-  const zr = await verifyBacklog(p, B, bf, q, 'Search "miss" AND DoR tile "Weak": zero results, empty-state everywhere, count 0');
-  check('Zero results: KPIs are 0 and the empty text is the specified sentence', eq(zr.d.kpis.map(k => k.value).slice(0, 2), ['0', '0']) && zr.d.tableEmpty === 'No backlog tickets match these filters. Remove a tag or use Reset all.', zr.d.tableEmpty);
-  await run(p, `clickTagX(${zr.d.tags.indexOf('Search: DoR = Missing')})`); q = '';
-  await verifyBacklog(p, B, bf, q, 'Removing the search tag clears the search and the input box');
-  await run(p, `clickReset()`); bf = newBF();
-  await verifyBacklog(p, B, bf, q, 'Reset all clears everything on the backlog page');
-  // Priority and Type icons (SPEC 9b)
+  for (const s of ['mis', 'miss', 'missi', 'missing', ' MISSING ', 'Wea', 'weak', 'wel', 'well', 'WELL-FORMED', 'n/a', 'rea', 'ready']) { await run(p, `setQ(${q(s)})`); query = s; await verifyBacklog(p, B, bf, query, `Search "${s}" -> DoR prefix filter, hint and tag, all tiles consistent`); }
+  for (const s of ['mi', 'w', 'r', 'missingx', 'asset', B[0] ? B[0].ticket : 'APP-11']) { await run(p, `setQ(${q(s)})`); query = s; await verifyBacklog(p, B, bf, query, `Search "${s}" -> normal text search`); }
+  await run(p, `setQ('weak')`); query = 'weak'; await click(BT.priority, prios[0]); bf.priority = new Set([prios[0]]);
+  await verifyBacklog(p, B, bf, query, `Search "weak" AND Priority ${prios[0]}`);
+  await run(p, `setQ('miss')`); query = 'miss';
+  await verifyBacklog(p, B, bf, query, `Search "miss" AND Priority ${prios[0]} (DoR Missing + ${prios[0]})`);
+  const dorOther = M.mostCommon(B, M.BKEY.dor, ['—', 'Missing'])[0];
+  if (dorOther) {
+    await click(BT.dor, dorOther); bf.dor = new Set([dorOther]);
+    const zr = await verifyBacklog(p, B, bf, query, `Search "miss" AND DoR tile "${dorOther}": zero results, empty-state everywhere, count 0`);
+    check('Zero results: KPIs are 0 and the empty text is the specified sentence', eq(zr.d.kpis.map(k => k.value).slice(0, 2), ['0', '0']) && zr.d.tableEmpty === UI.backlog.empty, zr.d.tableEmpty);
+    await run(p, `clickTagX(${zr.d.tags.indexOf(UI.backlog.dorTag('Missing'))})`); query = '';
+    await verifyBacklog(p, B, bf, query, 'Removing the search tag clears the search and the input box');
+  } else skip('Backlog zero-result search', 'every backlog ticket has DoR Missing');
+  await run(p, `clickReset()`); bf = M.newBF(); query = ''; await run(p, `setQ('')`);
+  await verifyBacklog(p, B, bf, query, 'Reset all clears everything on the backlog page');
+  // Priority and Type icons (SPEC §10b)
   { const PR = ['Highest', 'High', 'Medium', 'Low', 'Lowest'], TY = ['Story', 'Bug', 'Sub-Bug', 'Epic', 'Task', 'Sub-task', 'Initiative', 'Doc Task'];
-    const r = await run(p, `const rows = (t, kind) => rowsOf(t).map(r => { const n = r.querySelector('.name'); return { name: T(n), icons: [...n.querySelectorAll('svg')].map(v => v.dataset.icon), hidden: [...n.querySelectorAll('svg')].every(v => v.getAttribute('aria-hidden') === 'true' && v.textContent === '' && !v.querySelector('title')) }; });
-      const cells = col => colCells('Backlog tickets', col).map(c => c.text); const tb = tile('Backlog tickets'); const hdr = [...tb.querySelectorAll('thead th')].map(T);
+    const r = await run(p, `const rows = t => rowsOf(t).map(r => { const n = r.querySelector('.name'); return { name: T(n), icons: [...n.querySelectorAll('svg')].map(v => v.dataset.icon), hidden: [...n.querySelectorAll('svg')].every(v => v.getAttribute('aria-hidden') === 'true' && v.textContent === '' && !v.querySelector('title')) }; });
+      const cells = col => colCells(${q(BT.table)}, col).map(c => c.text); const tb = tile(${q(BT.table)}); const hdr = [...tb.querySelectorAll('thead th')].map(T);
       const cellIcons = col => [...tb.querySelectorAll('tbody tr')].map(tr => [...tr.children[hdr.indexOf(col)].querySelectorAll('svg')].map(v => v.dataset.icon));
-      return { prio: rows('Priority'), type: rows('Type'), pc: cellIcons('Priority'), tc: cellIcons('Type'), ptxt: cells('Priority'), ttxt: cells('Type'), imgs: document.querySelectorAll('img').length };`);
+      return { prio: rows(${q(BT.priority)}), type: rows(${q(BT.type)}), pc: cellIcons('Priority'), tc: cellIcons('Type'), ptxt: cells('Priority'), ttxt: cells('Type'), imgs: document.querySelectorAll('img').length };`);
     const want = (kind, known, name) => known.includes(name) ? [kind + ':' + name] : [];
     check('Icons: every Priority and Type tile row has the right single icon before its (unchanged) name; unknown values have none; icons are decorative with no text', r.prio.every(x => eq(x.icons, want('priority', PR, x.name)) && x.hidden) && r.type.every(x => eq(x.icons, want('type', TY, x.name)) && x.hidden) && r.prio.some(x => x.icons.length) && r.type.some(x => x.icons.length), { p: r.prio, t: r.type });
     check('Icons: every Priority and Type table cell has the right single icon; the cell text is exactly the value (or a dash)', B.every((t, i) => eq(r.pc[i], t.priority && PR.includes(t.priority) ? ['priority:' + t.priority] : []) && eq(r.tc[i], t.type && TY.includes(t.type) ? ['type:' + t.type] : []) && r.ptxt[i] === (t.priority || '—') && r.ttxt[i] === (t.type || '—')), { pc: r.pc.slice(0, 3), ptxt: r.ptxt.slice(0, 3) });
     check('Icons: no image elements were added (inline SVG only)', r.imgs === 0); }
-  // epic multi-select (SPEC 7.4)
-  { const epics = [...new Set(B.map(BKEY.epic))].filter(k => k !== '(no epic)'), cnt = {}; B.forEach(t => { cnt[BKEY.epic(t)] = (cnt[BKEY.epic(t)] || 0) + 1; });
-    const e1 = epics.find(k => k.startsWith('APP-718 ')), e2 = epics.find(k => k.startsWith('APP-55 '));
-    const tick = n => run(p, `const l=[...document.querySelectorAll('.epicopt')].find(l => l.querySelector('.name').textContent === ${JSON.stringify(n)}); l.querySelector('input').click();`);
-    check('Epic filter: closed at the start, button says "Epic ▾" with aria-haspopup, one checkbox per epic plus (no epic)', (r => !r.open && r.expanded === 'false' && r.haspopup === 'true' && r.btn === 'Epic \u25be' && r.opts.length === epics.length + 1)(await run(p, READ_EPIC)));
+  // epic multi-select (SPEC §7.4): the two epics with the most tickets
+  { const cnt = {}; B.forEach(t => { cnt[M.BKEY.epic(t)] = (cnt[M.BKEY.epic(t)] || 0) + 1; });
+    const epics = Object.keys(cnt).filter(k => k !== UI.backlog.noEpic);
+    const ranked = M.mostCommon(B, M.BKEY.epic, [UI.backlog.noEpic]);
+    const [e1, e2] = ranked, short = e => String(e).split(/\s/)[0];
+    const tick = n => run(p, `const l=[...document.querySelectorAll('.epicopt')].find(l => l.querySelector('.name').textContent === ${q(n)}); l.querySelector('input').click();`);
+    check('Epic filter: closed at the start, button says "Epic ▾", a disclosure (aria-expanded + aria-controls, no aria-haspopup), one checkbox per epic plus (no epic)', (r => !r.open && r.expanded === 'false' && r.haspopup === null && r.controls === 'epic-pop' && r.popId === 'epic-pop' && r.btn === UI.backlog.epicButton(0) && r.opts.length === epics.length + (cnt[UI.backlog.noEpic] ? 1 : 0))(await run(p, READ_EPIC)), await run(p, READ_EPIC).then(r => ({ haspopup: r.haspopup, controls: r.controls, n: r.opts.length })));
     await run(p, `document.getElementById('epic-btn').click()`);
     check('Epic filter: clicking the button opens the panel (aria-expanded=true)', (r => r.open && r.expanded === 'true')(await run(p, READ_EPIC)));
-    await verifyBacklog(p, B, bf, q, 'Epic panel open: nothing is filtered yet and the option counts equal the data');
-    await tick(e1); bf.epic = new Set([e1]);
-    await verifyBacklog(p, B, bf, q, 'Epic: ticking APP-718 filters every KPI, tile, the matrix and the table; tag "Epic: ..." appears');
-    check('Epic filter: the panel stays open while ticking', (r => r.open)(await run(p, READ_EPIC)));
-    await tick(e2); bf.epic.add(e2);
-    await verifyBacklog(p, B, bf, q, 'Epic: ticking APP-55 as well shows both epics together (OR): numbers equal the union');
-    { const d = await run(p, READ_BACKLOG), want = B.filter(t => [e1, e2].includes(BKEY.epic(t))).length;
-      check(`Epic: APP-718 + APP-55 together = ${want} tickets (${cnt[e1]} + ${cnt[e2]}); button reads "Epic (2)"`, want === cnt[e1] + cnt[e2] && d.kpis[0].value === String(want) && (await run(p, READ_EPIC)).btn === 'Epic (2) \u25be', d.kpis[0]); }
-    await run(p, `clickRow('Readiness (DoR)', 'Weak')`); bf.dor = new Set(['Weak']);
-    await verifyBacklog(p, B, bf, q, 'Epic combines with a DoR selection by AND (APP-718 + APP-55, DoR Weak)');
-    await run(p, `setQ('weak')`); q = 'weak';
-    await verifyBacklog(p, B, bf, q, 'Epic combines with the search by AND');
-    await run(p, `setQ('')`); q = ''; await run(p, `clickReset()`); bf = newBF();
-    check('Epic: Reset all unticks every checkbox and closes nothing it should not', (r => r.opts.every(o => !o.checked) && r.btn === 'Epic \u25be')(await run(p, READ_EPIC)));
-    await tick(e1); bf.epic = new Set([e1]); await tick('(no epic)'); bf.epic.add('(no epic)');
-    await verifyBacklog(p, B, bf, q, 'Epic: "(no epic)" can be ticked together with an epic');
-    const tagIx = (await run(p, `return readCommon().tags`)).findIndex(t => t === 'Epic: ' + e1);
-    await run(p, `clickTagX(${tagIx})`); bf.epic.delete(e1);
-    await verifyBacklog(p, B, bf, q, 'Epic: removing the tag with x unticks that checkbox only');
-    await run(p, `document.querySelector('.epicclear').click()`); bf.epic = new Set();
-    await verifyBacklog(p, B, bf, q, 'Epic: Clear unticks every epic');
-    check('Epic: clicking a tag x (outside the panel) closed the panel, as any click outside does', !(await run(p, READ_EPIC)).open);
+    await verifyBacklog(p, B, bf, query, 'Epic panel open: nothing is filtered yet and the option counts equal the data');
+    if (e1 && e2) {
+      await tick(e1); bf.epic = new Set([e1]);
+      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e1)} filters every KPI, tile, the matrix and the table; tag "Epic: ..." appears`);
+      check('Epic filter: the panel stays open while ticking', (r => r.open)(await run(p, READ_EPIC)));
+      await tick(e2); bf.epic.add(e2);
+      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e2)} as well shows both epics together (OR): numbers equal the union`);
+      { const d = await run(p, READ_BACKLOG), want = B.filter(t => [e1, e2].includes(M.BKEY.epic(t))).length;
+        check(`Epic: ${short(e1)} + ${short(e2)} together = ${want} tickets (${cnt[e1]} + ${cnt[e2]}); button reads "Epic (2)"`, want === cnt[e1] + cnt[e2] && d.kpis[0].value === String(want) && (await run(p, READ_EPIC)).btn === UI.backlog.epicButton(2), d.kpis[0]); }
+      await run(p, `clickRow(${q(BT.dor)}, ${q(dor1)})`); bf.dor = new Set([dor1]);
+      await verifyBacklog(p, B, bf, query, `Epic combines with a DoR selection by AND (${short(e1)} + ${short(e2)}, DoR ${dor1})`);
+      await run(p, `setQ('weak')`); query = 'weak';
+      await verifyBacklog(p, B, bf, query, 'Epic combines with the search by AND');
+      await run(p, `setQ('')`); query = ''; await run(p, `clickReset()`); bf = M.newBF();
+      check('Epic: Reset all unticks every checkbox and closes nothing it should not', (r => r.opts.every(o => !o.checked) && r.btn === UI.backlog.epicButton(0))(await run(p, READ_EPIC)));
+      await tick(e1); bf.epic = new Set([e1]);
+      if (cnt[UI.backlog.noEpic]) { await tick(UI.backlog.noEpic); bf.epic.add(UI.backlog.noEpic); }
+      await verifyBacklog(p, B, bf, query, 'Epic: "(no epic)" can be ticked together with an epic');
+      const tagIx = (await run(p, `return readCommon().tags`)).findIndex(t => t === 'Epic: ' + e1);
+      await run(p, `clickTagX(${tagIx})`); bf.epic.delete(e1);
+      await verifyBacklog(p, B, bf, query, 'Epic: removing the tag with x unticks that checkbox only');
+      await run(p, `document.querySelector('.epicclear').click()`); bf.epic = new Set();
+      await verifyBacklog(p, B, bf, query, 'Epic: Clear unticks every epic');
+      check('Epic: clicking a tag x (outside the panel) closed the panel, as any click outside does', !(await run(p, READ_EPIC)).open);
+    } else skip('Epic multi-select checks', 'the backlog has fewer than two epics');
     await run(p, `document.getElementById('epic-btn').click()`);
     check('Epic: Clear keeps the panel open', (await run(p, `document.querySelector('.epicclear').click(); return !document.querySelector('.epicpop').hidden`)));
     await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
@@ -762,23 +733,23 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
     await run(p, `document.getElementById('epic-btn').click()`); await run(p, `document.querySelector('.kpi').click()`);
     check('Epic: a click outside the panel closes it', (r => !r.open)(await run(p, READ_EPIC)));
     await run(p, `document.getElementById('epic-btn').click()`);
-    const lay = await run(p, layoutJs);
+    const lay = await run(p, LAYOUT);
     check('Epic: opening the panel adds no page scroll and keeps the panel inside the viewport', lay.sh <= lay.ih && lay.sw <= lay.iw && await run(p, `const r=document.querySelector('.epicpop').getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.bottom<=innerHeight`), lay);
     await run(p, `document.getElementById('epic-btn').click()`);
-    await verifyBacklog(p, B, bf, q, 'Epic: opening and closing the panel changed no filter'); }
+    await verifyBacklog(p, B, bf, query, 'Epic: opening and closing the panel changed no filter'); }
   // keyboard
   await run(p, `document.activeElement && document.activeElement.blur()`);
-  let bfk = null; for (let i = 0; i < 40 && !bfk; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile('Readiness (DoR)').contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); if (r) bfk = r; }
+  let bfk = null; for (let i = 0; i < 40 && !bfk; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile(${q(BT.dor)}).contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); if (r) bfk = r; }
   check('Keyboard: Tab reaches a DoR row with a visible focus outline', bfk && bfk.outline !== 'none' && parseFloat(bfk.w) >= 2, bfk);
-  await p.key('Enter', 'Enter', 13, '\r'); bf.dor = new Set([bfk.name]);
-  await verifyBacklog(p, B, bf, q, 'Keyboard: Enter selects the focused DoR row');
-  await run(p, `clickReset()`); bf = newBF();
+  if (bfk) { await p.key('Enter', 'Enter', 13, '\r'); bf.dor = new Set([bfk.name]);
+    await verifyBacklog(p, B, bf, query, 'Keyboard: Enter selects the focused DoR row'); }
+  await run(p, `clickReset()`); bf = M.newBF();
   await run(p, `document.getElementById('q').focus()`); await p.key('Tab', 'Tab', 9, undefined, 8);
   { const ek = await run(p, `const a=document.activeElement; return a && a.id==='epic-btn' ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`);
     check('Epic: the button is reachable with Tab (just before the search box) and shows a visible focus outline', ek && ek.outline !== 'none' && parseFloat(ek.w) >= 2, ek); }
   check('Backlog: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   for (const [w, h, mode] of [[1440, 900, 'dash'], [1536, 864, 'dash'], [1280, 720, 'fallback'], [800, 900, 'fallback'], [480, 900, 'fallback']]) {
-    await p.resize(w, h); const r = await run(p, layoutJs);
+    await p.resize(w, h); const r = await run(p, LAYOUT);
     if (mode === 'dash') check(`Backlog layout ${w}x${h}: dashboard mode, no page scroll, nothing beyond the viewport`, r.sh <= r.ih && r.sw <= r.iw && r.bad.length === 0, { sh: r.sh, ih: r.ih, sw: r.sw, bad: r.bad });
     else check(`Backlog layout ${w}x${h}: fallback layout, no page-level horizontal scroll`, r.sw <= r.iw && r.bad.length === 0 && r.sh > r.ih, { sw: r.sw, iw: r.iw, bad: r.bad });
   }
@@ -786,230 +757,222 @@ const layoutJs = `const d=document.scrollingElement; const bodies=[...document.q
 
   // =============== QUALITY INTAKE ===============
   console.log('\n--- Quality Intake page (real data) ---');
-  const Q = J('quality-intake.json');
-  p = await openPage(base + 'quality-intake.html');
-  check('Quality Intake: JSON 200, local requests only, no console errors', p.resp[base + 'quality-intake.json'] === 200 && p.logs.length === 0 && p.reqs.filter(u => u.endsWith('.json')).length === 1 && p.reqs.every(u => u.startsWith('http://127.0.0.1:' + ports.real + '/')), { resp: p.resp, reqs: p.reqs, logs: p.logs });
-  const qualityShell = await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[2])==='Quality Intake' && tabs[2].classList.contains('active') && tabs[2].getAttribute('aria-current')==='page' && T(document.querySelector('.snapshot-badge'))==='SNAPSHOT · NOT LIVE' && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname==='/jira/dashboards/18635' && live.target==='_blank' && live.rel.includes('noopener') && /LIVE/.test(T(live)) && T(document.querySelector('h1'))==='Quality Intake' && /intake signal, not a defect rate/i.test(T(document.querySelector('.qi-intro'))) && /PSWAT includes all/i.test(T(document.querySelector('.qi-intro'))) `);
-  check('Quality Intake: third tab active, intake-signal caveat and source definitions', qualityShell);
+  p = await open(base + 'quality-intake.html');
+  check('Quality Intake: JSON 200, local requests only, no console errors', p.resp[base + 'quality-intake.json'] === 200 && p.logs.length === 0 && p.reqs.filter(u => u.endsWith('.json')).length === 1 && p.reqs.every(u => isLocal(u)), { resp: p.resp, reqs: p.reqs, logs: p.logs });
+  const qualityShell = await run(p, `const tabs=[...document.querySelectorAll('.tab')], live=document.querySelector('.live-dashboard-link'); return tabs.length===3 && T(tabs[2])===${q(UI.shell.tabs[2])} && tabs[2].classList.contains('active') && tabs[2].getAttribute('aria-current')==='page' && T(document.querySelector('.snapshot-badge'))===${q(UI.shell.badge)} && live && live.href===window.AF.jiraDashboardUrl && new URL(live.href).pathname===${q(UI.shell.liveDashboardPath)} && live.target==='_blank' && live.rel.includes('noopener') && ${UI.shell.liveText}.test(T(live)) && document.querySelectorAll('h1').length===1 && T(document.querySelector('h1'))===${q(UI.quality.title)} && ${UI.quality.caveat}.test(T(document.querySelector('.qi-intro'))) && ${UI.quality.pswatDefinition}.test(T(document.querySelector('.qi-intro')))`);
+  check('Quality Intake: third tab active, one h1, intake-signal caveat and source definitions', qualityShell);
   const qCards = await run(p, `const txt=n=>n?T(n):''; return [...document.querySelectorAll('.qi-sprint')].map(card=>({id:Number(card.dataset.sprintId),title:txt(card.querySelector('h2')),sub:txt(card.querySelector('.sub')),partial:txt(card.querySelector('.qi-partial')),complete:txt(card.querySelector('.qi-complete')),rows:[...card.querySelectorAll('.qi-metrics tbody tr')].map(r=>({source:txt(r.querySelector('th')),count:txt(r.querySelector('.qi-count')||r.querySelector('.qi-na')),rate:txt(r.lastElementChild)}))}))`);
-  const qExpected = Q.sprints.map(s => ({ id: s.sprintId, title: s.name || `Sprint ${s.sprintId}`, sub: `Sprint ${s.sprintId} · Window: ${s.windowStart || 'n/a'} to ${s.windowEnd || 'n/a'} · ${s.weekdays == null ? 'n/a' : s.weekdays} weekdays`, partial: s.partial === true ? 'ACTIVE WINDOW · PARTIAL' : '', complete: s.partial === false ? 'COMPLETE WINDOW' : '', rows: [['PSWAT','pswat'],['APP Bugs','appBugs']].map(([source,k])=>({source,count:s.counts && s.counts[k] != null ? String(s.counts[k]) : 'n/a',rate:s.ratesPer10Weekdays && s.ratesPer10Weekdays[k] != null ? (Math.round(s.ratesPer10Weekdays[k]*10)/10).toFixed(1) : 'n/a'})) }));
+  const NA = UI.quality.na;
+  const qExpected = Q.sprints.map(s => ({ id: s.sprintId, title: s.name || `Sprint ${s.sprintId}`, sub: `Sprint ${s.sprintId} · Window: ${s.windowStart || NA} to ${s.windowEnd || NA} · ${s.weekdays == null ? NA : s.weekdays} weekdays`, partial: s.partial === true ? UI.quality.partial : '', complete: s.partial === false ? UI.quality.complete : '', rows: UI.quality.sources.map(([source, k]) => ({ source, count: s.counts && s.counts[k] != null ? String(s.counts[k]) : NA, rate: s.ratesPer10Weekdays && s.ratesPer10Weekdays[k] != null ? (Math.round(s.ratesPer10Weekdays[k] * 10) / 10).toFixed(1) : NA })) }));
   check('Quality Intake: sprint windows, partial marker, raw counts and rates match the JSON', eq(qCards, qExpected), { actual: qCards, expected: qExpected });
   const qChoice = Q.sprints.find(s => Array.isArray(s.tickets) && s.tickets.length && s.counts && s.counts.pswat > 0) || Q.sprints.find(s => Array.isArray(s.tickets) && s.tickets.length);
   if (qChoice) {
     const qSource = qChoice.tickets[0].source, qSourceKey = qSource === 'PSWAT' ? 'pswat' : 'appBugs', qItems = qChoice.tickets.filter(t => t.source === qSource);
-    await run(p, `document.querySelectorAll('.qi-sprint').forEach(c=>{if(c.dataset.sprintId===${JSON.stringify(String(qChoice.sprintId))}) [...c.querySelectorAll('.qi-count')].find(b=>b.getAttribute('data-key')===${JSON.stringify(String(qChoice.sprintId)+'|'+qSourceKey)}).click()})`);
-    const qDetail = await run(p, `const card=[...document.querySelectorAll('.qi-sprint')].find(c=>c.dataset.sprintId===${JSON.stringify(String(qChoice.sprintId))});const d=card.querySelector('.qi-details'),b=card.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]'),box=d&&d.querySelector('.qi-ticket-scroll'),hint=d&&d.querySelector('.qi-scroll-hint');return {open:!!d,head:T(d&&d.querySelector('h3')),expanded:b&&b.getAttribute('aria-expanded'),overflow:box&&box.scrollHeight>box.clientHeight+1,hint:hint&&T(hint),aria:box&&box.getAttribute('aria-label'),bottomGap:Math.round(card.getBoundingClientRect().bottom-box.getBoundingClientRect().bottom),rows:[...(d?d.querySelectorAll('tbody tr'):[])].map(r=>({key:T(r.children[0]),summary:T(r.children[1]),type:T(r.children[2]),status:T(r.children[3]),created:T(r.children[4]),href:r.querySelector('a')&&r.querySelector('a').href}))}`);
-    const qRowsExpected = qItems.map(t=>({key:t.key,summary:t.summary || 'n/a',type:t.type || 'n/a',status:t.status || 'n/a',created:t.created || 'n/a',href:t.url || null}));
-    check('Quality Intake: clicking a source count expands exactly its ticket list with Jira-linked keys', qDetail.open && qDetail.expanded === 'true' && qDetail.head === `${qSource} ticket detail · ${qItems.length}` && eq(qDetail.rows,qRowsExpected), {actual:qDetail,expected:qRowsExpected});
-    check('Quality Intake: expanded list reaches the bottom of its card and explains visible overflow', qDetail.bottomGap <= 48 && (!qDetail.overflow || qDetail.hint === `Scroll within this list to see all ${qItems.length} tickets.` && qDetail.aria.includes(`scroll to view all ${qItems.length} tickets`)), {overflow:qDetail.overflow,hint:qDetail.hint,aria:qDetail.aria,bottomGap:qDetail.bottomGap});
-    await run(p, `document.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]').click()`);
-    check('Quality Intake: clicking the expanded count closes its detail', await run(p, `return !document.querySelector('.qi-details') && document.querySelector('.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]').getAttribute('aria-expanded')==='false'`));
+    const sel = `.qi-count[data-key="${qChoice.sprintId}|${qSourceKey}"]`;
+    await run(p, `document.querySelector(${q(sel)}).click()`);
+    const qDetail = await run(p, `const card=[...document.querySelectorAll('.qi-sprint')].find(c=>c.dataset.sprintId===${q(String(qChoice.sprintId))});const d=card.querySelector('.qi-details'),b=card.querySelector(${q(sel)}),box=d&&d.querySelector('.qi-ticket-scroll'),hint=d&&d.querySelector('.qi-scroll-hint');return {open:!!d,head:T(d&&d.querySelector('h3')),expanded:b&&b.getAttribute('aria-expanded'),overflow:box&&box.scrollHeight>box.clientHeight+1,hint:hint&&T(hint),aria:box&&box.getAttribute('aria-label'),tabindex:box&&box.getAttribute('tabindex'),role:box&&box.getAttribute('role'),bottomGap:Math.round(card.getBoundingClientRect().bottom-box.getBoundingClientRect().bottom),rows:[...(d?d.querySelectorAll('tbody tr'):[])].map(r=>({key:T(r.children[0]),summary:T(r.children[1]),type:T(r.children[2]),status:T(r.children[3]),created:T(r.children[4]),href:r.querySelector('a')&&r.querySelector('a').href}))}`);
+    const qRowsExpected = qItems.map(t => ({ key: t.key, summary: t.summary || NA, type: t.type || NA, status: t.status || NA, created: t.created || NA, href: t.url || null }));
+    check('Quality Intake: clicking a source count expands exactly its ticket list with Jira-linked keys', qDetail.open && qDetail.expanded === 'true' && qDetail.head === UI.quality.detailHead(qSource, qItems.length) && eq(qDetail.rows, qRowsExpected), { actual: qDetail, expected: qRowsExpected });
+    check('Quality Intake: expanded list reaches the bottom of its card, explains visible overflow, and is a focusable region only when it overflows', qDetail.bottomGap <= 48 && (qDetail.overflow ? qDetail.hint === UI.quality.scrollHint(qItems.length) && qDetail.aria.includes(UI.quality.scrollAria(qItems.length)) && qDetail.tabindex === '0' && qDetail.role === 'region' : qDetail.tabindex === null && qDetail.role === null), { overflow: qDetail.overflow, hint: qDetail.hint, aria: qDetail.aria, tabindex: qDetail.tabindex, bottomGap: qDetail.bottomGap });
+    await run(p, `document.querySelector(${q(sel)}).click()`);
+    check('Quality Intake: clicking the expanded count closes its detail', await run(p, `return !document.querySelector('.qi-details') && document.querySelector(${q(sel)}).getAttribute('aria-expanded')==='false'`));
   } else check('Quality Intake: click-through has a populated source row', false);
   check('Quality Intake: no console errors after interactions', p.logs.length === 0, p.logs);
   await p.close();
 
   // =============== FIXTURE ===============
   console.log('\n--- Fixture edge cases (copy of the app) ---');
-  p = await openPage('http://127.0.0.1:' + ports.fixture + '/index.html');
-  const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint || null, today: FJ.refreshedAt, thr: 1 }; let ff = newF();
-  await verifySprint(p, F, ff, 'Fixture: all tiles consistent (Other bucket, Unassigned merge, null points, burndown, new KPIs)', FCTX);
+  p = await open(url.fixture + 'index.html');
+  const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint, today: FJ.refreshedAt, thr: 1 };
+  await verifySprint(p, F, M.newF(), 'Fixture: all tiles consistent (Other bucket, Unassigned merge, null points, removed ticket, Dev to Test, days in status)', FCTX);
   const fd = await run(p, READ_SPRINT);
-  { const fe = expectSprint(F, newF(), FCTX), un = fe.contribution['Unassigned'];
-    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${sumP(F)}); null role names merge into Unassigned`, fd.status['Other'] && fd.status['Other'][0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${sumP(F)}SP` && un && fd.contribution.some(r=>r.name==='Unassigned'), {un, rows:fd.contribution.map(r=>r.name)}); }
-  check('Fixture: literal owner "Unassigned" is one Team Contribution row; null points show "—" in detail; Blocked text in detail', await run(p, `const hdr=[...tile('Ticket detail').querySelectorAll('thead th')].map(T); const rows=[...tile('Ticket detail').querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return tile('Team Contribution').querySelectorAll('.contribution-name').length === [...new Set([...tile('Team Contribution').querySelectorAll('.contribution-name')].map(T))].length && [...tile('Team Contribution').querySelectorAll('.contribution-name')].filter(x=>T(x)==='Unassigned').length===1 && r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`));
-  await run(p, `clickRow('Tickets by status', 'Other')`); ff.status = new Set(['Other']);
+  { const fe = M.expectSprint(F, M.newF(), FCTX), un = fe.contribution.Unassigned;
+    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${M.sumP(F)}); null role names merge into Unassigned`, fd.status.Other && fd.status.Other[0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${M.sumP(F)}SP` && un && fd.contribution.some(r => r.name === 'Unassigned'), { un, rows: fd.contribution.map(r => r.name) }); }
+  check('Fixture: literal owner "Unassigned" is one Team Contribution row; null points show "—" in detail; Blocked text in detail', await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return tile(${q(ST.contribution)}).querySelectorAll('.contribution-name').length === [...new Set([...tile(${q(ST.contribution)}).querySelectorAll('.contribution-name')].map(T))].length && [...tile(${q(ST.contribution)}).querySelectorAll('.contribution-name')].filter(x=>T(x)==='Unassigned').length===1 && r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`));
+  { const fk = FJ.sprint.carriedOver.ticketKeys || [];
+    await run(p, `clickEl(kpi(${q(UI.sprint.kpi.carried)}))`);
+    const got = await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
+    check('Fixture: carriedOver.ticketKeys makes Carried over clickable and it filters the lower section to those keys', eq(got, fk), { got, fk });
+    await run(p, `clickReset()`); }
+  await run(p, `clickRow(${q(ST.status)}, 'Other')`); const ff = M.newF(); ff.status = new Set(['Other']);
   await verifySprint(p, F, ff, 'Fixture: clicking the Other status filters to the Blocked ticket', FCTX);
   await run(p, `clickReset()`);
   check('Fixture: no console errors', p.logs.length === 0, p.logs);
   await p.close();
 
   console.log('\n--- Burndown, cycle time, mid-sprint and carried over with hand-made data (copies of the app) ---');
-  p = await openPage(`http://127.0.0.1:${ports.burn}/index.html`);
+  p = await open(url.burn + 'index.html');
   await run(p, `AF.config.midSprintThresholdDays = 2; AF.store.reset()`); // the hand-made sprint's expected numbers are worked out by hand for a 2-day threshold, independent of the app default
-  { const BJ = JSON.parse(mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 } }, SP_OK))), BCTX = { sprint: BJ.sprint, today: BJ.refreshedAt, thr: 2 };
-    await verifySprint(p, BURN_T, newF(), 'Hand-made sprint: every tile and the burndown equal the independent calculation', BCTX);
+  { const BJ2 = JSON.parse(mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK))), BCTX = { sprint: BJ2.sprint, today: BJ2.refreshedAt, thr: 2 };
+    await verifySprint(p, BURN_T, M.newF(), 'Hand-made sprint: every tile and the burndown equal the independent calculation', BCTX);
     const k = await run(p, READ_SPRINT), bd = await run(p, READ_BD);
     check('Hand-made sprint: KPIs equal the numbers worked out by hand (6 items, 15 points, 87% done, 2 added mid-sprint, 3 carried over, 2 no tester, cycle time 3.3)', eq(k.kpis.map(x => x.value), ['6', '15', '87%', '2', '3', '2', '—', '3.3']) && k.kpis[7].hint === 'days, over 3 Done tickets' && k.kpis[3].hint === '2 points, added after day 2' && k.kpis[4].hint === '20% of tickets, 8 points', k.kpis);
     check('Hand-made sprint: scope [13,13,13,13] (APP-903 enters on 9/26, after today), remaining [9,4,1,1] then nothing after today; ideal falls from the starting scope 13 to 0 in steps of 13/6; done per day [4,5,3,0,0,0,0] (the pre-start date counts on day 1)', eq(bd.days.map(d => d.remaining), [9, 4, 1, 1, null, null, null]) && eq(bd.days.map(d => d.scope), [13, 13, 13, 13, 15, 15, 15]) && eq(bd.days.map(d => Math.round(d.ideal * 1000) / 1000), [13, 10.833, 8.667, 6.5, 4.333, 2.167, 0]) && eq(bd.days.map(d => d.done), [4, 5, 3, 0, 0, 0, 0]), bd.days);
     check('Hand-made sprint: markers on 9/25 (1 ticket, 0 points) and 9/26 (1 ticket, 2 points); today is 9/25; subtitle and footnote as specified', eq(bd.added.map(a => [a.date, a.count, a.points]), [['2026-09-25', 1, 0], ['2026-09-26', 1, 2]]) && bd.todayLabel && bd.sub === '1 of 13 points remaining today, ideal 6.5' && bd.foot.includes('1 Done ticket has no done date and is not on the line.'), { added: bd.added, sub: bd.sub, foot: bd.foot });
-    // marker click: list of added tickets (SPEC 6.3, D44)
-    const PANEL = `const b = tile('Burndown'); const pop = b.querySelector('.bd-pop'); const mk = [...b.querySelectorAll('g.bd-added')].map(g => [g.dataset.date, g.getAttribute('aria-pressed'), g.getAttribute('class')]);
-      return { open: !!pop, head: pop ? T(pop.querySelector('.bd-pop-head')) : null, hdr: pop ? [...pop.querySelectorAll('th')].map(T) : [], rows: pop ? [...pop.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(T)) : [],
+    // marker click: list of added tickets (SPEC §6.3, D44)
+    const PANEL = `const b = tile(${q(ST.burndown)}); const pop = b.querySelector('.bd-pop'); const mk = [...b.querySelectorAll('g.bd-added')].map(g => [g.dataset.date, g.getAttribute('aria-pressed'), g.getAttribute('class')]);
+      return { open: !!pop, role: pop ? pop.getAttribute('role') : null, label: pop ? pop.getAttribute('aria-label') : null, head: pop ? T(pop.querySelector('.bd-pop-head')) : null, hdr: pop ? [...pop.querySelectorAll('th')].map(T) : [], rows: pop ? [...pop.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(T)) : [],
         links: pop ? [...pop.querySelectorAll('tbody a')].map(a => [T(a), a.getAttribute('href'), a.getAttribute('target')]) : [], mk, inside: pop ? (r => r.left >= b.getBoundingClientRect().left - 1 && r.right <= b.getBoundingClientRect().right + 1 && r.top >= b.getBoundingClientRect().top - 1 && r.bottom <= b.getBoundingClientRect().bottom + 1)(pop.getBoundingClientRect()) : null,
         tags: [...document.querySelectorAll('.tags .tag')].length, kpis: [...document.querySelectorAll('.kpi .value')].map(T) };`;
     const kBefore = (await run(p, PANEL)).kpis;
     check('Marker panel: closed at the start; markers expose aria-pressed=false', (r => !r.open && eq(r.mk.map(m => m[1]), ['false', 'false']))(await run(p, PANEL)));
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-added[data-date="2026-09-26"]'))`);
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-26"]'))`);
     { const r = await run(p, PANEL);
-      check('Marker panel: clicking the 9/26 marker lists exactly APP-903 (Jira link, summary, 2 points, In Progress, Bob) under "Added Sep. 26, 2026"', r.open && r.head.startsWith('Added Sep. 26, 2026') && r.head.includes('1 ticket, 2 points') && eq(r.hdr, ['Ticket', 'Summary', 'Pts', 'Status', 'Assignee']) && eq(r.rows, [['APP-903', 's', '2', 'In Progress', 'Bob']]) && eq(r.links, [['APP-903', 'https://mysnaplogic.atlassian.net/browse/APP-903', '_blank']]) && eq(r.mk, [['2026-09-25', 'false', 'bd-added'], ['2026-09-26', 'true', 'bd-added bd-sel']]), r);
+      check('Marker panel: clicking the 9/26 marker lists exactly APP-903 (Jira link, summary, 2 points, In Progress, Bob) under "Added Sep. 26, 2026"; it is a labelled region', r.open && r.role === 'region' && /Sep\. 26, 2026/.test(r.label || '') && r.head.startsWith('Added Sep. 26, 2026') && r.head.includes('1 ticket, 2 points') && eq(r.hdr, UI.sprint.burndown.panelHeaders) && eq(r.rows, [['APP-903', 's', '2', 'In Progress', 'Bob']]) && eq(r.links, [['APP-903', UI.jiraBrowse + 'APP-903', '_blank']]) && eq(r.mk, [['2026-09-25', 'false', 'bd-added'], ['2026-09-26', 'true', 'bd-added is-selected']]), r);
       check('Marker panel: it stays inside the burndown tile and changes no filter, tag or KPI', r.inside === true && r.tags === 0 && eq(r.kpis, kBefore), r); }
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-added[data-date="2026-09-25"]'))`);
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-25"]'))`);
     { const r = await run(p, PANEL);
       check('Marker panel: another marker replaces the list (9/25: APP-906, 0 points, In Review, Ann)', r.open && r.head.startsWith('Added Sep. 25, 2026') && eq(r.rows, [['APP-906', 's', '0', 'In Review', 'Ann']]) && eq(r.mk.map(m => m[1]), ['true', 'false']), r); }
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-added[data-date="2026-09-25"]'))`);
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-25"]'))`);
     check('Marker panel: clicking the same marker again closes it', (r => !r.open && eq(r.mk.map(m => m[1]), ['false', 'false']))(await run(p, PANEL)));
-    await run(p, `tile('Burndown').querySelector('g.bd-added[data-date="2026-09-26"]').dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true}))`);
-    check('Marker panel: Enter on a marker opens it, and the marker keeps keyboard focus', await run(p, `const a = document.activeElement; return !!tile('Burndown').querySelector('.bd-pop') && a && a.classList && a.classList.contains('bd-added') && a.dataset.date === '2026-09-26'`));
+    await run(p, `tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-26"]').dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true}))`);
+    check('Marker panel: Enter on a marker opens it, and the marker keeps keyboard focus', await run(p, `const a = document.activeElement; return !!tile(${q(ST.burndown)}).querySelector('.bd-pop') && a && a.classList && a.classList.contains('bd-added') && a.dataset.date === '2026-09-26'`));
     await p.resize(1440, 900);
     check('Marker panel: stays open and inside the tile after the chart is redrawn at a new window size', (r => r.open && r.inside === true && eq(r.rows.map(x => x[0]), ['APP-903']))(await run(p, PANEL)));
     await p.resize(1920, 1080);
     await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
     check('Marker panel: Escape closes it', (r => !r.open && eq(r.mk.map(m => m[1]), ['false', 'false']))(await run(p, PANEL)));
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-added[data-date="2026-09-26"]'))`);
-    await run(p, `clickEl(tile('Burndown').querySelector('.bd-pop-x'))`);
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-26"]'))`);
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('.bd-pop-x'))`);
     check('Marker panel: the x button closes it', (r => !r.open)(await run(p, PANEL)));
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-added[data-date="2026-09-26"]'))`);
-    await run(p, `clickRow('Tickets by status', 'Done')`);
+    // a keyboard user sees where the focus is on a marker (C19)
+    await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
+    { let ring = null; for (let i = 0; i < 80 && !ring; i++) { await p.key('Tab', 'Tab', 9); ring = await run(p, `const a=document.activeElement; if (!a || !a.classList || !a.classList.contains('bd-added')) return null; const hit=a.querySelector('.bd-hit'); return { stroke: getComputedStyle(hit).stroke, width: parseFloat(getComputedStyle(hit).strokeWidth), focusVisible: a.matches(':focus-visible') }`); }
+      check('Marker focus: Tab reaches a burndown marker and it shows a visible teal focus ring', ring && ring.focusVisible && ring.stroke === 'rgb(42, 157, 143)' && ring.width >= 2, ring); }
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-added[data-date="2026-09-26"]'))`);
+    await run(p, `clickRow(${q(ST.status)}, 'Done')`);
     check('Marker panel: after a filter that removes its tickets (status Done) the panel closes', (r => !r.open && r.mk.length === 0)(await run(p, PANEL)));
     await run(p, `clickReset()`);
     check('Marker panel: after Reset all the markers are back and no panel is open', (r => !r.open && r.mk.length === 2)(await run(p, PANEL)));
-    await run(p, `clickRow('Tickets by status', 'Done')`); const ff2 = newF(); ff2.status = new Set(['Done']);
+    await run(p, `clickRow(${q(ST.status)}, 'Done')`); const ff2 = M.newF(); ff2.status = new Set(['Done']);
     await verifySprint(p, BURN_T, ff2, 'Hand-made sprint, status Done selected: scope and both lines recomputed for the filtered set', BCTX);
     const bd2 = await run(p, READ_BD), k2 = await run(p, READ_SPRINT);
     check('Hand-made sprint, Done only: scope 13 on every day, remaining [9,4,1,1], ideal starts at 13, no markers, mid-sprint 0, carried over unchanged (3)', eq(bd2.days.slice(0, 4).map(d => d.remaining), [9, 4, 1, 1]) && bd2.days[0].ideal === 13 && bd2.added.length === 0 && k2.kpis[3].value === '0' && k2.kpis[4].value === '3', { r: bd2.days.map(d => d.remaining), k: k2.kpis.map(x => x.value) });
-    await run(p, `clickReset()`); await run(p, `clickContribution('assignee', 'Bob')`); const ff3 = newF(); ff3.assignee = new Set(['Bob']);
+    await run(p, `clickReset()`); await run(p, `clickContribution('assignee', 'Bob')`); const ff3 = M.newF(); ff3.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, ff3, 'Hand-made sprint, assignee Bob selected: burndown and KPIs follow the filter', BCTX);
     check('Hand-made sprint: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
-  for (const [name, want, label] of [['cnull', ['—', 'Not calculated yet for this sprint'], 'carriedOver null shows "Not calculated yet", never 0'], ['czero', ['0', '0% of tickets, 0 points'], 'zero carried over shows 0, which differs from not calculated'], ['cpart', ['5', '12 points'], 'a null percent is left out of the hint']]) {
-    p = await openPage(`http://127.0.0.1:${ports[name]}/index.html`);
-    const read = () => run(p, `const k=kpi('Carried over'); return [T(k.querySelector('.value')), T(k.querySelector('.hint'))]`);
-    const a = await read(); await run(p, `clickRow('Tickets by status', 'Done')`); const b = await read();
+  for (const [name, want, label] of [['cnull', ['—', UI.sprint.hints.carriedNull], 'carriedOver null shows "Not calculated yet", never 0'], ['czero', ['0', '0% of tickets, 0 points'], 'zero carried over shows 0, which differs from not calculated'], ['cpart', ['5', '12 points'], 'a null percent is left out of the hint']]) {
+    p = await open(url[name] + 'index.html');
+    const read = () => run(p, `const k=kpi(${q(UI.sprint.kpi.carried)}); return [T(k.querySelector('.value')), T(k.querySelector('.hint'))]`);
+    const a = await read(); await run(p, `clickRow(${q(ST.status)}, 'Done')`); const b = await read();
     check(`Carried over tile: ${label}; unchanged by filters; no console errors`, eq(a, want) && eq(b, want) && p.logs.length === 0, { a, b, logs: p.logs });
     if (name === 'cnull') {
-      const clickable = await run(p, `return kpi('Carried over').classList.contains('clickable')`);
+      const clickable = await run(p, `return kpi(${q(UI.sprint.kpi.carried)}).classList.contains('clickable')`);
       check('Carried Over KPI without ticketKeys is visible but not clickable', clickable === false, clickable);
     }
     await p.close();
   }
   console.log('\n--- Removed tickets (sprint.removed) with hand-made data ---');
-  p = await openPage(`http://127.0.0.1:${ports.rem}/index.html`);
+  p = await open(url.rem + 'index.html');
   await run(p, `AF.config.midSprintThresholdDays = 2; AF.store.reset()`); // hand-made data worked out for a 2-day threshold
-  { const RJ = JSON.parse(mkSprint(Object.assign({ carriedOver: { count: 3, percent: 20, storyPoints: 8 }, removed: REMOVED }, SP_OK))), RCTX = { sprint: RJ.sprint, today: RJ.refreshedAt, thr: 2 };
-    await verifySprint(p, BURN_T, newF(), 'Removed: every tile and the burndown equal the independent calculation (with sprint.removed)', RCTX);
+  { const RJ = JSON.parse(mkSprint(Object.assign({ carriedOver: CARRIED, removed: REMOVED }, SP_OK))), RCTX = { sprint: RJ.sprint, today: RJ.refreshedAt, thr: 2 };
+    await verifySprint(p, BURN_T, M.newF(), 'Removed: every tile and the burndown equal the independent calculation (with sprint.removed)', RCTX);
     const bd = await run(p, READ_BD);
     check('Removed (by hand): scope [16,18,13,13,15,15,15], remaining [12,9,1,1] then nothing, ideal falls from 16, one removal marker on 9/24 (2 tickets, 5 points), subtitle uses today\'s scope', eq(bd.days.map(d => d.scope), [16, 18, 13, 13, 15, 15, 15]) && eq(bd.days.map(d => d.remaining), [12, 9, 1, 1, null, null, null]) && eq(bd.days.map(d => Math.round(d.ideal * 1000) / 1000), [16, 13.333, 10.667, 8, 5.333, 2.667, 0]) && eq(bd.removed.map(r => [r.date, r.count, r.points]), [['2026-09-24', 2, 5]]) && bd.sub === '1 of 13 points remaining today, ideal 8', { days: bd.days, removed: bd.removed, sub: bd.sub });
     await p.resize(600, 900);
-    { const lg = await run(p, `const s=tile('Burndown').querySelector('svg.burndown'), w=+s.getAttribute('width'); const names=['Remaining','Ideal','Scope','Added after day 2','Earlier','Removed']; const boxes=[...s.querySelectorAll('text')].filter(t=>names.includes(T(t))).map(t=>{const b=t.getBBox();return {name:T(t),x:b.x,right:b.x+b.width,bottom:b.y+b.height}}); const top=Math.min(...[...s.querySelectorAll('line')].filter(l=>+l.getAttribute('y1')===+l.getAttribute('y2') && +l.getAttribute('x1')<100 && +l.getAttribute('x2')>w-30).map(l=>+l.getAttribute('y1'))); return {w,boxes,top};`);
+    { const lg = await run(p, `const s=tile(${q(ST.burndown)}).querySelector('svg.burndown'), w=+s.getAttribute('width'); const names=${q(UI.sprint.burndown.legendNames(2))}; const boxes=[...s.querySelectorAll('text')].filter(t=>names.includes(T(t))).map(t=>{const b=t.getBBox();return {name:T(t),x:b.x,right:b.x+b.width,bottom:b.y+b.height}}); const top=Math.min(...[...s.querySelectorAll('line')].filter(l=>+l.getAttribute('y1')===+l.getAttribute('y2') && +l.getAttribute('x1')<100 && +l.getAttribute('x2')>w-30).map(l=>+l.getAttribute('y1'))); return {w,boxes,top};`);
       check('Narrow burndown: two-row legend keeps every label inside the chart and above the plot', lg.boxes.length === 6 && lg.boxes.every(b => b.x >= 0 && b.right <= lg.w && b.bottom <= lg.top), lg); }
     await p.resize(1920, 1080);
     check('Removed: the added markers are unchanged (9/25 and 9/26 only; removed tickets are not "added")', eq(bd.added.map(a => a.date), ['2026-09-25', '2026-09-26']));
     check('Removed: the date labels sit below the removal triangles, which are red and point down', await run(p, `const g=document.querySelector('g.bd-removed'); const path=g.querySelector('path').getAttribute('d'); const m=path.match(/M([\\d.]+),([\\d.]+) L([\\d.]+),([\\d.]+) L([\\d.]+),([\\d.]+)/); return g.querySelector('path').getAttribute('fill')==='#d64545' && +m[6] > +m[2];`));
-    const PANEL2 = `const b = tile('Burndown'); const pop = b.querySelector('.bd-pop'); return { open: !!pop, head: pop ? T(pop.querySelector('.bd-pop-head')) : null, rows: pop ? [...pop.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(T)) : [], pressed: b.querySelector('g.bd-removed').getAttribute('aria-pressed'), tags: document.querySelectorAll('.tags .tag').length };`;
-    await run(p, `clickEl(tile('Burndown').querySelector('g.bd-removed'))`);
+    const PANEL2 = `const b = tile(${q(ST.burndown)}); const pop = b.querySelector('.bd-pop'); return { open: !!pop, head: pop ? T(pop.querySelector('.bd-pop-head')) : null, rows: pop ? [...pop.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(T)) : [], pressed: b.querySelector('g.bd-removed').getAttribute('aria-pressed'), tags: document.querySelectorAll('.tags .tag').length };`;
+    await run(p, `clickEl(tile(${q(ST.burndown)}).querySelector('g.bd-removed'))`);
     { const r = await run(p, PANEL2);
       check('Removed: clicking the red triangle opens "Removed Sep. 24, 2026" listing exactly APP-950 and APP-951 (status at removal, assignee), aria-pressed true, no filter changed', r.open && r.head.startsWith('Removed Sep. 24, 2026') && r.head.includes('2 tickets, 5 points') && eq(r.rows, [['APP-950', 'gone one', '3', 'In Progress', 'Ann'], ['APP-951', 'gone two', '2', 'To Do', 'Bob']]) && r.pressed === 'true' && r.tags === 0, r); }
     await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
     check('Removed: Escape closes the panel', !(await run(p, PANEL2)).open);
-    await run(p, `clickContribution('assignee', 'Bob')`); const fb = newF(); fb.assignee = new Set(['Bob']);
+    await run(p, `clickContribution('assignee', 'Bob')`); const fb = M.newF(); fb.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, fb, 'Removed, assignee Bob selected: the removed ticket of another assignee drops out, the scope and markers follow the filter', RCTX);
     { const b2 = await run(p, READ_BD); check('Removed, Bob only: scope [5,7,5,5,7,7,7] and one removal marker (APP-951, 2 points)', eq(b2.days.map(d => d.scope), [5, 7, 5, 5, 7, 7, 7]) && eq(b2.removed.map(r => [r.date, r.count, r.points]), [['2026-09-24', 1, 2]]), { s: b2.days.map(d => d.scope), r: b2.removed }); }
     check('Removed: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
 
   console.log('\n--- Jira links with odd data (copy of the app) ---');
-  p = await openPage('http://127.0.0.1:' + ports.links + '/index.html');
-  { const odd = JSON.parse(linksSprint).tickets; const LO = await run(p, `return {ticket: colCells('Ticket detail','Ticket'), parent: colCells('Ticket detail','Parent'), linked: colCells('Ticket detail','Linked work items'), summary: colCells('Ticket detail','Summary'), situation: colCells('Ticket detail','Last sync update'), badEls: document.querySelectorAll('.tile-body img, .tile-body script, .tile-body iframe').length, allLinks:[...document.querySelectorAll('a.jira')].map(a=>a.getAttribute('href'))}`);
-    check('Odd data: only valid keys become links; every other character stays text; nothing is lost', linkErrors(LO.parent, odd.map(t => t.parent)).length === 0 && linkErrors(LO.linked, odd.map(t => t.linkedWorkItems)).length === 0, [linkErrors(LO.parent, odd.map(t => t.parent)), linkErrors(LO.linked, odd.map(t => t.linkedWorkItems))]);
+  p = await open(url.links + 'index.html');
+  { const odd = JSON.parse(linksSprint).tickets; const LO = await run(p, `return {ticket: colCells(${q(ST.detail)},'Ticket'), parent: colCells(${q(ST.detail)},'Parent'), linked: colCells(${q(ST.detail)},'Linked work items'), summary: colCells(${q(ST.detail)},'Summary'), situation: colCells(${q(ST.detail)},'Last sync update'), badEls: document.querySelectorAll('.tile-body img, .tile-body script, .tile-body iframe').length, allLinks:[...document.querySelectorAll('a.jira')].map(a=>a.getAttribute('href'))}`);
+    check('Odd data: only valid keys become links; every other character stays text; nothing is lost', M.linkErrors(LO.parent, odd.map(t => t.parent)).length === 0 && M.linkErrors(LO.linked, odd.map(t => t.linkedWorkItems)).length === 0, [M.linkErrors(LO.parent, odd.map(t => t.parent)), M.linkErrors(LO.linked, odd.map(t => t.linkedWorkItems))]);
     check('Odd data: expected keys exactly (APP-5, DOC-6 in parent; APP-7, DOC-22, PLATENG-9 in linked work items)', eq(LO.parent[0].links.map(l => l.t), ['APP-5', 'DOC-6']) && eq(LO.linked[0].links.map(l => l.t), ['APP-7', 'DOC-22', 'PLATENG-9']), [LO.parent[0].links, LO.linked[0].links]);
-    check('Odd data: no injected elements; all hrefs start with the Jira address; no javascript: link', LO.badEls === 0 && LO.allLinks.every(h => h.startsWith('https://mysnaplogic.atlassian.net/browse/')) && !LO.allLinks.some(h => /javascript:/i.test(h)), LO.allLinks);
+    check('Odd data: no injected elements; all hrefs start with the Jira address; no javascript: link', LO.badEls === 0 && LO.allLinks.every(h => h.startsWith(UI.jiraBrowse)) && !LO.allLinks.some(h => /javascript:/i.test(h)), LO.allLinks);
     check('Odd data: a Ticket value that is not a key stays plain text; Summary and Last sync update are never linked', LO.ticket[1].links.length === 0 && LO.ticket[1].text === 'not a key' && LO.ticket[0].links.length === 1 && LO.situation[0].text === 'blocked by APP-98' && [...LO.summary, ...LO.situation].every(c => c.links.length === 0), [LO.ticket, LO.summary[0], LO.situation[0]]);
-    check('Odd data: no console errors', p.logs.length === 0, p.logs);
-    // A snapshot without a sprint object cannot be opened any more: the manifest entry must match it (sprint.js throws), so the old 'No sprint object' states are unreachable.
-  }
+    check('Odd data: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
 
   // =============== ERROR / EMPTY ===============
   console.log('\n--- Error and empty states ---');
-  const states = [['missing', 'index', /Can’t load sprints\.json/, 'Missing sprints.json (manifest)'], ['missing', 'backlog', /Can’t load backlog\.json/, 'Missing backlog.json'], ['invalid', 'index', /Can’t load snapshots\/sprint-1\.json[\s\S]*not valid JSON/, 'Invalid sprint snapshot'], ['invalid', 'backlog', /Can’t load backlog\.json/, 'Invalid backlog.json'], ['empty', 'index', /No tickets in this snapshot/, 'Empty sprint snapshot'], ['empty', 'backlog', /No backlog tickets in this snapshot/, 'Empty backlog snapshot']];
+  const states = [['missing', 'index', UI.errors.cantLoad('sprints.json'), 'Missing sprints.json (manifest)'], ['missing', 'backlog', UI.errors.cantLoad('backlog.json'), 'Missing backlog.json'], ['invalid', 'index', /Can’t load snapshots\/sprint-1\.json[\s\S]*not valid JSON/, 'Invalid sprint snapshot'], ['invalid', 'backlog', UI.errors.cantLoad('backlog.json'), 'Invalid backlog.json'], ['empty', 'index', UI.sprint.noTickets, 'Empty sprint snapshot'], ['empty', 'backlog', UI.backlog.noTickets, 'Empty backlog snapshot']];
   for (const [v, page, re, name] of states) {
-    p = await openPage(`http://127.0.0.1:${ports[v]}/${page}.html`);
+    p = await open(`${url[v]}${page}.html`);
     const txt = await run(p, `return document.getElementById('app').innerText`);
     const isErr = v !== 'empty';
-    check(`${name}: clear message${isErr ? ' with the regenerate command' : ''}, no blank page, no JS exception`, re.test(txt) && (!isErr || /export_dashboard_snapshots\.py/.test(txt)) && !p.logs.some(l => l.startsWith('exception')), { txt: txt.slice(0, 160), logs: p.logs.slice(0, 2) });
+    check(`${name}: clear message${isErr ? ' with the regenerate command' : ''}, no blank page, no JS exception`, re.test(txt) && (!isErr || UI.errors.regenerate.test(txt)) && !p.logs.some(l => l.startsWith('exception')), { txt: txt.slice(0, 160), logs: p.logs.slice(0, 2) });
     await p.close();
   }
-  p = await openPage('file://' + path.join(ROOT, 'index.html'));
+  for (const page of ['index', 'backlog', 'quality-intake']) { // C6, C7: a drawing bug says so instead of "can't load the file"
+    p = await open(`${url.renderErr}${page}.html`);
+    const txt = await run(p, `return document.getElementById('app').innerText`);
+    check(`Render error on ${page}.html: "Can’t draw this page" (not a load error), no unhandled exception, the error is logged to the console`, UI.errors.cantDraw.test(txt) && !/Can’t load/.test(txt) && !p.logs.some(l => l.startsWith('exception')) && p.logs.some(l => /render error/i.test(l)), { txt: txt.slice(0, 200), logs: p.logs.slice(0, 3) });
+    await p.close();
+  }
+  p = await open('file://' + path.join(SP, 'real', 'index.html'));
   const ft = await run(p, `return document.getElementById('app').innerText`);
-  check('file:// open: message says to use the local server', /opened as a file/.test(ft) && /http\.server/.test(ft), ft.slice(0, 160));
+  check('file:// open: message says to use the local server', UI.errors.openedAsFile.test(ft) && UI.errors.useServer.test(ft), ft.slice(0, 160));
   await p.close();
 
   // =============== STATIC ===============
   console.log('\n--- Static and safety checks ---');
-  const ext = []; const codeOf = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const codeOf = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const APP = files.APP_FILES;
+  const ext = [];
   for (const f of APP) { const t = codeOf(f); (t.match(/(?:src|href)\s*=\s*"https?:\/\/[^"]+"|url\(\s*['"]?https?:/g) || []).forEach(m => ext.push(f + ': ' + m)); if (/@import|googleapis|cdn\./i.test(t)) ext.push(f + ': cdn/font/import'); if (/\bimport\s+.*from|require\(/.test(t)) ext.push(f + ': module import'); if (/XMLHttpRequest|WebSocket|sendBeacon/.test(t)) ext.push(f + ': network API'); }
   check('No external src/href/url(), CDN, @import, web font, module import or network API', ext.length === 0, ext);
   { const hits = []; APP.filter(f => /\.(html|js|css)$/.test(f)).forEach(f => { const m = codeOf(f).match(/atlassian\.net/g); if (m) hits.push(f + ' x' + m.length); });
     check('The Jira address appears once in the app source (one constant in dashboard.js)', eq(hits, ['dashboard.js x1']), hits); }
   const strip = f => codeOf(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  const fetches = []; ['dashboard.js', 'sprint.js', 'backlog.js'].forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
+  const fetches = []; APP.filter(f => f.endsWith('.js')).forEach(f => (strip(f).match(/fetch\([^)]*\)/g) || []).forEach(m => fetches.push(f + ': ' + m)));
   check('Only one fetch() code path, loading a local relative JSON path via loadJson', fetches.length === 1 && /fetch\(file/.test(fetches[0]), fetches);
-  check('No innerHTML / document.write / eval in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|document\.write|\beval\(/.test(strip(f))));
-  const after = { m: mtime(path.join(ROOT, 'sprints.json')), s: mtime(path.join(ROOT, ACTIVE_FILE)), c: mtime(path.join(ROOT, 'snapshots/sprint-4697.json')), b: mtime(path.join(ROOT, 'backlog.json')), q: mtime(path.join(ROOT, 'quality-intake.json')), x: mtime(TRACKER) };
-  { const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'schema/snapshot.schema.json'), 'utf8'));
-    const vType = (v, ty) => (Array.isArray(ty) ? ty : [ty]).some(x => x === 'null' ? v === null : x === 'integer' ? Number.isInteger(v) : x === 'number' ? typeof v === 'number' : x === 'string' ? typeof v === 'string' : x === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v)) : x === 'array' ? Array.isArray(v) : x === 'boolean' ? typeof v === 'boolean' : false);
-    const vNode = (v, node, at, errs) => {
-      if (node.type && !vType(v, node.type)) { errs.push(at + ' type ' + JSON.stringify(v).slice(0, 40)); return; }
-      if (node.enum && !node.enum.some(x => Object.is(x, v))) errs.push(at + ' enum ' + JSON.stringify(v));
-      if (node.format === 'date' && typeof v === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) errs.push(at + ' date ' + v);
-      if (typeof v === 'number') { if (node.minimum !== undefined && v < node.minimum) errs.push(at + ' below minimum'); if (node.maximum !== undefined && v > node.maximum) errs.push(at + ' above maximum'); }
-      if (v !== null && typeof v === 'object' && !Array.isArray(v) && node.properties) {
-        (node.required || []).forEach(k => { if (!(k in v)) errs.push(at + ' missing ' + k); });
-        Object.keys(v).forEach(k => { if (node.properties[k]) vNode(v[k], node.properties[k], at + '.' + k, errs); else if (node.additionalProperties === false) errs.push(at + ' unexpected key ' + k); });
-      }
-    };
-    const conform = (obj, def) => { const errs = []; vNode(obj, Object.assign({}, schema, { properties: Object.assign({}, schema.properties, { tickets: { type: 'array' } }) }), 'root', errs); (obj.tickets || []).forEach((tk, i) => vNode(tk, schema.definitions[def], 'tickets[' + i + ']', errs)); return errs.slice(0, 4); };
-    check('Active sprint snapshot conforms to the schema (keys, types, dates, sprint and carriedOver objects)', conform(J(ACTIVE_FILE), 'sprintTicket').length === 0, conform(J(ACTIVE_FILE), 'sprintTicket'));
-    check('snapshots/sprint-4697.json conforms to the snapshot schema', conform(CLOSED, 'sprintTicket').length === 0, conform(CLOSED, 'sprintTicket'));
-    check('snapshots/sprint-12119.json conforms to the snapshot schema (closed-sprint state and completeDate allowed)', conform(J('snapshots/sprint-12119.json'), 'sprintTicket').length === 0, conform(J('snapshots/sprint-12119.json'), 'sprintTicket'));
-    check('backlog.json conforms to the schema', conform(J('backlog.json'), 'backlogTicket').length === 0, conform(J('backlog.json'), 'backlogTicket'));
-    check('fixtures/sample_snapshot.json conforms to the schema (with sprint.carriedOver and cycleTime)', conform(JSON.parse(fixtureTxt), 'sprintTicket').length === 0 && !!JSON.parse(fixtureTxt).sprint.carriedOver, conform(JSON.parse(fixtureTxt), 'sprintTicket'));
-    const manifestSchema=J('schema/sprints.schema.json');
-    const vManifest=(v,node,at,errs)=>{
-      if(node.$ref){const target=node.$ref.split('/').slice(1).reduce((o,k)=>o&&o[k.replace(/~1/g,'/').replace(/~0/g,'~')],manifestSchema);return vManifest(v,target,at,errs);}
-      const okType=(x,t)=>t==='object'&&x!==null&&typeof x==='object'&&!Array.isArray(x)||t==='array'&&Array.isArray(x)||t==='integer'&&Number.isInteger(x)||t==='string'&&typeof x==='string';
-      if(node.type&&!okType(v,node.type)){errs.push(at+' type');return;}
-      if(node.const!==undefined&&!Object.is(v,node.const))errs.push(at+' const');
-      if(node.enum&&!node.enum.includes(v))errs.push(at+' enum');
-      if(node.format==='date'&&(!/^\d{4}-\d{2}-\d{2}$/.test(v)||new Date(v+'T00:00:00Z').toISOString().slice(0,10)!==v))errs.push(at+' date');
-      if(node.minLength!==undefined&&v.length<node.minLength)errs.push(at+' minLength');
-      if(node.pattern&&!new RegExp(node.pattern).test(v))errs.push(at+' pattern');
-      if(typeof v==='number'&&node.minimum!==undefined&&v<node.minimum)errs.push(at+' minimum');
-      if(Array.isArray(v)){
-        if(node.minItems!==undefined&&v.length<node.minItems)errs.push(at+' minItems');
-        if(node.items)v.forEach((x,i)=>vManifest(x,node.items,at+'['+i+']',errs));
-        if(node.contains){let n=0;v.forEach((x,i)=>{const e=[];vManifest(x,node.contains,at+'['+i+']',e);if(!e.length)n++;});if(n<(node.minContains||1)||node.maxContains!==undefined&&n>node.maxContains)errs.push(at+' contains');}
-      }
-      if(v!==null&&typeof v==='object'&&!Array.isArray(v)&&node.properties){
-        (node.required||[]).forEach(k=>{if(!(k in v))errs.push(at+' missing '+k);});
-        Object.keys(v).forEach(k=>{if(node.properties[k])vManifest(v[k],node.properties[k],at+'.'+k,errs);else if(node.additionalProperties===false)errs.push(at+' unexpected '+k);});
-      }
-    };
-    const manifestConform=obj=>{const errs=[];vManifest(obj,manifestSchema,'manifest',errs);const ids=obj.sprints.map(s=>s.id),act=obj.sprints.filter(s=>s.state==='active');if(new Set(ids).size!==ids.length)errs.push('duplicate ids');if(act.length!==1||!act[0]||act[0].id!==obj.current)errs.push('current must match exactly one active entry');return errs.slice(0,5);};
-    const liveManifestErrors=manifestConform(MANIFEST),fixtureManifestErrors=manifestConform(J('fixtures/sprints.json'));
-    check('sprints.json and manifest fixture conform to schema, with exactly one active current id and unique ids',liveManifestErrors.length===0&&fixtureManifestErrors.length===0,{live:liveManifestErrors,fixture:fixtureManifestErrors});
-    const qualitySchema=J('schema/quality-intake.schema.json');
-    const vQuality=(v,node,at,errs)=>{
-      if(node.$ref){const target=node.$ref.split('/').slice(1).reduce((o,k)=>o&&o[k.replace(/~1/g,'/').replace(/~0/g,'~')],qualitySchema);return vQuality(v,target,at,errs);}
-      const types=Array.isArray(node.type)?node.type:[node.type];
-      if(node.type&&!types.some(t=>t==='null'&&v===null||t==='object'&&v!==null&&typeof v==='object'&&!Array.isArray(v)||t==='array'&&Array.isArray(v)||t==='integer'&&Number.isInteger(v)||t==='number'&&typeof v==='number'&&Number.isFinite(v)||t==='boolean'&&typeof v==='boolean'||t==='string'&&typeof v==='string')){errs.push(at+' type');return;}
-      if(node.enum&&!node.enum.includes(v))errs.push(at+' enum');
-      if(node.format==='date'&&v!==null&&(!/^\d{4}-\d{2}-\d{2}$/.test(v)||new Date(v+'T00:00:00Z').toISOString().slice(0,10)!==v))errs.push(at+' date');
-      if(node.pattern&&typeof v==='string'&&!new RegExp(node.pattern).test(v))errs.push(at+' pattern');
-      if(node.minLength!==undefined&&typeof v==='string'&&v.length<node.minLength)errs.push(at+' minLength');
-      if(typeof v==='number'&&node.minimum!==undefined&&v<node.minimum)errs.push(at+' minimum');
-      if(Array.isArray(v)&&node.items)v.forEach((x,i)=>vQuality(x,node.items,at+'['+i+']',errs));
-      if(v!==null&&typeof v==='object'&&!Array.isArray(v)&&node.properties){(node.required||[]).forEach(k=>{if(!(k in v))errs.push(at+' missing '+k);});Object.keys(v).forEach(k=>{if(node.properties[k])vQuality(v[k],node.properties[k],at+'.'+k,errs);else if(node.additionalProperties===false)errs.push(at+' unexpected '+k);});}
-    };
-    const qualityErrors=[];vQuality(J('quality-intake.json'),qualitySchema,'quality-intake',qualityErrors);
-    check('quality-intake.json conforms to schema/quality-intake.schema.json',qualityErrors.length===0,qualityErrors.slice(0,8)); }
-  check('manifest, selected snapshots, the active sprint snapshot, backlog.json, quality-intake.json and daily_tracker.xlsx unchanged by the run', eq(before, after), { before, after });
+  check('No innerHTML / document.write / eval / inline style strings (setAttribute("style") or cssText) in app code (comments stripped)', APP.filter(f => f.endsWith('.js')).every(f => !/innerHTML|outerHTML|document\.write|\beval\(|new Function|setAttribute\(\s*['"]style|cssText/.test(strip(f))));
+  { const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+    const pages = ['index.html', 'backlog.html', 'quality-intake.html'].map(f => ({ f, csp: (codeOf(f).match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/) || [])[1] || null, inline: /<script>(?!\s*<\/script>)|\sstyle="|\son[a-z]+="/i.test(codeOf(f)), probe: /deployment probe/i.test(codeOf(f)) }));
+    check('Every page has the same Content-Security-Policy meta (self only, no inline script or style), no inline style/handler attributes, no leftover probe comment', pages.every(x => x.csp === CSP && !x.inline && !x.probe), pages); }
+  { const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', path.join(__dirname, 'unit.test.js')], { encoding: 'utf8', timeout: 120000 });
+    const summary = (r.stdout || '').split('\n').filter(l => /^# (tests|pass|fail)/.test(l)).join(', ');
+    check('Unit tests (node --test scripts/unit.test.js) pass: ' + summary, r.status === 0, (r.stdout || '').split('\n').filter(l => /not ok|Error/.test(l)).slice(0, 8)); }
 
+  // ---------- data conformance (one validator, lib/schema.js) ----------
+  const snapSchema = J('schema/snapshot.schema.json'), manifestSchema = J('schema/sprints.schema.json'), qualitySchema = J('schema/quality-intake.schema.json');
+  { const unsupported = [['snapshot', snapSchema], ['sprints', manifestSchema], ['quality-intake', qualitySchema]].map(([n, s]) => [n, unsupportedKeywords(s)]).filter(x => x[1].length);
+    check('The harness validator implements every keyword the three schemas use', unsupported.length === 0, unsupported); }
+  const strict = (data, def) => validate(snapSchema, data, 'root').concat(validate(snapSchema, data.tickets || [], 'tickets', { type: 'array', items: { $ref: '#/$defs/' + def } })).slice(0, 5);
+  for (const entry of MANIFEST.sprints) {
+    const exists = fs.existsSync(path.join(ROOT, entry.file));
+    const data = exists ? J(entry.file) : null;
+    const errs = exists ? strict(data, 'sprintTicket') : ['file missing'];
+    const meta = data && data.sprint ? data.sprint.id === entry.id && data.sprint.startDate === entry.startDate && data.sprint.endDate === entry.endDate : false;
+    check(`${entry.file} (${entry.state}) exists, conforms to the snapshot schema (strict sprintTicket shape) and matches its manifest entry (id, start, end)`, errs.length === 0 && meta, { errs, meta });
+  }
+  check('backlog.json conforms to the snapshot schema (strict backlogTicket shape)', strict(ctx.BJ, 'backlogTicket').length === 0, strict(ctx.BJ, 'backlogTicket'));
+  { const FJ2 = JSON.parse(fixtureTxt); const errs = strict(FJ2, 'sprintTicket');
+    check('fixtures/sample_snapshot.json conforms to the schema and covers the edge cases (carriedOver.ticketKeys, removed with a note, classifications, statusAging, statusAgingApprox)', errs.length === 0 && !!FJ2.sprint.carriedOver && Array.isArray(FJ2.sprint.carriedOver.ticketKeys) && Array.isArray(FJ2.sprint.removed) && FJ2.sprint.removed.some(r => 'note' in r) && FJ2.tickets.some(t => 'classifications' in t) && FJ2.tickets.some(t => typeof t.statusAging === 'number') && FJ2.tickets.some(t => t.statusAgingApprox === true), errs); }
+  { const manifestConform = obj => { const errs = validate(manifestSchema, obj, 'manifest'); const ids = (obj.sprints || []).map(s => s.id), act = (obj.sprints || []).filter(s => s.state === 'active'); if (new Set(ids).size !== ids.length) errs.push('duplicate ids'); if (act.length !== 1 || act[0].id !== obj.current) errs.push('current must match exactly one active entry'); return errs.slice(0, 5); };
+    const live = manifestConform(MANIFEST), fixture = manifestConform(J('fixtures/sprints.json'));
+    check('sprints.json and the manifest fixture conform to the schema, with exactly one active current id and unique ids', live.length === 0 && fixture.length === 0, { live, fixture }); }
+  { const errs = validate(qualitySchema, Q, 'quality-intake'); check('quality-intake.json conforms to schema/quality-intake.schema.json', errs.length === 0, errs.slice(0, 8)); }
+}
+
+// ---------- run ----------
+(async () => {
+  let harnessError = null;
+  if (!fs.existsSync(CH)) harnessError = new Error('Chrome not found at ' + CH + '. Set CHROME_PATH.');
+  else { try { await main(); } catch (e) { harnessError = e; } }
   const failed = results.filter(r => !r.ok);
-  console.log(`\nTOTAL ${results.length}  PASS ${results.length - failed.length}  FAIL ${failed.length}`);
+  console.log(`\nTOTAL ${results.length}  PASS ${results.length - failed.length}  FAIL ${failed.length}` + (skips.length ? `  SKIP ${skips.length}` : ''));
   failed.forEach(x => console.log('FAILED: ' + x.name + ' ' + String(JSON.stringify(x.detail)).slice(0, 500)));
-  fs.writeFileSync(path.join(SP, 'acceptance_results.json'), JSON.stringify(results, null, 1));
-  chrome.kill('SIGKILL'); servers.forEach(s => s.kill());
-  if (OWN_SCRATCH) { await sleep(300); fs.rmSync(SP, { recursive: true, force: true }); } else console.log('Results: ' + path.join(SP, 'acceptance_results.json'));
+  fs.mkdirSync(SP, { recursive: true });
+  fs.writeFileSync(path.join(SP, 'acceptance_results.json'), JSON.stringify({ results, skips, harnessError: harnessError ? String(harnessError.stack || harnessError) : null }, null, 1));
+  const clean = !harnessError && !failed.length;
+  if (clean && OWN_SCRATCH) { await sleep(300); fs.rmSync(SP, { recursive: true, force: true }); }
+  else console.log('Results and screenshots kept in: ' + SP);
+  if (harnessError) { console.error('HARNESS ERROR', harnessError); process.exit(2); }
   process.exit(failed.length ? 1 : 0);
-})().catch(e => { console.error('HARNESS ERROR', e); try { chrome && chrome.kill('SIGKILL'); servers.forEach(s => s.kill()); } catch (x) {} process.exit(1); });
+})();
