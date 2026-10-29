@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T09:07:39+00:00",
+  "exportedAt": "2026-10-29T14:59:40+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1697,6 +1697,21 @@
       "quickCheck": "Clear repo, scope and acceptance criteria; sequencing by environment is explicit.",
       "cluster": null,
       "created": "2026-10-28"
+    },
+    {
+      "ticket": "APP-3262",
+      "summary": "Git link is pointing to default branch in the repo",
+      "type": "Bug",
+      "priority": "Lowest",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": "No",
+      "days": 0,
+      "epic": null,
+      "risk": null,
+      "quickCheck": "Repro steps, expected vs actual and affected scope are explicit.",
+      "cluster": null,
+      "created": "2026-10-29"
     }
   ]
 }

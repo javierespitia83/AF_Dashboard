@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T09:07:39+00:00",
+  "exportedAt": "2026-10-29T14:59:40+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -1461,7 +1461,7 @@
     {
       "ticket": "APP-3207",
       "owner": "Salim Abdul",
-      "status": "Open",
+      "status": "In Progress",
       "type": "Bug",
       "tester": "Pavan V",
       "classifications": null,
@@ -1472,10 +1472,10 @@
       "doneDate": null,
       "addedDate": null,
       "cycleTime": null,
-      "statusAging": 6,
-      "statusAgingApprox": true,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "Validating GHEC is throwing error",
-      "lastSyncUpdate": "Open. No Jira comments yet.",
+      "lastSyncUpdate": "In Progress since 10/29 (was Open). No Jira comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1659,7 +1659,7 @@
     {
       "ticket": "APP-3253",
       "owner": "Salim Abdul",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Bug",
       "tester": null,
       "classifications": null,
@@ -1670,10 +1670,10 @@
       "doneDate": null,
       "addedDate": "2026-10-28",
       "cycleTime": null,
-      "statusAging": 1,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Working Account returns HTTP : 500 \"Metadata failed to load\" without any user update and cause production failures.",
-      "lastSyncUpdate": "In Progress since 10/28 (added 10/28). Production bug. Salim Abdul recommends reverting the APP-1821 change; Vishal Soni to coordinate a patch before 4.46; Poornima Srikantesh to assess testing. Fix Version to confirm.",
+      "lastSyncUpdate": "In Review since 10/29 (added 10/28). Production bug. Salim Abdul recommends reverting the APP-1821 change; Vishal Soni to coordinate a patch before 4.46; Poornima Srikantesh to assess testing. Fix Version to confirm.",
       "blocker": "Production issue affecting several customers; patch and release plan to be coordinated.",
       "demoOrSpike": null,
       "discussed": "Yes"
