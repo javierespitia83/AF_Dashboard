@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T14:59:40+00:00",
+  "exportedAt": "2026-10-29T15:48:14+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -30,22 +30,22 @@
   "tickets": [
     {
       "ticket": "APP-3172",
-      "owner": null,
-      "status": "Open",
+      "owner": "Vlad Storona",
+      "status": "In Progress",
       "type": "Bug",
       "tester": "Anumeha Singh",
       "classifications": null,
-      "points": null,
+      "points": 3,
       "parent": "APP-55 – App Foundation PSWAT",
       "linkedWorkItems": "DOC-3676 (relates to)",
       "fixVersion": null,
       "doneDate": null,
       "addedDate": null,
       "cycleTime": null,
-      "statusAging": 20,
-      "statusAgingApprox": true,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "Intermittent Issue's while connecting the snaps at the Designer",
-      "lastSyncUpdate": "Open. No Jira comments yet.",
+      "lastSyncUpdate": "In Progress since 10/29. Vlad Storona assigned himself and sized it at 3 points on 10/29. Rob Vazzana asked Vishal Soni for an update on 10/29.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
