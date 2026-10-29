@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T09:07:39+00:00",
+  "exportedAt": "2026-10-29T14:59:40+00:00",
   "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-10-28",
-      "weekdays": 3,
+      "windowEnd": "2026-10-29",
+      "weekdays": 4,
       "partial": true,
       "counts": {
         "pswat": 4,
-        "appBugs": 1
+        "appBugs": 2
       },
       "ratesPer10Weekdays": {
-        "pswat": 13.33,
-        "appBugs": 3.33
+        "pswat": 10.0,
+        "appBugs": 5.0
       },
       "tickets": [
         {
@@ -747,6 +747,15 @@
           "status": "Open",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3244"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3262",
+          "summary": "Git link is pointing to default branch in the repo",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3262"
         },
         {
           "source": "PSWAT",
