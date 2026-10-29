@@ -1,8 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "af-dashboard-snapshot-export/snapshot.schema.json",
-  "title": "Dashboard snapshot (snapshots/sprint-<id>.json / backlog.json)",
-  "description": "Shared schema for both dashboard snapshot files exported by export_dashboard_snapshots.py. The 'tickets' array's item shape differs between the sprint snapshot (Daily-sheet fields) and backlog.json (Backlog Prioritized-sheet fields); this schema only requires the fields common to both, which is sufficient for the structural validation the exporter itself runs. A stricter per-file schema (sprintTicket vs backlogTicket) can be layered on top later if the dashboard needs it. the sprint snapshot additionally carries a top-level 'sprint' object (added 10-01-2026) describing the active sprint, sourced from the tracker's Sprint Metrics tab; backlog.json has no such object.",
+  "title": "Dashboard snapshot (snapshots/sprint-<id>.json and backlog.json)",
+  "description": "Shared schema for the sprint snapshots (snapshots/sprint-<id>.json, active and frozen) and backlog.json, exported by export_dashboard_snapshots.py. The top level only requires the fields common to both files, which is what the exporter's minimal structural check reads (top-level 'required' and tickets.items 'required'). The exact ticket shapes are $defs/sprintTicket (sprint snapshots) and $defs/backlogTicket (backlog.json); tickets.items accepts either, and the acceptance harness validates each file strictly against its own shape. Sprint snapshots also carry a top-level 'sprint' object (added 2026-10-01) from the tracker's Sprint Metrics tab; backlog.json has none.",
   "type": "object",
   "required": [
     "refreshedAt",
@@ -23,7 +23,7 @@
     },
     "source": {
       "type": "string",
-      "description": "Which workbook and sheet this snapshot was derived from, e.g. '03_Team_Enablement/daily_tracker.xlsx \u00b7 Daily'."
+      "description": "Which workbook and sheet this snapshot was derived from, e.g. '03_Team_Enablement/daily_tracker.xlsx · Daily'."
     },
     "tickets": {
       "type": "array",
@@ -38,7 +38,7 @@
           "ticket": {
             "type": "string",
             "minLength": 1,
-            "description": "The exact Jira ticket key (e.g. 'APP-123'), preserved verbatim. Never blank \u2014 rows with no ticket key are skipped by the exporter rather than exported with a null key."
+            "description": "The exact Jira ticket key (e.g. 'APP-123'), preserved verbatim. Never blank — rows with no ticket key are skipped by the exporter rather than exported with a null key."
           },
           "summary": {
             "type": [
@@ -51,7 +51,7 @@
               "number",
               "null"
             ],
-            "description": "Story points. Always a JSON number (int or float) or null \u2014 never a numeric value encoded as a string."
+            "description": "Story points. Always a JSON number (int or float) or null — never a numeric value encoded as a string."
           },
           "doneDate": {
             "type": [
@@ -59,7 +59,7 @@
               "null"
             ],
             "format": "date",
-            "description": "the sprint snapshot only. YYYY-MM-DD or null. Set only when the ticket's current status is Done; a non-null value on a non-Done ticket is a non-fatal exporter warning, not a schema violation."
+            "description": "Sprint snapshots only. YYYY-MM-DD or null. Set only when the ticket's current status is Done; a non-null value on a non-Done ticket is a non-fatal exporter warning, not a schema violation."
           },
           "addedDate": {
             "type": [
@@ -67,14 +67,23 @@
               "null"
             ],
             "format": "date",
-            "description": "the sprint snapshot only. YYYY-MM-DD or null \u2014 the date the ticket entered the active sprint, blank if it was already in the sprint at its start."
+            "description": "Sprint snapshots only. YYYY-MM-DD or null: the tracker's Added to Sprint date, i.e. the Jira changelog date on which the ticket entered the sprint (its Created date when there is no Sprint-field entry). Older snapshots may contain dates from before the approximation marker was retired. See DATA_CONTRACT.md section 2a."
           }
-        }
+        },
+        "description": "Fields common to both ticket shapes. Each ticket must also match $defs/sprintTicket or $defs/backlogTicket.",
+        "anyOf": [
+          {
+            "$ref": "#/$defs/sprintTicket"
+          },
+          {
+            "$ref": "#/$defs/backlogTicket"
+          }
+        ]
       }
     },
     "sprint": {
       "type": "object",
-      "description": "the sprint snapshot only. The active sprint's identity and date range, sourced from the Sprint Metrics tab's last (active-sprint) row. Not present in backlog.json.",
+      "description": "Sprint snapshots only: the sprint's identity and date range, from the Sprint Metrics tab. Not present in backlog.json.",
       "required": [
         "id"
       ],
@@ -93,8 +102,11 @@
         },
         "state": {
           "type": "string",
-          "enum": ["active", "closed"],
-          "description": "Optional. Written only in a frozen snapshot of a closed sprint (snapshots/sprint-<id>.json); absent in the active sprint snapshot."
+          "enum": [
+            "active",
+            "closed"
+          ],
+          "description": "Optional. Written in some frozen snapshots of closed sprints (for example sprint-12119); absent in the active sprint's snapshot and not guaranteed in frozen ones (sprint-12176 has none). The manifest, not this field, decides which sprint is active."
         },
         "completeDate": {
           "type": [
@@ -102,7 +114,7 @@
             "null"
           ],
           "format": "date",
-          "description": "Optional. YYYY-MM-DD the sprint was completed in Jira. Only in frozen snapshots of closed sprints."
+          "description": "Optional. YYYY-MM-DD the sprint was completed in Jira. Only in some frozen snapshots of closed sprints, like 'state'."
         },
         "startDate": {
           "type": [
@@ -152,7 +164,9 @@
             "ticketKeys": {
               "type": "array",
               "description": "Optional ticket keys for filtering the lower dashboard section to carried-over work items.",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "uniqueItems": true
             }
           }
@@ -162,7 +176,7 @@
             "array",
             "null"
           ],
-          "description": "Tickets that left the active sprint for the backlog bucket (sprint 4994 / Backlog (Prioritized)), from af-jira-changelog-scan pattern 5, sourced from the Removed From Sprint tab. Absent or null = not tracked for this sprint; [] = nothing removed yet.",
+          "description": "Tickets that left the sprint (moved to the backlog bucket or a later sprint), from the Removed From Sprint tab (af-jira-changelog-scan pattern 5). Absent or null = not tracked for this sprint; [] = nothing removed.",
           "items": {
             "type": "object",
             "required": [
@@ -240,6 +254,13 @@
                   "string",
                   "null"
                 ]
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Optional free-text caveat about this removal record, for example that it was reconstructed by hand after the sprint closed (present in snapshots/sprint-12119.json). The app does not display it."
               }
             }
           }
@@ -247,10 +268,10 @@
       }
     }
   },
-  "definitions": {
+  "$defs": {
     "sprintTicket": {
       "type": "object",
-      "description": "The exact shape of each object in the sprint snapshot's 'tickets' array.",
+      "description": "The exact shape of each object in a sprint snapshot's 'tickets' array.",
       "required": [
         "ticket"
       ],
@@ -265,17 +286,20 @@
             "string",
             "null"
           ],
-          "description": "Exact Jira summary, preserved verbatim; not a plain-language rewrite."
+          "description": "Assignee display name, preserved verbatim; null when unassigned. The UI groups null, blank and the literal 'Unassigned' as Unassigned."
         },
         "status": {
           "type": [
             "string",
             "null"
           ],
-          "description": "Original Jira status, preserved verbatim (To Do, Open, In Progress, In Review, Done, or an unrecognized value \u2014 unrecognized values are never dropped or remapped by the exporter). The dashboard UI may choose to display 'Open' as 'To Do'; that is a display-layer decision documented in the skill file, not something this exporter does to the data."
+          "description": "Original Jira status, preserved verbatim (To Do, Open, In Progress, In Review, Done, or an unrecognized value — unrecognized values are never dropped or remapped by the exporter). The dashboard UI may choose to display 'Open' as 'To Do'; that is a display-layer decision documented in the skill file, not something this exporter does to the data."
         },
         "type": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Exact Jira issue type, preserved verbatim; null when the source tracker has no Type value yet."
         },
         "tester": {
@@ -376,7 +400,10 @@
           "description": "Days from start of work to Done. Populated only when status is Done; null for every other ticket by design (the metric does not apply)."
         },
         "statusAging": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "description": "Whole days the ticket has been in its current status, from the tracker Status Aging column (Done tickets: days since Done Date). Null when the tracker has no usable number."
         },
         "statusAgingApprox": {
@@ -421,7 +448,7 @@
             "string",
             "null"
           ],
-          "description": "Ready, Weak, Missing, null (blank), or an unrecognized/documented-unknown value \u2014 unrecognized values are preserved verbatim, never dropped."
+          "description": "Well-Formed, Weak, Missing, N/A (Epic) (since 2026-10-02; older snapshots used Ready for Well-Formed), null (blank), or an unrecognised value; unrecognised values are preserved verbatim, never dropped."
         },
         "points": {
           "type": [
