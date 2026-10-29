@@ -1,13 +1,17 @@
 /*
- * dashboard.js — shared engine for index.html and backlog.html.
- * Plain JavaScript, no dependencies, no network except the two local JSON files.
+ * dashboard.js — shared engine for the three pages: index.html (Current sprint),
+ * backlog.html (Backlog) and quality-intake.html (Quality Intake).
+ * Plain JavaScript, no dependencies, no network except relative local JSON files
+ * (sprints.json plus one sprint snapshot, backlog.json, quality-intake.json).
  * Rules: DATA_CONTRACT.md. The filter store and the aggregation functions are
- * pure (no DOM) so numbers can be checked in the console, e.g. AF.statusTotals(rows).
+ * pure (no DOM) so numbers can be checked in the console, e.g. AF.statusTotals(rows),
+ * and in Node, where loading this file returns the same AF object (scripts/unit.test.js).
  */
 (function () {
   'use strict';
 
   var root = typeof window !== 'undefined' ? window : globalThis;
+  var hasDom = typeof document !== 'undefined';
 
   // ---- Status buckets (DATA_CONTRACT §5) ---------------------------------
   var BUCKETS = ['To Do/Open', 'In Progress', 'In Review', 'Done', 'Other'];
@@ -39,11 +43,29 @@
   function personName(v) {
     return isBlank(v) || String(v).trim() === 'Unassigned' ? 'Unassigned' : String(v);
   }
+  // Natural order for labels such as fix versions: '4.9' before '4.10', 'APP-9' before 'APP-10'.
+  function naturalCompare(a, b) {
+    return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+  }
 
-  // ---- Settings (SPEC §6.2 / D38) -------------------------------------------
+  // ---- Settings (SPEC §6.2 / D38, D72) -------------------------------------
   var config = {
     timeInStatusThresholdDays: 7, // In Progress / In Review tickets in the same status this many days or more appear under "Long-running work · 7+ days"
-    midSprintThresholdDays: 1 // tickets added later than start + this many days count as "added mid-sprint"
+    midSprintThresholdDays: 1 // tickets added later than start + this many days count as "added mid-sprint" (D72)
+  };
+
+  // ---- Colours shared with dashboard.css (SPEC §10) -------------------------
+  // SVG drawing and the heat ramp need literal colours. Each value mirrors the CSS
+  // custom property named in COLOR_TOKENS; the acceptance harness checks they agree.
+  var COLORS = {
+    ink: '#17263b', muted: '#566478', grid: '#e8ecf1', navy: '#1f3a5f', teal: '#2a9d8f', surface: '#ffffff',
+    scope: '#b9c3d0', ideal: '#8795a8',
+    added: '#e3a72f', addedStroke: '#8a6414', removed: '#d64545', removedStroke: '#8f1f1f'
+  };
+  var COLOR_TOKENS = {
+    ink: '--ink', muted: '--muted', grid: '--line-soft', navy: '--navy', teal: '--teal', surface: '--surface',
+    scope: '--chart-scope', ideal: '--chart-ideal',
+    added: '--marker-added', addedStroke: '--marker-added-stroke', removed: '--marker-removed', removedStroke: '--marker-removed-stroke'
   };
 
   // ---- Aggregation (pure) --------------------------------------------------
@@ -113,7 +135,7 @@
       });
       return keys;
     }
-    var rows = order(rt, opts.rowOrder, opts.lastRow), cols = order(ct, opts.colOrder, opts.lastCol);
+    var rows = order(rt, opts.rowOrder, null), cols = order(ct, opts.colOrder, opts.lastCol);
     var max = 0;
     rows.forEach(function (r) { cols.forEach(function (c) { max = Math.max(max, (cells[r] || {})[c] || 0); }); });
     return { rows: rows, cols: cols, cells: cells, rowTotals: rt, colTotals: ct, max: max };
@@ -127,34 +149,47 @@
   }
 
   // ---- Filter store (pure; DATA_CONTRACT §6) -------------------------------
-  // dims: { name: { label, get(ticket) -> string } }
+  // dims: { name: { label, get(ticket) -> string } } or { label, matches(ticket, selectedSet) }.
+  // Besides the dimensions and the search, the store has one optional "extra" filter slot:
+  // { id, label, value, pred(ticket) }. It is not applied by apply() unless asked
+  // ({ withExtra: true }), so a page can scope it to some tiles (the sprint KPI filters,
+  // which filter only the lower section). It shows as a tag, counts as an active filter,
+  // and is cleared by Reset all or by removing its tag. Subscribers receive a reason:
+  // 'extra' when only the extra filter changed, otherwise undefined.
+  var EXTRA_DIM = '__extra';
   function createStore(dims) {
     var sel = {};
     Object.keys(dims).forEach(function (k) { sel[k] = new Set(); });
     var search = { q: '', pred: null, tag: '' };
+    var extra = null;
     var subs = [];
-    function emit() { subs.forEach(function (f) { f(); }); }
+    function emit(reason) { subs.forEach(function (f) { f(reason); }); }
     function exceptMap(except) {
       var o = {};
       (Array.isArray(except) ? except : except ? [except] : []).forEach(function (k) { o[k] = true; });
       return o;
     }
     var store = {
-      dims: dims, sel: sel, search: search,
+      dims: dims, sel: sel, search: search, EXTRA_DIM: EXTRA_DIM,
       subscribe: function (f) { subs.push(f); },
-      isActive: function () {
-        return Object.keys(sel).some(function (k) { return sel[k].size > 0; }) || !!search.pred;
+      // true when any dimension, the search or (unless opts.extra === false) the extra filter is set
+      isActive: function (opts) {
+        var withExtra = !(opts && opts.extra === false);
+        return Object.keys(sel).some(function (k) { return sel[k].size > 0; }) || !!search.pred || (withExtra && !!extra);
       },
-      // tickets that match every active filter except the dimensions in `except`
-      apply: function (tickets, except) {
+      // tickets that match every active filter except the dimensions in `except`;
+      // opts.withExtra also applies the extra filter
+      apply: function (tickets, except, opts) {
         var ex = exceptMap(except);
         var active = Object.keys(sel).filter(function (k) { return !ex[k] && sel[k].size > 0; });
+        var extraPred = opts && opts.withExtra && extra ? extra.pred : null;
         return tickets.filter(function (t) {
           for (var i = 0; i < active.length; i++) {
             var dim = dims[active[i]];
             if (typeof dim.matches === 'function' ? !dim.matches(t, sel[active[i]]) : !sel[active[i]].has(dim.get(t))) return false;
           }
-          return !(search.pred && !search.pred(t));
+          if (search.pred && !search.pred(t)) return false;
+          return !(extraPred && !extraPred(t));
         });
       },
       click: function (dim, value, multi) {
@@ -173,11 +208,17 @@
         emit();
       },
       set: function (dim, values) { sel[dim].clear(); values.forEach(function (v) { sel[dim].add(v); }); emit(); },
-      remove: function (dim, value) { sel[dim].delete(value); emit(); },
+      remove: function (dim, value) {
+        if (dim === EXTRA_DIM) { store.setExtra(null); return; }
+        sel[dim].delete(value); emit();
+      },
       setSearch: function (q, pred, tag) { search.q = q; search.pred = pred || null; search.tag = tag || ''; emit(); },
+      extra: function () { return extra; },
+      setExtra: function (x) { extra = x || null; emit('extra'); },
       reset: function () {
         Object.keys(sel).forEach(function (k) { sel[k].clear(); });
         search.q = ''; search.pred = null; search.tag = '';
+        extra = null;
         emit();
       },
       tags: function () {
@@ -185,6 +226,7 @@
         Object.keys(dims).forEach(function (k) {
           sel[k].forEach(function (v) { out.push({ dim: k, label: dims[k].label, value: v }); });
         });
+        if (extra) out.push({ dim: EXTRA_DIM, label: extra.label, value: extra.value });
         return out;
       }
     };
@@ -211,14 +253,15 @@
   function oneDecimal(x) { return fmtNum(Math.round(x * 10) / 10); }
 
   // Tickets added after sprint start + thresholdDays, using exported Added to Sprint dates.
+  // Dates are compared as day numbers; a value that is not a YYYY-MM-DD date never counts (C13).
   function midSprintAdded(tickets, sprint, thresholdDays) {
-    var out = { thresholdDate: null, count: 0, points: 0, tickets: [] };
-    if (!sprint || isNaN(dayNum(sprint.startDate))) return null;
-    out.thresholdDate = isoOf(dayNum(sprint.startDate) + thresholdDays);
+    var start = dayNum(sprint && sprint.startDate);
+    if (isNaN(start)) return null;
+    var limit = start + thresholdDays;
+    var out = { thresholdDate: isoOf(limit), count: 0, points: 0, tickets: [] };
     tickets.forEach(function (t) {
-      if (!isBlank(t.addedDate) && String(t.addedDate) > out.thresholdDate) {
-        out.count += 1; out.points += pts(t.points); out.tickets.push(t);
-      }
+      var a = dayNum(t.addedDate);
+      if (!isNaN(a) && a > limit) { out.count += 1; out.points += pts(t.points); out.tickets.push(t); }
     });
     return out;
   }
@@ -267,16 +310,17 @@
       });
     }
     var total = maxScope; // the y axis tops out at the largest scope
-    var mid = midSprintAdded(tickets, sprint, thresholdDays), byDate = {}, midBy = {}, lastDay = days[n - 1].date, limit = isoOf(s + thresholdDays);
+    var mid = midSprintAdded(tickets, sprint, thresholdDays), byDate = {}, midBy = {}, limitDay = s + thresholdDays;
     tickets.forEach(function (t) {
-      if (isBlank(t.addedDate) || String(t.addedDate) <= sprint.startDate) return; // the starting scope has no marker
-      var k = String(t.addedDate) > lastDay ? lastDay : String(t.addedDate);
+      var a = dayNum(t.addedDate);
+      if (isNaN(a) || a <= s) return; // the starting scope (and an unreadable date) has no marker
+      var k = isoOf(Math.min(a, e)); // a date after the end is shown on the last day
       var item = { ticket: t.ticket, points: pts(t.points), summary: t.summary, status: t.status, owner: t.owner };
       (byDate[k] = byDate[k] || []).push(item);
-      if (String(t.addedDate) > limit) (midBy[k] = midBy[k] || []).push(item);
+      if (a > limitDay) (midBy[k] = midBy[k] || []).push(item);
     });
     return { days: days, total: total, startScope: start, n: n, todayIndex: todayIndex, todayInside: todayInside, unplacedDone: unplaced, unplacedPoints: unplacedPoints,
-             afterEndDone: afterEnd, mid: mid, removedByDate: removedByDate, addedByDate: byDate, midByDate: midBy, thresholdDate: limit };
+             afterEndDone: afterEnd, mid: mid, removedByDate: removedByDate, addedByDate: byDate, midByDate: midBy, thresholdDate: isoOf(limitDay) };
   }
 
   // Nice upper bound and tick step for the y axis.
@@ -287,7 +331,21 @@
     return { top: Math.ceil(max / step) * step, step: step };
   }
 
+  // Teal heat ramp for matrix cells, as a CSS colour (SPEC §10). Cell text is ink, never white: the ramp
+  // stops at HEAT_MAX_ALPHA so ink keeps at least 4.5:1 (about 6:1 on the darkest cell). A dimmed cell
+  // (outside the current selection) gets a lighter tint and muted text (about 4.8:1) instead of opacity (C17, C18).
+  var HEAT_MIN_ALPHA = 0.12, HEAT_MAX_ALPHA = 0.8, HEAT_DIM_FACTOR = 0.25;
+  function heatColor(n, max, dimmed) {
+    if (!n || !max) return '';
+    var a = HEAT_MIN_ALPHA + (HEAT_MAX_ALPHA - HEAT_MIN_ALPHA) * (n / max);
+    if (dimmed) a *= HEAT_DIM_FACTOR;
+    var rgb = [1, 3, 5].map(function (i) { return parseInt(COLORS.teal.slice(i, i + 2), 16); });
+    return 'rgba(' + rgb.join(', ') + ', ' + a.toFixed(2) + ')';
+  }
+
   // ---- DOM helpers (text nodes only, so data can never inject markup) ------
+  // attrs: class, text, style (an object of CSSOM properties, never a string: CSP style-src 'self'),
+  // on<event> (functions only), anything else becomes an attribute.
   function el(tag, attrs, children) {
     var n = document.createElement(tag);
     if (attrs) {
@@ -296,9 +354,13 @@
         if (v === null || v === undefined || v === false) return;
         if (k === 'class') n.className = v;
         else if (k === 'text') n.textContent = v;
-        else if (k === 'style') n.setAttribute('style', v);
-        else if (k.slice(0, 2) === 'on' && typeof v === 'function') n.addEventListener(k.slice(2), v);
-        else n.setAttribute(k, v === true ? '' : v);
+        else if (k === 'style') {
+          if (typeof v !== 'object') throw new Error('AF.el: pass "style" as an object of CSS properties');
+          Object.keys(v).forEach(function (p) { n.style[p] = v[p]; });
+        } else if (k.slice(0, 2) === 'on') {
+          if (typeof v !== 'function') throw new Error('AF.el: "' + k + '" must be a function');
+          n.addEventListener(k.slice(2), v);
+        } else n.setAttribute(k, v === true ? '' : v);
       });
     }
     (children || []).forEach(function (c) {
@@ -310,6 +372,22 @@
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function isMulti(e) { return !!(e && (e.ctrlKey || e.metaKey || e.shiftKey)); }
 
+  // A scroll box becomes a keyboard-focusable, labelled region only while it actually scrolls (C19),
+  // so tiles that fit add no extra tab stops. Boxes carry their label in data-scroll-label.
+  function markScrollable(node) {
+    if (!node || !node.isConnected) return;
+    var cs = getComputedStyle(node);
+    var canScroll = /auto|scroll/.test(cs.overflowY + ' ' + cs.overflowX);
+    var scrolls = canScroll && (node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1);
+    if (scrolls) {
+      node.setAttribute('tabindex', '0'); node.setAttribute('role', 'region');
+      node.setAttribute('aria-label', node.getAttribute('data-scroll-label') || 'Scrollable content');
+    } else { node.removeAttribute('tabindex'); node.removeAttribute('role'); node.removeAttribute('aria-label'); }
+  }
+  function markAllScrollables() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scroll-label]'), markScrollable);
+  }
+
   // Tile: card with head (title, subtitle), scrolling body, optional pinned foot.
   function tile(opts) {
     var head = el('div', { class: 'tile-head' }, [
@@ -317,10 +395,16 @@
       opts.sub !== undefined ? el('p', { class: 'sub', text: opts.sub }) : null
     ]);
     var colhead = el('div', { class: 'colhead' });
-    var body = el('div', { class: 'tile-body', tabindex: '0', 'aria-label': opts.title });
+    var body = el('div', { class: 'tile-body', 'data-scroll-label': opts.title });
     var foot = el('div', { class: 'tile-foot' });
     var rootEl = el('section', { class: 'tile ' + (opts.cls || '') }, [head, colhead, body, foot]);
     return { root: rootEl, head: head, colhead: colhead, body: body, foot: foot };
+  }
+
+  // KPI tile: label, big value, hint. kind: 'items' | 'points' | 'plain'.
+  function kpi(kind, label) {
+    var value = el('div', { class: 'value' }), hint = el('div', { class: 'hint' });
+    return { root: el('section', { class: 'tile kpi ' + kind }, [el('div', { class: 'label', text: label }), value, hint]), value: value, hint: hint };
   }
 
   // Replace a tile's body/foot contents but keep the scroll position.
@@ -334,45 +418,37 @@
     if (!tileObj.colhead.firstChild) tileObj.colhead.style.display = 'none';
     if (!tileObj.foot.firstChild) tileObj.foot.style.display = 'none';
     tileObj.body.scrollTop = top; tileObj.body.scrollLeft = left;
+    markScrollable(tileObj.body);
     if (focusKey) { // keep keyboard focus on the same row or cell after the tile is redrawn
       var again = Array.prototype.filter.call(tileObj.root.querySelectorAll('[data-key]'), function (n) { return n.getAttribute('data-key') === focusKey; })[0];
       if (again) again.focus({ preventScroll: true });
     }
   }
 
+  // Selection state uses one class pair everywhere: .is-selected and .is-dimmed (SPEC §10).
+  function stateClass(selected, dimmed) { return (selected ? ' is-selected' : '') + (dimmed ? ' is-dimmed' : ''); }
+
   function rowButton(opts, children) {
-    var cls = 'rowbtn' + (opts.cls ? ' ' + opts.cls : '') + (opts.selected ? ' sel' : '') + (opts.dimmed ? ' dim' : '');
+    var cls = 'rowbtn' + (opts.cls ? ' ' + opts.cls : '') + stateClass(opts.selected, opts.dimmed);
     return el('button', {
       type: 'button', class: cls, title: opts.title || null, 'data-key': opts.key || null, 'aria-pressed': opts.selected ? 'true' : 'false',
+      'aria-label': opts.ariaLabel || null,
       onclick: function (e) { opts.onclick(isMulti(e)); }
     }, children);
   }
 
   function statusDot(b) { return el('span', { class: 'dot ' + BUCKET_CLASS[b], 'aria-hidden': 'true' }); }
 
-  // Stacked bar. segments: [{bucket, value, title}], scale = value of a full-width bar.
-  function stackedBar(segments, total, scale) {
-    var width = scale > 0 ? Math.max(total / scale * 100, total > 0 ? 1 : 0) : 0;
-    var bar = el('div', { class: 'bar', style: 'width:' + width.toFixed(2) + '%' }, segments
-      .filter(function (s) { return s.value > 0; })
-      .map(function (s) {
-        return el('span', { class: 'seg ' + BUCKET_CLASS[s.bucket], style: 'flex:' + s.value + ' 1 0', title: s.title });
-      }));
-    return el('div', { class: 'bar-track' }, [bar]);
+  // `N W.I | P SP` (SPEC §6.2).
+  function pair(items, points) {
+    return el('span', { class: 'pair' }, [String(items) + ' W.I', el('span', { class: 'sep', text: ' | ' }), fmtNum(points) + ' SP']);
   }
 
   // One-colour bar, width as a percentage of the track.
   function simpleBar(pct, cls, title) {
     return el('div', { class: 'bar-track' }, [
-      el('div', { class: 'fill ' + (cls || ''), style: 'width:' + Math.max(0, Math.min(100, pct)).toFixed(2) + '%', title: title || null })
+      el('div', { class: 'fill ' + (cls || ''), style: { width: Math.max(0, Math.min(100, pct)).toFixed(2) + '%' }, title: title || null })
     ]);
-  }
-
-  // Teal heat ramp for matrix cells.
-  function heatStyle(n, max) {
-    if (!n || !max) return '';
-    var a = 0.12 + 0.78 * (n / max);
-    return 'background:rgba(42,157,143,' + a.toFixed(2) + ');color:' + (a > 0.55 ? '#fff' : 'var(--ink)');
   }
 
   // cols: [{label, cls, render(row, index) -> Node|string}]
@@ -390,7 +466,7 @@
     return el('table', { class: opts.cls || null }, [el('thead', null, [head]), body]);
   }
 
-  // ---- Burndown chart (inline SVG; SPEC §6.3) --------------------------------
+  // ---- Inline SVG ------------------------------------------------------------
   var SVG_NS = 'http://www.w3.org/2000/svg';
   function svg(tag, attrs, children) {
     var n = document.createElementNS(SVG_NS, tag);
@@ -402,7 +478,8 @@
     return n;
   }
 
-  // ---- Priority and Type icons (inline SVG look-alikes of Jira's; SPEC §9b) ------
+  // ---- Priority and Type icons (inline SVG look-alikes of Jira's; SPEC §10b) ------
+  // The icon colours are Jira's own artwork colours, not part of the dashboard palette.
   function ico(name, children) {
     return svg('svg', { class: 'ico', width: 16, height: 16, viewBox: '0 0 16 16', 'aria-hidden': 'true', focusable: 'false', 'data-icon': name }, children);
   }
@@ -435,27 +512,58 @@
     type: function (name) { return iconFor(TYPE_ICONS, 'type', name); }
   };
 
+  // ---- Burndown chart (inline SVG; SPEC §6.3) --------------------------------
+  // Geometry in px. Margins around the plot; the y-axis labels sit in the left margin.
+  var CHART = {
+    minWidth: 280, minHeight: 120,
+    left: 42, right: 16,
+    top: 42, topSmall: 34, topTwoRowLegend: 51,   // the second legend row needs 51px above the plot
+    bottom: 50, bottomSmall: 36, removedExtra: 18, // removal triangles hang below the axis; date labels move down by removedExtra
+    smallHeight: 260,                              // below this height use the small margins
+    narrowWidth: 700, narrowWidthWithRemoved: 760, // below this width there is no y-axis title and the legend starts at the left
+    labelSpacing: 36,                              // minimum distance between x-axis date labels
+    markerHalfWidth: 14                            // half width of a marker's click target
+  };
+  // Legend item x offsets from the legend start. One row: lines then markers; the narrow two-row
+  // layout puts the three markers on a second row. width = the space reserved at the right edge.
+  var LEGEND = {
+    row1: { y: 10, textY: 14, triTop: 5, triBottom: 16 },
+    row2: { textY: 34, triTop: 25, triBottom: 36 },
+    swatch: 18, textGap: 5, triangle: 12,
+    oneRow: { remaining: 0, ideal: 90, scope: 160, added: 230, earlier: 410, removed: 480 },
+    twoRows: { added: 0, earlier: 140, removed: 210 },
+    width: { withRemoved: 550, withoutRemoved: 470 }
+  };
+
   // Draws the chart for model m (from burndown()) into container, sized to the container.
+  // opts: { thresholdDays, label, selectedKey ('added:YYYY-MM-DD' | 'removed:YYYY-MM-DD'), onMarker(kind, date, list) }.
   function drawBurndown(container, m, opts) {
     clear(container);
-    var W = Math.max(280, container.clientWidth), H = Math.max(120, container.clientHeight); // fits the tile exactly
-    var small = H < 260; // short tiles (small laptop screens) get tighter margins
-    var hasRem = Object.keys(m.removedByDate).length > 0, extra = hasRem ? 18 : 0; // removal triangles hang below the axis, so the date labels move down
-    var narrow = W < (hasRem ? 760 : 700); // not enough room for the axis title and the legend on one line
+    var C = COLORS;
+    var W = Math.max(CHART.minWidth, container.clientWidth), H = Math.max(CHART.minHeight, container.clientHeight); // fits the tile exactly
+    var small = H < CHART.smallHeight; // short tiles (small laptop screens) get tighter margins
+    var hasRem = Object.keys(m.removedByDate).length > 0, extra = hasRem ? CHART.removedExtra : 0;
+    var narrow = W < (hasRem ? CHART.narrowWidthWithRemoved : CHART.narrowWidth); // not enough room for the axis title and the legend on one line
     var legendTwoRows = narrow && hasRem;
-    var L = 42, R = 16, T = Math.max(small ? 34 : 42, legendTwoRows ? 51 : 0), B = (small ? 36 : 50) + extra, pw = W - L - R, ph = H - T - B;
+    var L = CHART.left, R = CHART.right;
+    var T = Math.max(small ? CHART.topSmall : CHART.top, legendTwoRows ? CHART.topTwoRowLegend : 0);
+    var B = (small ? CHART.bottomSmall : CHART.bottom) + extra, pw = W - L - R, ph = H - T - B;
     var sc = niceScale(m.total);
     var x = function (i) { return L + (m.n > 1 ? pw * i / (m.n - 1) : pw / 2); };
     var y = function (v) { return T + ph - ph * v / sc.top; };
     var step = m.n > 1 ? pw / (m.n - 1) : pw;
     var g = [];
-    var INK = '#17263b', MUTED = '#566478', GRID = '#e8ecf1';
+    function plural(n) { return n + ' ticket' + (n === 1 ? '' : 's'); }
+    function listTip(date, list, verb, px) {
+      return shortDate(date) + ': ' + plural(list.length) + ' ' + verb + ', ' + fmtNum(px) + ' points: '
+        + list.slice(0, 8).map(function (t) { return t.ticket + ' (' + fmtNum(t.points) + ')'; }).join(', ') + (list.length > 8 ? ', and ' + (list.length - 8) + ' more' : '');
+    }
     // y grid and labels
     for (var v = 0; v <= sc.top + 1e-9; v += sc.step) {
-      g.push(svg('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: GRID, 'stroke-width': 1 }));
-      g.push(svg('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: MUTED, text: fmtNum(v) }));
+      g.push(svg('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: C.grid, 'stroke-width': 1 }));
+      g.push(svg('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: C.muted, text: fmtNum(v) }));
     }
-    if (!narrow) g.push(svg('text', { x: L, y: 14, 'font-size': 11, 'font-weight': 700, fill: MUTED, text: 'Story points remaining' }));
+    if (!narrow) g.push(svg('text', { x: L, y: LEGEND.row1.textY, 'font-size': 11, 'font-weight': 700, fill: C.muted, text: 'Story points remaining' }));
     // per-day hover columns (tooltips), drawn first so markers and lines stay on top
     m.days.forEach(function (d, i) {
       var tip = shortDate(d.date) + ': ' + (d.remaining === null ? 'ideal ' + oneDecimal(d.ideal) + ' points (future day)' : fmtNum(d.remaining) + ' points remaining of ' + fmtNum(d.scope) + ' in scope')
@@ -467,17 +575,17 @@
       }, [svg('title', { text: tip })]));
     });
     // x labels (thinned to fit) and axis
-    var every = Math.max(1, Math.ceil(36 / Math.max(1, step))), shown = [], i0;
+    var every = Math.max(1, Math.ceil(CHART.labelSpacing / Math.max(1, step))), shown = [], i0;
     for (i0 = 0; i0 < m.n; i0 += every) shown.push(i0);
     if (shown[shown.length - 1] !== m.n - 1) { // always label the last day; drop a neighbour that would collide with it
-      if ((m.n - 1 - shown[shown.length - 1]) * step < 36 && shown.length > 1) shown.pop();
+      if ((m.n - 1 - shown[shown.length - 1]) * step < CHART.labelSpacing && shown.length > 1) shown.pop();
       shown.push(m.n - 1);
     }
     shown.forEach(function (i) {
-      g.push(svg('line', { x1: x(i), x2: x(i), y1: T + ph, y2: T + ph + 4, stroke: MUTED }));
-      g.push(svg('text', { x: x(i), y: T + ph + 17 + extra, 'text-anchor': 'middle', 'font-size': 11, fill: MUTED, text: shortDate(m.days[i].date) }));
+      g.push(svg('line', { x1: x(i), x2: x(i), y1: T + ph, y2: T + ph + 4, stroke: C.muted }));
+      g.push(svg('text', { x: x(i), y: T + ph + 17 + extra, 'text-anchor': 'middle', 'font-size': 11, fill: C.muted, text: shortDate(m.days[i].date) }));
     });
-    g.push(svg('line', { x1: L, x2: W - R, y1: T + ph, y2: T + ph, stroke: MUTED, 'stroke-width': 1 }));
+    g.push(svg('line', { x1: L, x2: W - R, y1: T + ph, y2: T + ph, stroke: C.muted, 'stroke-width': 1 }));
     // scope: thin step line up to today (rises on the days tickets were added)
     var upTo = m.days.filter(function (d) { return d.remaining !== null; });
     if (upTo.length) {
@@ -486,103 +594,104 @@
         if (i > 0) sp.push(x(i).toFixed(1) + ',' + y(upTo[i - 1].scope).toFixed(1));
         sp.push(x(i).toFixed(1) + ',' + y(d.scope).toFixed(1));
       });
-      g.push(svg('polyline', { points: sp.join(' '), fill: 'none', stroke: '#b9c3d0', 'stroke-width': 1.5, class: 'bd-scope' }));
+      g.push(svg('polyline', { points: sp.join(' '), fill: 'none', stroke: C.scope, 'stroke-width': 1.5, class: 'bd-scope' }));
     }
     // ideal line
     g.push(svg('polyline', {
       points: m.days.map(function (d, i) { return x(i).toFixed(1) + ',' + y(d.ideal).toFixed(1); }).join(' '),
-      fill: 'none', stroke: '#8795a8', 'stroke-width': 2, 'stroke-dasharray': '6 5', class: 'bd-ideal'
+      fill: 'none', stroke: C.ideal, 'stroke-width': 2, 'stroke-dasharray': '6 5', class: 'bd-ideal'
     }));
     // today marker
     if (m.todayInside) {
-      g.push(svg('line', { x1: x(m.todayIndex), x2: x(m.todayIndex), y1: T, y2: T + ph, stroke: '#2a9d8f', 'stroke-width': 1.5, 'stroke-dasharray': '2 3' }));
-      g.push(svg('text', { x: x(m.todayIndex), y: T - 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#2a9d8f', text: 'Today' }));
+      g.push(svg('line', { x1: x(m.todayIndex), x2: x(m.todayIndex), y1: T, y2: T + ph, stroke: C.teal, 'stroke-width': 1.5, 'stroke-dasharray': '2 3' }));
+      g.push(svg('text', { x: x(m.todayIndex), y: T - 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: C.teal, text: 'Today' }));
     }
     // remaining line (up to today)
-    var pts_ = m.days.filter(function (d) { return d.remaining !== null; });
-    if (pts_.length) {
+    if (upTo.length) {
       g.push(svg('polyline', {
-        points: pts_.map(function (d, i) { return x(i).toFixed(1) + ',' + y(d.remaining).toFixed(1); }).join(' '),
-        fill: 'none', stroke: '#1f3a5f', 'stroke-width': 2.5, 'stroke-linejoin': 'round', class: 'bd-actual'
+        points: upTo.map(function (d, i) { return x(i).toFixed(1) + ',' + y(d.remaining).toFixed(1); }).join(' '),
+        fill: 'none', stroke: C.navy, 'stroke-width': 2.5, 'stroke-linejoin': 'round', class: 'bd-actual'
       }));
-      pts_.forEach(function (d, i) {
-        g.push(svg('circle', { cx: x(i), cy: y(d.remaining), r: i === pts_.length - 1 ? 4.5 : 2.5, fill: '#1f3a5f' }));
+      upTo.forEach(function (d, i) {
+        g.push(svg('circle', { cx: x(i), cy: y(d.remaining), r: i === upTo.length - 1 ? 4.5 : 2.5, fill: C.navy }));
       });
     }
-    // mid-sprint addition markers on the x axis
-    Object.keys(m.addedByDate).sort().forEach(function (date) {
+    // a marker: a focusable SVG button with a transparent hit area, a triangle, a count and a tooltip
+    function marker(kind, date, list, early) {
       var idx = m.days.findIndex(function (d) { return d.date === date; });
       if (idx < 0) return;
-      var list = m.addedByDate[date], early = date <= m.thresholdDate, px = list.reduce(function (a, t) { return a + t.points; }, 0), cx = x(idx), by = T + ph - 1;
-      var mk = svg('g', { class: 'bd-added' + (early ? ' bd-early' : ''), 'data-date': date, 'data-early': early ? '1' : '0', 'data-count': String(list.length), 'data-points': String(px),
-        tabindex: 0, role: 'button', 'aria-pressed': opts.selectedKey === 'added:' + date ? 'true' : 'false',
-        'aria-label': shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added. Show list.' }, [
-        svg('rect', { x: cx - 14, y: by - 30, width: 28, height: 32, fill: 'transparent' }),
-        svg('path', { d: 'M' + (cx - 6) + ',' + by + ' L' + (cx + 6) + ',' + by + ' L' + cx + ',' + (by - 11) + ' Z', fill: early ? '#ffffff' : '#e3a72f', stroke: '#8a6414', 'stroke-width': early ? 1.5 : 1 }),
-        svg('text', { x: cx, y: by - 14, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: INK, text: '+' + list.length }),
-        svg('title', { text: shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' added, ' + fmtNum(px) + ' points: '
-          + list.slice(0, 8).map(function (t) { return t.ticket + ' (' + fmtNum(t.points) + ')'; }).join(', ') + (list.length > 8 ? ', and ' + (list.length - 8) + ' more' : '') })
+      var px = list.reduce(function (a, t) { return a + t.points; }, 0), cx = x(idx), key = kind + ':' + date, selected = opts.selectedKey === key;
+      var added = kind === 'added', axis = T + ph, hw = CHART.markerHalfWidth;
+      var cls = 'bd-' + kind + (early ? ' bd-early' : '') + (selected ? ' is-selected' : '');
+      var shape = added
+        ? { hit: { x: cx - hw, y: axis - 1 - 30, width: hw * 2, height: 32 }, d: 'M' + (cx - 6) + ',' + (axis - 1) + ' L' + (cx + 6) + ',' + (axis - 1) + ' L' + cx + ',' + (axis - 12) + ' Z',
+            fill: early ? C.surface : C.added, stroke: C.addedStroke, sw: early ? 1.5 : 1, labelY: axis - 15, label: '+' + list.length }
+        : { hit: { x: cx - hw, y: axis + 1, width: hw * 2, height: 30 }, d: 'M' + (cx - 6) + ',' + (axis + 3) + ' L' + (cx + 6) + ',' + (axis + 3) + ' L' + cx + ',' + (axis + 14) + ' Z',
+            fill: C.removed, stroke: C.removedStroke, sw: 1, labelY: axis + 25, label: '−' + list.length };
+      var attrs = { class: cls, 'data-date': date, 'data-count': String(list.length), 'data-points': String(px),
+        tabindex: 0, role: 'button', 'aria-pressed': selected ? 'true' : 'false',
+        'aria-label': shortDate(date) + ': ' + plural(list.length) + (added ? ' added' : ' removed from the sprint') + '. Show list.' };
+      if (added) { attrs['data-early'] = early ? '1' : '0'; }
+      var mk = svg('g', attrs, [
+        svg('rect', { class: 'bd-hit', x: shape.hit.x, y: shape.hit.y, width: shape.hit.width, height: shape.hit.height, rx: 3, fill: 'transparent' }),
+        svg('path', { d: shape.d, fill: shape.fill, stroke: shape.stroke, 'stroke-width': shape.sw }),
+        svg('text', { x: cx, y: shape.labelY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: C.ink, text: shape.label }),
+        svg('title', { text: listTip(date, list, added ? 'added' : 'removed', px) })
       ]);
-      if (opts.selectedKey === 'added:' + date) mk.setAttribute('class', 'bd-added' + (early ? ' bd-early' : '') + ' bd-sel');
       if (typeof opts.onMarker === 'function') {
-        mk.addEventListener('click', function () { opts.onMarker('added', date, list); });
+        mk.addEventListener('click', function () { opts.onMarker(kind, date, list); });
         mk.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opts.onMarker('added', date, list); }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opts.onMarker(kind, date, list); }
         });
       }
       g.push(mk);
-    });
-    // removal markers: red downward triangles below the x axis (D52)
-    Object.keys(m.removedByDate).sort().forEach(function (date) {
-      var idx = m.days.findIndex(function (d) { return d.date === date; });
-      if (idx < 0) return;
-      var list = m.removedByDate[date], px = list.reduce(function (a, t) { return a + t.points; }, 0), cx = x(idx), ay = T + ph;
-      var rk = svg('g', { class: 'bd-removed', 'data-date': date, 'data-count': String(list.length), 'data-points': String(px),
-        tabindex: 0, role: 'button', 'aria-pressed': opts.selectedKey === 'removed:' + date ? 'true' : 'false',
-        'aria-label': shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' removed from the sprint. Show list.' }, [
-        svg('rect', { x: cx - 14, y: ay + 1, width: 28, height: 30, fill: 'transparent' }),
-        svg('path', { d: 'M' + (cx - 6) + ',' + (ay + 3) + ' L' + (cx + 6) + ',' + (ay + 3) + ' L' + cx + ',' + (ay + 14) + ' Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }),
-        svg('text', { x: cx, y: ay + 25, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: INK, text: '\u2212' + list.length }),
-        svg('title', { text: shortDate(date) + ': ' + list.length + ' ticket' + (list.length === 1 ? '' : 's') + ' removed, ' + fmtNum(px) + ' points: '
-          + list.slice(0, 8).map(function (t) { return t.ticket + ' (' + fmtNum(t.points) + ')'; }).join(', ') + (list.length > 8 ? ', and ' + (list.length - 8) + ' more' : '') })
-      ]);
-      if (opts.selectedKey === 'removed:' + date) rk.setAttribute('class', 'bd-removed bd-sel');
-      if (typeof opts.onMarker === 'function') {
-        rk.addEventListener('click', function () { opts.onMarker('removed', date, list); });
-        rk.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opts.onMarker('removed', date, list); }
-        });
-      }
-      g.push(rk);
-    });
-    // legend
-    var lx = narrow ? L : W - R - (hasRem ? 550 : 470);
-    g.push(svg('line', { x1: lx, x2: lx + 18, y1: 10, y2: 10, stroke: '#1f3a5f', 'stroke-width': 2.5 }));
-    g.push(svg('text', { x: lx + 23, y: 14, 'font-size': 11, fill: MUTED, text: 'Remaining' }));
-    g.push(svg('line', { x1: lx + 90, x2: lx + 108, y1: 10, y2: 10, stroke: '#8795a8', 'stroke-width': 2, 'stroke-dasharray': '6 5' }));
-    g.push(svg('text', { x: lx + 113, y: 14, 'font-size': 11, fill: MUTED, text: 'Ideal' }));
-    g.push(svg('line', { x1: lx + 160, x2: lx + 178, y1: 10, y2: 10, stroke: '#b9c3d0', 'stroke-width': 1.5 }));
-    g.push(svg('text', { x: lx + 183, y: 14, 'font-size': 11, fill: MUTED, text: 'Scope' }));
-    if (legendTwoRows) {
-      g.push(svg('path', { d: 'M' + lx + ',36 L' + (lx + 12) + ',36 L' + (lx + 6) + ',25 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
-      g.push(svg('text', { x: lx + 17, y: 34, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
-      g.push(svg('path', { d: 'M' + (lx + 140) + ',36 L' + (lx + 152) + ',36 L' + (lx + 146) + ',25 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
-      g.push(svg('text', { x: lx + 157, y: 34, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
-      g.push(svg('path', { d: 'M' + (lx + 210) + ',25 L' + (lx + 222) + ',25 L' + (lx + 216) + ',36 Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }));
-      g.push(svg('text', { x: lx + 227, y: 34, 'font-size': 11, fill: MUTED, text: 'Removed' }));
-    } else {
-      g.push(svg('path', { d: 'M' + (lx + 230) + ',16 L' + (lx + 242) + ',16 L' + (lx + 236) + ',5 Z', fill: '#e3a72f', stroke: '#8a6414', 'stroke-width': 1 }));
-      g.push(svg('text', { x: lx + 247, y: 14, 'font-size': 11, fill: MUTED, text: 'Added after day ' + opts.thresholdDays }));
-      g.push(svg('path', { d: 'M' + (lx + 410) + ',16 L' + (lx + 422) + ',16 L' + (lx + 416) + ',5 Z', fill: '#ffffff', stroke: '#8a6414', 'stroke-width': 1.5 }));
-      g.push(svg('text', { x: lx + 427, y: 14, 'font-size': 11, fill: MUTED, text: 'Earlier' }));
-      if (hasRem) {
-        g.push(svg('path', { d: 'M' + (lx + 480) + ',5 L' + (lx + 492) + ',5 L' + (lx + 486) + ',16 Z', fill: '#d64545', stroke: '#8f1f1f', 'stroke-width': 1 }));
-        g.push(svg('text', { x: lx + 497, y: 14, 'font-size': 11, fill: MUTED, text: 'Removed' }));
-      }
     }
+    // mid-sprint addition markers on the x axis; removal markers: red downward triangles below it (D52)
+    Object.keys(m.addedByDate).sort().forEach(function (date) { marker('added', date, m.addedByDate[date], date <= m.thresholdDate); });
+    Object.keys(m.removedByDate).sort().forEach(function (date) { marker('removed', date, m.removedByDate[date], false); });
+    // legend
+    var lx = narrow ? L : W - R - (hasRem ? LEGEND.width.withRemoved : LEGEND.width.withoutRemoved);
+    function legendLine(dx, stroke, width, dash, text) {
+      g.push(svg('line', { x1: lx + dx, x2: lx + dx + LEGEND.swatch, y1: LEGEND.row1.y, y2: LEGEND.row1.y, stroke: stroke, 'stroke-width': width, 'stroke-dasharray': dash || null }));
+      g.push(svg('text', { x: lx + dx + LEGEND.swatch + LEGEND.textGap, y: LEGEND.row1.textY, 'font-size': 11, fill: C.muted, text: text }));
+    }
+    function legendTriangle(dx, row, pointsDown, fill, stroke, width, text) {
+      var a = lx + dx, b = a + LEGEND.triangle, mid = a + LEGEND.triangle / 2;
+      var d = pointsDown
+        ? 'M' + a + ',' + row.triTop + ' L' + b + ',' + row.triTop + ' L' + mid + ',' + row.triBottom + ' Z'
+        : 'M' + a + ',' + row.triBottom + ' L' + b + ',' + row.triBottom + ' L' + mid + ',' + row.triTop + ' Z';
+      g.push(svg('path', { d: d, fill: fill, stroke: stroke, 'stroke-width': width }));
+      g.push(svg('text', { x: b + LEGEND.textGap, y: row.textY, 'font-size': 11, fill: C.muted, text: text }));
+    }
+    legendLine(LEGEND.oneRow.remaining, C.navy, 2.5, null, 'Remaining');
+    legendLine(LEGEND.oneRow.ideal, C.ideal, 2, '6 5', 'Ideal');
+    legendLine(LEGEND.oneRow.scope, C.scope, 1.5, null, 'Scope');
+    var pos = legendTwoRows ? LEGEND.twoRows : LEGEND.oneRow, row = legendTwoRows ? LEGEND.row2 : LEGEND.row1;
+    legendTriangle(pos.added, row, false, C.added, C.addedStroke, 1, 'Added after day ' + opts.thresholdDays);
+    legendTriangle(pos.earlier, row, false, C.surface, C.addedStroke, 1.5, 'Earlier');
+    if (hasRem) legendTriangle(pos.removed, row, true, C.removed, C.removedStroke, 1, 'Removed');
     container.appendChild(svg('svg', {
       width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': opts.label, class: 'burndown'
     }, [svg('title', { text: opts.label })].concat(g)));
+    container.appendChild(burndownTable(m)); // the per-day figures for screen readers (C19)
+  }
+
+  // Visually hidden table with the burndown's per-day values (the chart's tooltips are mouse-only), in a clipping wrapper.
+  function burndownTable(m) {
+    var rows = m.days.map(function (d) {
+      return el('tr', null, [
+        el('th', { scope: 'row', text: longDate(d.date) }),
+        el('td', { text: fmtNum(d.scope) }),
+        el('td', { text: d.remaining === null ? '—' : fmtNum(d.remaining) }),
+        el('td', { text: oneDecimal(d.ideal) }),
+        el('td', { text: d.remaining === null ? '—' : fmtNum(d.doneToday) })
+      ]);
+    });
+    return el('div', { class: 'visually-hidden bd-data' }, [el('table', null, [ // the wrapper clips it (tables ignore a 1px size)
+      el('caption', { text: 'Burndown by day, story points' }),
+      el('thead', null, [el('tr', null, ['Date', 'Scope', 'Remaining', 'Ideal', 'Done that day'].map(function (h) { return el('th', { scope: 'col', text: h }); }))]),
+      el('tbody', null, rows)
+    ])]);
   }
 
   // Filter bar: tags (with remove buttons), persistent page controls, Reset all.
@@ -597,7 +706,7 @@
     function tag(text, label, onRemove) {
       return el('span', { class: 'tag' }, [
         el('span', { text: text }),
-        el('button', { type: 'button', class: 'tag-x', 'aria-label': label, text: '\u00d7', onclick: onRemove })
+        el('button', { type: 'button', class: 'tag-x', 'aria-label': label, text: '×', onclick: onRemove })
       ]);
     }
     return function update() {
@@ -619,18 +728,19 @@
   // Heat grid inside a tile body. ct from crossTab; o: {corner, rowSel, colSel, unit, onCell(r, c, multi)}.
   function heatGrid(t, ct, o) {
     var anySel = o.rowSel.size > 0 || o.colSel.size > 0;
-    var head = el('tr', null, [el('th', { class: 'corner', text: o.corner })]
-      .concat(ct.cols.map(function (c) { return el('th', { text: c, title: c }); }))
-      .concat([el('th', { text: 'Total' })]));
+    var head = el('tr', null, [el('th', { class: 'corner', scope: 'col', text: o.corner })]
+      .concat(ct.cols.map(function (c) { return el('th', { scope: 'col', text: c, title: c }); }))
+      .concat([el('th', { scope: 'col', text: 'Total' })]));
     var rows = ct.rows.map(function (r) {
       var tds = ct.cols.map(function (c) {
         var n = (ct.cells[r] || {})[c] || 0;
         if (!n) return el('td', { class: 'zero' });
         var selCell = anySel && (o.rowSel.size === 0 || o.rowSel.has(r)) && (o.colSel.size === 0 || o.colSel.has(c));
-        return el('td', { class: anySel && !selCell ? 'dim' : null, style: heatStyle(n, ct.max) }, [
+        var dimmed = anySel && !selCell;
+        return el('td', { class: dimmed ? 'is-dimmed' : null, style: { backgroundColor: heatColor(n, ct.max, dimmed) } }, [
           el('button', {
-            type: 'button', class: 'cell' + (selCell ? ' sel' : ''), 'data-key': r + '|' + c, 'aria-pressed': selCell ? 'true' : 'false',
-            title: r + ' / ' + c + ': ' + n + ' ' + o.unit,
+            type: 'button', class: 'cell' + stateClass(selCell, false), 'data-key': r + '|' + c, 'aria-pressed': selCell ? 'true' : 'false',
+            title: r + ' / ' + c + ': ' + n + ' ' + o.unit, 'aria-label': r + ' / ' + c + ': ' + n + ' ' + o.unit,
             onclick: function (e) { o.onCell(r, c, isMulti(e)); }
           }, [String(n)])
         ]);
@@ -641,7 +751,7 @@
     t.body.appendChild(el('table', { class: 'heat' }, [el('thead', null, [head]), el('tbody', null, rows)]));
   }
 
-  // ---- Jira links (SPEC §8a, DATA_CONTRACT §7a) ----------------------------
+  // ---- Jira links (SPEC §9a, DATA_CONTRACT §7a) ----------------------------
   var JIRA_BASE = 'https://mysnaplogic.atlassian.net'; // the only place the Jira address lives
   var JIRA_DASHBOARD_URL = JIRA_BASE + '/jira/dashboards/18635';
   var KEY_PATTERN = '[A-Z][A-Z0-9]+-[0-9]+';
@@ -668,7 +778,7 @@
   // A ticket cell: the whole value is a link when it is a key, else plain text.
   function ticketCell(key) { return KEY_EXACT.test(String(key)) ? jiraLink(String(key)) : String(key); }
   // A cell that may contain several keys among other text; empty shows a dash.
-  function linkCell(v) { return isBlank(v) ? '\u2014' : el('span', null, linkify(v)); }
+  function linkCell(v) { return isBlank(v) ? '—' : el('span', null, linkify(v)); }
 
   // ---- Loading and errors (SPEC §4) ----------------------------------------
   function loadJson(file) {
@@ -685,19 +795,36 @@
     });
   }
 
+  // A load error. err.userMessage, when set, replaces the generic "missing or not valid JSON" sentence (C8).
   function showError(container, file, err) {
     clear(container);
     var onFile = root.location && root.location.protocol === 'file:';
+    var detail = err && err.message ? err.message : 'unknown error';
     container.appendChild(el('section', { class: 'message', role: 'alert' }, [
       el('h2', { text: 'Can’t load ' + file }),
       el('p', { text: onFile
         ? 'This page was opened as a file. Browsers block local data files that way. Start the local server instead.'
-        : 'The file is missing or not valid JSON (' + (err && err.message ? err.message : 'unknown error') + ').' }),
+        : err && err.userMessage ? err.userMessage : 'The file is missing or not valid JSON (' + detail + ').' }),
       el('p', null, ['Run ', el('code', { text: 'python3 05_Automation/export_dashboard_snapshots.py' }),
         ' from the project root, then reload.']),
       el('p', null, ['To serve the page: ', el('code', { text: 'cd AF_Dashboard && python3 -m http.server 8000' }),
         ', then open http://localhost:8000/.'])
     ]));
+  }
+
+  // A bug while drawing the page: not a data-file problem, so it gets its own message (C6, C7).
+  function showRenderError(container, err) {
+    if (typeof console !== 'undefined') console.error('AF dashboard render error:', err);
+    clear(container);
+    container.appendChild(el('section', { class: 'message', role: 'alert' }, [
+      el('h2', { text: 'Can’t draw this page' }),
+      el('p', { text: 'The data loaded, but drawing the page failed (' + (err && err.message ? err.message : 'unknown error') + '). This is a dashboard bug, not a data problem; the browser console has the details.' })
+    ]));
+  }
+
+  // Neutral message used when a snapshot has nothing to show (SPEC §4).
+  function emptyMessage(container, title, text) {
+    container.appendChild(el('section', { class: 'message neutral' }, [el('h2', { text: title }), el('p', { text: text })]));
   }
 
   function emptyState(text) { return el('p', { class: 'empty', text: text }); }
@@ -717,19 +844,31 @@
     n.textContent = 'Data as of ' + localDate + ' · ' + localTime + ' ' + zone;
   }
 
-  root.AF = {
-    BUCKETS: BUCKETS, BUCKET_CLASS: BUCKET_CLASS, OTHER: OTHER, NONE: NONE,
-    bucketOf: bucketOf, isBlank: isBlank, pts: pts, fmtNum: fmtNum, show: show, showPoints: showPoints,
+  var AF = {
+    BUCKETS: BUCKETS, BUCKET_CLASS: BUCKET_CLASS, OTHER: OTHER, NONE: NONE, COLORS: COLORS, COLOR_TOKENS: COLOR_TOKENS,
+    bucketOf: bucketOf, isBlank: isBlank, pts: pts, fmtNum: fmtNum, show: show, showPoints: showPoints, naturalCompare: naturalCompare,
     personName: personName, sum: sum, statusTotals: statusTotals, aggregateBy: aggregateBy,
     countBy: countBy, crossTab: crossTab, median: median, createStore: createStore,
-    config: config, dayNum: dayNum, avgCycleTime: avgCycleTime, oneDecimal: oneDecimal, midSprintAdded: midSprintAdded,
-    burndown: burndown, drawBurndown: drawBurndown, shortDate: shortDate, longDate: longDate, icon: icon,
-    el: el, clear: clear, isMulti: isMulti, tile: tile, rebuild: rebuild, rowButton: rowButton,
-    statusDot: statusDot, stackedBar: stackedBar, simpleBar: simpleBar, heatStyle: heatStyle,
+    config: config, dayNum: dayNum, isoOf: isoOf, avgCycleTime: avgCycleTime, oneDecimal: oneDecimal, midSprintAdded: midSprintAdded,
+    burndown: burndown, niceScale: niceScale, drawBurndown: drawBurndown, shortDate: shortDate, longDate: longDate, icon: icon,
+    el: el, clear: clear, isMulti: isMulti, tile: tile, kpi: kpi, rebuild: rebuild, rowButton: rowButton, stateClass: stateClass,
+    markScrollable: markScrollable, statusDot: statusDot, pair: pair, simpleBar: simpleBar, heatColor: heatColor,
     buildTable: buildTable, filterBar: filterBar, heatGrid: heatGrid,
     jira: { base: JIRA_BASE, url: jiraUrl, link: jiraLink, linkify: linkify }, jiraDashboardUrl: JIRA_DASHBOARD_URL, ticketCell: ticketCell, linkCell: linkCell,
-    loadJson: loadJson, loadSnapshot: loadSnapshot, showError: showError, emptyState: emptyState, setUpdated: setUpdated
+    loadJson: loadJson, loadSnapshot: loadSnapshot, showError: showError, showRenderError: showRenderError,
+    emptyMessage: emptyMessage, emptyState: emptyState, setUpdated: setUpdated
   };
-  var liveDashboardLink = document.querySelector('.live-dashboard-link');
-  if (liveDashboardLink) liveDashboardLink.href = JIRA_DASHBOARD_URL;
+  root.AF = AF;
+  if (typeof module === 'object' && module && module.exports) module.exports = AF; // Node unit tests (C9)
+
+  if (hasDom) { // page wiring; skipped when the file is loaded outside a browser
+    var liveDashboardLink = document.querySelector('.live-dashboard-link');
+    if (liveDashboardLink) liveDashboardLink.href = JIRA_DASHBOARD_URL;
+    var resizeQueued = false;
+    root.addEventListener('resize', function () {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      root.requestAnimationFrame(function () { resizeQueued = false; markAllScrollables(); });
+    });
+  }
 })();
