@@ -74,6 +74,19 @@ const REMOVED = [
   { ticket: 'APP-950', points: 3, addedDate: '2026-09-22', removedDate: '2026-09-24', status: 'In Progress', owner: 'Ann', tester: 'Tim', fixVersion: '4.46', parent: null, summary: 'gone one' },
   { ticket: 'APP-951', points: 2, addedDate: '2026-09-23', removedDate: '2026-09-24', status: 'To Do', owner: 'Bob', tester: null, fixVersion: '4.46', parent: null, summary: 'gone two' }];
 const CARRIED = { count: 3, percent: 20, storyPoints: 8 };
+// Needs attention today and Self-tested (R001-02, R001-17); the expected rows and cells are worked out by hand below.
+const ATT_T = [
+  TK({ ticket: 'APP-801', status: 'In Review', statusAging: 9, tester: 'Ann' }),
+  TK({ ticket: 'APP-802', status: 'In Progress', statusAging: 2, linkedWorkItems: 'APP-803 (is blocked by), APP-804 (is blocked by), APP-809 (relates to)' }),
+  TK({ ticket: 'APP-803', statusAging: 0 }),
+  TK({ ticket: 'APP-804', status: 'In Progress', statusAging: 1, tester: null, classifications: 'Dev to Test', blocker: 'Waiting on Zed Person for a review' }),
+  TK({ ticket: 'APP-805', status: 'Open', statusAging: 12, statusAgingApprox: true }),
+  TK({ ticket: 'APP-806', blocker: 'Old blocker text on a Done ticket' }),
+  TK({ ticket: 'APP-807', status: 'In Progress', statusAging: 0, linkedWorkItems: 'APP-999 (is blocked by)' }),
+  TK({ ticket: 'APP-808', status: 'To Do', tester: null, points: null, fixVersion: null }),
+  TK({ ticket: 'APP-810', status: 'In Progress', statusAging: 3, linkedWorkItems: 'APP-803 (is blocked by)' }),
+  TK({ ticket: 'APP-811', owner: 'Bob', tester: 'Ann', classifications: 'Dev to Test' })];
+const ATT_CARRIED = { count: 2, percent: 20, storyPoints: 2, ticketKeys: ['APP-805', 'APP-806'] };
 const manifestFor = (sp, extraTop = {}, extraEntry = {}) => JSON.stringify(Object.assign({ current: sp.id, sprints: [Object.assign({ id: sp.id, name: sp.name, startDate: sp.startDate, endDate: sp.endDate, state: 'active', file: 'snapshots/sprint-' + sp.id + '.json' }, extraEntry)] }, extraTop));
 
 // A throwaway copy of the app. files: { snapshot, manifest, 'backlog.json', 'quality-intake.json', ... } as text.
@@ -130,6 +143,7 @@ async function main() {
       cnull: variant('cnull', { snapshot: mkSprint(Object.assign({ carriedOver: null }, SP_OK)), 'backlog.json': emptyJson }),
       czero: variant('czero', { snapshot: mkSprint(Object.assign({ carriedOver: { count: 0, percent: 0, storyPoints: 0 } }, SP_OK)), 'backlog.json': emptyJson }),
       cpart: variant('cpart', { snapshot: mkSprint(Object.assign({ carriedOver: { count: 5, percent: null, storyPoints: 12 } }, SP_OK)), 'backlog.json': emptyJson }),
+      attn: variant('attn', { snapshot: mkSprint(Object.assign({ carriedOver: ATT_CARRIED }, SP_OK), '2026-09-25', ATT_T), 'backlog.json': emptyJson }),
       rem: variant('rem', { snapshot: mkSprint(Object.assign({ carriedOver: CARRIED, removed: REMOVED }, SP_OK)), 'backlog.json': emptyJson }),
       noManifest: variant('no_manifest', {}),
       badManifest: variant('bad_manifest', { 'sprints.json': '{not json' }),
@@ -236,20 +250,31 @@ async function suites(ctx) {
       names.forEach(n => { const g = d.types[n], x = e.types[n], wantIcon = iconTypes.has(n) ? 'type:' + n : null; if (!g || g[0] !== x.i || g[1] !== x.p || d.typeRaw[n] !== `${x.i} W.I | ${x.p} SP`) errs.push(['type metrics', n, g, x, d.typeRaw[n]]); if (d.typeIcons[n] !== wantIcon) errs.push(['type icon', n, d.typeIcons[n], wantIcon]); });
       if (d.typeFoot.replace(/\s+/g, '') !== `Total${e.typeBase.length}W.I|${M.sumP(e.typeBase)}SP`) errs.push(['type total', d.typeFoot]);
     } else if (!d.empties.type) errs.push(['type empty-state missing']);
-    const cExp = e.contribution, cGot = d.contribution, cNames = Object.keys(cExp).sort((a, b) => cExp[b].keys.size - cExp[a].keys.size || a.localeCompare(b));
-    if (!cNames.length) { if (!d.empties.contribution) errs.push(['Team Contribution empty-state missing']); }
-    else {
-      if (!eq(cGot.map(r => r.name), cNames)) errs.push(['Team Contribution row order', cGot.map(r => r.name), cNames]);
-      cNames.forEach((n, i) => { const x = cExp[n], g = cGot[i]; if (!g || g.assignee !== x.assignee || g.tester !== x.tester || g.total !== x.total) errs.push(['Team Contribution row', n, g, x]); if (g && (g.nameSelected !== f.contributor.has(n) || g.nameDimmed !== (!!f.contributor.size && !f.contributor.has(n)))) errs.push(['Team Contribution name selection', n]); });
-      if (!eq(d.contributionHeaders, UI.sprint.contribution.headers)) errs.push(['Team Contribution headers', d.contributionHeaders]);
-      if (d.contributionNote !== UI.sprint.contribution.note) errs.push(['Team Contribution note', d.contributionNote]);
-      const ao = M.group(e.cBase, M.SKEY.assignee), te = M.group(e.cBase, M.SKEY.tester);
-      if (!eq(d.contributionFoot, ['Total', String(Object.values(ao).reduce((s, r) => s + r.i, 0)), String(Object.values(te).reduce((s, r) => s + r.i, 0)), `${e.cBase.length} W.I | ${M.sumP(e.cBase)} SP`])) errs.push(['Team Contribution total row', d.contributionFoot]);
-    }
+    { const xa = e.attention, ga = d.attention, AT = UI.sprint.attention;
+      if (!e.all.length) { if (ga.empty !== UI.sprint.empty) errs.push(['attention empty-state', ga.empty]); }
+      else {
+        const got = ga.rows.map(r => [r.key, r.status, r.days, r.reasons]), want = xa.rows.map(r => [r.key, r.status, r.days, r.reasons]);
+        if (!eq(got, want)) errs.push(['attention rows', got.length, want.length, got.filter((g, i) => !eq(g, want[i])).slice(0, 2), want.filter((w, i) => !eq(w, got[i])).slice(0, 2)]);
+        if (xa.rows.length ? !eq(ga.hdr, AT.headers) : ga.empty !== AT.none) errs.push(['attention headers or none state', ga.hdr, ga.empty]);
+        if (ga.foot !== xa.missing) errs.push(['attention missing line', ga.foot, xa.missing]);
+        if (!ga.rows.every(r => r.links.length >= 1 && r.links.every(h => h.startsWith(UI.jiraBrowse)))) errs.push(['attention links']);
+      }
+      if (ga.sub !== AT.sub(xa.rows.length)) errs.push(['attention subtitle', ga.sub, AT.sub(xa.rows.length)]);
+      // R001-02 condition 1 (public site): no person names and no blocker text in the panel
+      const names = [...new Set(Srows.flatMap(t => [t.owner, t.tester]).filter(n => n != null && String(n).trim() !== '' && n !== 'Unassigned').map(String))];
+      const leaked = names.filter(n => ga.text.includes(n)).concat(Srows.map(t => t.blocker).filter(b => b != null && String(b).trim().length >= 8).map(b => String(b).trim().slice(0, 24)).filter(b => ga.text.includes(b)));
+      if (leaked.length) errs.push(['attention shows names or blocker text', leaked.slice(0, 3)]); }
     { const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(cc => { out[r + '|' + cc] = o[r][cc]; })); return out; };
       const a = flat(d.matrix.o), b = flat(e.matrix);
       if (!Object.keys(b).length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); }
-      else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells', Object.keys(a).length, Object.keys(b).length]); }
+      else {
+        if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells', Object.keys(a).length, Object.keys(b).length]);
+        // R001-17: Self-tested and Unassigned are the last two columns; Unassigned holds exactly the No tester & Not Dev to Test tickets
+        const cols = d.matrix.hdr.slice(1, -1), ST_COL = UI.sprint.matrix.selfTested, want = [ST_COL, 'Unassigned'].filter(cName => cols.includes(cName));
+        if (!eq(cols.slice(cols.length - want.length), want)) errs.push(['matrix: Self-tested and Unassigned not last', cols]);
+        if ((d.matrix.colTotals.Unassigned || 0) !== e.mBase.filter(M.noTester).length) errs.push(['matrix: Unassigned column total differs from no tester & not Dev to Test', d.matrix.colTotals.Unassigned, e.mBase.filter(M.noTester).length]);
+        if (cols.includes(ST_COL) && d.matrix.titles[d.matrix.hdr.indexOf(ST_COL)] !== UI.sprint.matrix.selfTestedTitle) errs.push(['matrix: Self-tested tooltip', d.matrix.titles[d.matrix.hdr.indexOf(ST_COL)]]);
+      } }
     if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
     if (d.detailSub !== `${e.all.length} of ${Srows.length} work items`) errs.push(['detail sub', d.detailSub]);
     if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
@@ -300,8 +325,8 @@ async function suites(ctx) {
     return { d, all };
   }
 
-  // in-page contrast of text-bearing controls (heat cells, rows, Team Contribution); ratio computed in Node
-  const readContrast = async page => (await run(page, `return [...document.querySelectorAll('table.heat .cell, .rowbtn .name, .rowbtn .pair, .rowbtn .n, .contribution-name, .contribution-value')].map(n => ({ cls: n.className, text: n.textContent.trim().slice(0, 20), fg: rgbOf(getComputedStyle(n).color).slice(0, 3), bg: paintedBg(n), opacity: effOpacity(n), dimmed: !!n.closest('.is-dimmed') }))`))
+  // in-page contrast of text-bearing controls (heat cells, rows, attention reasons); ratio computed in Node
+  const readContrast = async page => (await run(page, `return [...document.querySelectorAll('table.heat .cell, .rowbtn .name, .rowbtn .pair, .rowbtn .n, .reason')].map(n => ({ cls: n.className, text: n.textContent.trim().slice(0, 20), fg: rgbOf(getComputedStyle(n).color).slice(0, 3), bg: paintedBg(n), opacity: effOpacity(n), dimmed: !!n.closest('.is-dimmed') }))`))
     .map(r => Object.assign(r, { ratio: M.contrast(r.fg, r.bg) }));
   const lowContrast = list => list.filter(r => r.ratio < 4.5 || r.opacity < 0.999).map(r => [r.cls, r.text, Math.round(r.ratio * 100) / 100, r.opacity]);
 
@@ -442,50 +467,62 @@ async function suites(ctx) {
   check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(8, 12).map(t => t.h)).size === 1 && new Set(L.tiles.slice(12, 14).map(t => t.h)).size === 1 && L.tiles[12].w + L.tiles[13].w + 10 >= L.iw - 30 && L.tiles[13].w >= 440 && L.tiles[13].w <= 0.32 * L.iw, L.tiles.slice(8));
   const rowRatio = L.tiles[8].h / L.tiles[12].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Team Contribution; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(8).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[9].w >= 250 && L.tiles[10].w >= 250, L.tiles.slice(8).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Needs attention today; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(8).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[9].w >= 250 && L.tiles[10].w >= 250, L.tiles.slice(8).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
-  const st = await run(p, `const out={}; for (const [k,t] of [['contribution',${q(ST.contribution)}],['detail',${q(ST.detail)}],['matrix',${q(ST.matrix)}]]) { const b=tile(t).querySelector('.tile-body'); const th=tile(t).querySelector('.colhead.contribution-grid')||b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile(${q(ST.contribution)}).querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile(${q(ST.contribution)}).getBoundingClientRect().bottom+1 && T(ft).startsWith('Total'); return out;`);
-  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Total line pinned', st.contribution.scrolls && st.contribution.sb > 0 && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
-  check('Team Contribution: every name and role count is a button whose accessible name says whose count it is and what it filters', await run(p, `return [...tile(${q(ST.contribution)}).querySelectorAll('.contribution-row')].every(r => { const n = T(r.querySelector('.contribution-name')); return [...r.querySelectorAll('button')].length === 3 && [...r.querySelectorAll('button')].every(b => (b.getAttribute('aria-label')||'').startsWith(n) && /filter|show/i.test(b.getAttribute('aria-label'))); })`));
+  const st = await run(p, `const out={}; for (const [k,t] of [['attention',${q(ST.attention)}],['detail',${q(ST.detail)}],['matrix',${q(ST.matrix)}]]) { const b=tile(t).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile(${q(ST.attention)}).querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile(${q(ST.attention)}).getBoundingClientRect().bottom+1 && T(ft).startsWith('Missing:'); return out;`);
+  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Missing line pinned under Needs attention today', (!st.attention.scrolls || (st.attention.sb > 0 && st.attention.thSticky === 'sticky' && Math.abs(st.attention.thDiff) <= 2)) && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
+  { const ex = M.expectSprint(S, M.newF(), CTX).attention, A = UI.sprint.attention.reasons;
+    check('Needs attention today (real data): rows equal the independent calculation (not Done; long-running, carried over, blocked by a ticket not Done, or blocker recorded), most days first; no names or blocker text (checked in every sprint state)', (await run(p, READ_SPRINT)).attention.rows.length === ex.rows.length, ex.rows.length);
+    const doneBlockers = S.filter(t => M.bucket(t.status) !== 3).flatMap(t => [...String(t.linkedWorkItems || '').matchAll(/\b([A-Z][A-Z0-9]+-[0-9]+) \(is blocked by\)/g)].map(m => [t.ticket, m[1]])).filter(([, k]) => S.some(x => x.ticket === k && M.bucket(x.status) === 3));
+    if (doneBlockers.length) check(`Needs attention today: "is blocked by" links to a Done ticket are ignored (${doneBlockers.map(x => x.join(' by ')).join(', ')})`, doneBlockers.every(([key, b]) => !(ex.rows.find(r => r.key === key) || { reasons: [] }).reasons.includes(A.blocked(b))) && !(await run(p, `return T(tile(${q(ST.attention)}))`)).includes(doneBlockers.map(([, b]) => A.blocked(b))[0]), doneBlockers);
+    else skip('Needs attention today: blocked-by link to a Done ticket (real data)', 'no such link in the active sprint; covered by the hand-made attention data'); }
 
-  const ownerGroups = M.group(S, M.SKEY.assignee);
-  const owners = Object.keys(ownerGroups).sort((a, b) => ownerGroups[b].p - ownerGroups[a].p || a.localeCompare(b));
-  if (owners.length >= 3) {
-    const [pick, pick2, pick3] = owners;
-    await run(p, `clickContribution('assignee', ${q(pick)})`); f.assignee = new Set([pick]);
-    await verifySprint(p, S, f, `Click Assignee W.I "${pick}": filters ticket detail and other tiles`);
-    await run(p, `clickContribution('assignee', ${q(pick)})`); f.assignee = new Set();
-    await verifySprint(p, S, f, 'Click the same assignee again: cleared');
-    await run(p, `clickContribution('assignee', ${q(pick)})`); await run(p, `clickContribution('assignee', ${q(pick2)})`); f.assignee = new Set([pick2]);
-    await verifySprint(p, S, f, 'Plain click on another assignee replaces the selection');
-    await run(p, `clickContribution('assignee', ${q(pick3)}, {ctrl:true})`); f.assignee.add(pick3);
-    await verifySprint(p, S, f, 'Ctrl+click adds a second assignee (OR within dimension)');
-    await run(p, `clickContribution('assignee', ${q(pick3)}, {meta:true})`); f.assignee.delete(pick3);
+  const typeGroups = M.group(S, M.SKEY.type);
+  const typeNames = Object.keys(typeGroups).sort((a, b) => typeGroups[b].i - typeGroups[a].i || a.localeCompare(b));
+  if (typeNames.length >= 3) {
+    const [pick, pick2, pick3] = typeNames;
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick)})`); f.type = new Set([pick]);
+    await verifySprint(p, S, f, `Click Type "${pick}": filters ticket detail and other tiles`);
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick)})`); f.type = new Set();
+    await verifySprint(p, S, f, 'Click the same type again: cleared');
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick)})`); await run(p, `clickRow(${q(ST.type)}, ${q(pick2)})`); f.type = new Set([pick2]);
+    await verifySprint(p, S, f, 'Plain click on another type replaces the selection');
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick3)}, {ctrl:true})`); f.type.add(pick3);
+    await verifySprint(p, S, f, 'Ctrl+click adds a second type (OR within dimension)');
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick3)}, {meta:true})`); f.type.delete(pick3);
     await verifySprint(p, S, f, 'Cmd+click toggles a value off');
-    await run(p, `clickContribution('assignee', ${q(pick)}, {shift:true})`); f.assignee.add(pick);
+    await run(p, `clickRow(${q(ST.type)}, ${q(pick)}, {shift:true})`); f.type.add(pick);
     await verifySprint(p, S, f, 'Shift+click also multi-selects');
     await run(p, `clickReset()`); f = M.newF();
     await verifySprint(p, S, f, 'Reset all clears everything; Reset is disabled again');
-  } else skip('Assignee click, replace and multi-select checks', 'the active sprint has fewer than three assignees');
-  const contribNames = Object.keys(M.expectSprint(S, M.newF(), CTX).contribution);
-  const member = contribNames.find(n => S.some(t => M.grpName(t.owner) === n && M.grpName(t.tester) === n)) || contribNames[0];
-  await run(p, `clickContribution('contributor', ${q(member)})`); f.contributor = new Set([member]);
-  await verifySprint(p, S, f, `Click Team Contribution name "${member}": ticket detail includes assignee OR tester matches`);
-  check('Team member filter directly matches owner or tester', eq(M.expectSprint(S, f, CTX).all.map(t => t.ticket).sort(), S.filter(t => M.grpName(t.owner) === member || M.grpName(t.tester) === member).map(t => t.ticket).sort()));
-  await run(p, `clickReset()`); f = M.newF(); await verifySprint(p, S, f, 'Reset all clears Team member filter');
+  } else skip('Click, replace and multi-select checks on Type rows', 'the active sprint has fewer than three types');
+  // Self-tested cell (R001-17): the assignee's tickets they test themselves (Dev to Test without a tester, or tester = assignee)
+  { const mm = M.expectSprint(S, M.newF(), CTX).matrix, STC = UI.sprint.matrix.selfTested;
+    const rowsWith = Object.keys(mm).filter(r => mm[r][STC]).sort((a, b) => mm[b][STC] - mm[a][STC] || a.localeCompare(b));
+    if (rowsWith.length) {
+      const who = rowsWith[0];
+      await run(p, `clickCell(${q(ST.matrix)}, ${q(who)}, ${q(STC)})`); f.assignee = new Set([who]); f.tester = new Set([STC]);
+      const r = await verifySprint(p, S, f, `Matrix cell "${who} / Self-tested" filters to that assignee's self-tested tickets; the tag reads "Tester: Self-tested"`);
+      const direct = S.filter(t => M.grpName(t.owner) === who && ((M.grpName(t.tester) === 'Unassigned' && M.isDevToTest(t)) || (M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) === who))).map(t => t.ticket).sort();
+      check('Self-tested cell equals the direct count (Dev to Test with no tester, or tester = assignee), and a Dev to Test ticket with another tester stays under that tester', eq([...r.d.detailKeys].sort(), direct) && S.filter(t => M.isDevToTest(t) && M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) !== M.grpName(t.owner)).every(t => M.testerGroup(t) === M.grpName(t.tester)), { got: r.d.detailKeys.length, direct: direct.length });
+      await run(p, `clickReset()`); f = M.newF(); await verifySprint(p, S, f, 'Reset all clears the Self-tested cell');
+    } else skip('Self-tested matrix cell', 'no self-tested tickets in the active sprint'); }
 
-  // AND across dimensions (tester: Unassigned when some ticket has no tester, else the most common tester)
-  const testerPick = S.some(t => M.grpName(t.tester) === 'Unassigned') ? 'Unassigned' : M.mostCommon(S, M.SKEY.tester)[0];
+  // AND across dimensions: status In Review, then the biggest assignee x tester cell among the In Review tickets
   await run(p, `clickRow(${q(ST.status)}, 'In Review')`); f.status = new Set(['In Review']);
   await verifySprint(p, S, f, 'Click status "In Review"');
-  await run(p, `clickContribution('tester', ${q(testerPick)})`); f.tester = new Set([testerPick]);
-  await verifySprint(p, S, f, `Click tester "${testerPick}" on top: In Review tickets with that tester (AND)`);
-  { const exp1 = M.expectSprint(S, f, CTX);
-    check(`That combination equals the In Review tickets with tester ${testerPick} (direct count)`, exp1.all.length === S.filter(t => t.status === 'In Review' && M.grpName(t.tester) === testerPick).length, exp1.all.length); }
+  { const mm = M.expectSprint(S, f, CTX).matrix, cells = [];
+    Object.keys(mm).forEach(r => Object.keys(mm[r]).forEach(cc => cells.push([r, cc, mm[r][cc]])));
+    cells.sort((a, b) => b[2] - a[2] || a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+    const [rA, cT] = cells[0];
+    await run(p, `clickCell(${q(ST.matrix)}, ${q(rA)}, ${q(cT)})`); f.assignee = new Set([rA]); f.tester = new Set([cT]);
+    await verifySprint(p, S, f, `Click matrix cell "${rA} / ${cT}" on top: In Review tickets with that pair (AND)`);
+    const exp1 = M.expectSprint(S, f, CTX);
+    check(`That combination equals the In Review tickets with assignee ${rA} and tester column ${cT} (direct count)`, exp1.all.length === S.filter(t => t.status === 'In Review' && M.grpName(t.owner) === rA && M.testerGroup(t) === cT).length, exp1.all.length); }
   await run(p, `clickRow(${q(ST.status)}, 'Done')`); f.status.add('Done');
-  await verifySprint(p, S, f, 'Plain click adds Done: status OR, still AND tester');
+  await verifySprint(p, S, f, 'Plain click adds Done: status OR, still AND assignee and tester');
   { const c = await readContrast(p);
-    check('Contrast: with a selection active, every row, count and Team Contribution value (dimmed or not) keeps text at full opacity and at least 4.5:1', lowContrast(c).length === 0 && c.some(r => r.dimmed), lowContrast(c).slice(0, 6)); }
+    check('Contrast: with a selection active, every row, count and attention reason (dimmed or not) keeps text at full opacity and at least 4.5:1', lowContrast(c).length === 0 && c.some(r => r.dimmed), lowContrast(c).slice(0, 6)); }
   await run(p, `clickRow(${q(ST.status)}, 'In Review')`); f.status.delete('In Review');
   await verifySprint(p, S, f, 'Plain click clears one selected status while retaining the other');
   await run(p, `clickTagX(0)`); const firstTag = [...f.status][0]; f.status.delete(firstTag);
@@ -525,15 +562,15 @@ async function suites(ctx) {
   if (zero) {
     await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setSel(${q(zero[1])}, ${q(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
     const z = await verifySprint(p, S, f, `Zero results (${zero[0]} + ${zero[2]} ${zero[3]}): KPIs 0, empty-state in tiles and table, no errors`);
-    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.contribution === z.d.detailEmpty, z.d.detailEmpty);
+    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.attention === z.d.detailEmpty, z.d.detailEmpty);
     await run(p, `clickReset()`); f = M.newF();
   } else check('Zero results case available in data', false, 'no empty combination');
-  // scroll position kept
-  await run(p, `tile(${q(ST.contribution)}).querySelector('.tile-body').scrollTop = 150`);
-  const rowName = owners[Math.min(9, owners.length - 1)];
-  await run(p, `clickContribution('contributor', ${q(rowName)})`); f.contributor = new Set([rowName]);
-  const kept = await run(p, `return tile(${q(ST.contribution)}).querySelector('.tile-body').scrollTop`);
-  check('Scroll position inside a tile is kept when a filter changes', kept >= 100, kept);
+  // scroll position kept (Ticket detail; filter by the most common type)
+  await run(p, `tile(${q(ST.detail)}).querySelector('.tile-body').scrollTop = 150`);
+  await run(p, `clickRow(${q(ST.type)}, ${q(typeNames[0])})`); f.type = new Set([typeNames[0]]);
+  { const kept = await run(p, `const b=tile(${q(ST.detail)}).querySelector('.tile-body'); return {top: b.scrollTop, max: b.scrollHeight - b.clientHeight}`);
+    if (kept.max >= 150) check('Scroll position inside a tile is kept when a filter changes', kept.top >= 100, kept);
+    else skip('Scroll position kept', 'the filtered detail table is too short to scroll 150 px'); }
   await run(p, `clickReset()`); f = M.newF();
   // keyboard
   await run(p, `document.activeElement && document.activeElement.blur()`);
@@ -564,7 +601,7 @@ async function suites(ctx) {
   await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
   { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); }
     check('Jira links: Tab reaches a link and it shows a visible focus outline', li && li.outline !== 'none' && parseFloat(li.w) >= 2, li); }
-  check('Team Contribution wording: combined title, Jira role subtitle, explicit headers and shared-points note', await run(p, `const t=tile(${q(ST.contribution)}); return !!t && T(t.querySelector('.sub'))===${q(UI.sprint.contribution.sub)} && [...t.querySelector('.colhead.contribution-grid').children].map(T).join('|')===${q(UI.sprint.contribution.headers.join('|'))} && T(t.querySelector('.footnote'))===${q(UI.sprint.contribution.note)} && !T(t).includes(${q(UI.sprint.contribution.removedWording)})`));
+  check('Needs attention today wording: title, subtitle, Ticket/Status/Days/Reason headers and the Missing line; Team Contribution is no longer on the sprint page', await run(p, `const t=tile(${q(ST.attention)}); return !!t && /^\\d+ open tickets?: long-running, carried over or blocked$/.test(T(t.querySelector('.sub'))) && (!t.querySelector('thead') || [...t.querySelectorAll('thead th')].map(T).join('|')===${q(UI.sprint.attention.headers.join('|'))}) && /^Missing: \\d+ no tester \\(excluding Dev to Test\\) · \\d+ no fix version · \\d+ no story points$/.test(T(t.querySelector('.tile-foot'))) && !tile('Team Contribution')`));
   check('Sprint: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
@@ -786,9 +823,9 @@ async function suites(ctx) {
   const FJ = JSON.parse(fixtureTxt), F = FJ.tickets, FCTX = { sprint: FJ.sprint, today: FJ.refreshedAt, thr: 1 };
   await verifySprint(p, F, M.newF(), 'Fixture: all tiles consistent (Other bucket, Unassigned merge, null points, removed ticket, Dev to Test, days in status)', FCTX);
   const fd = await run(p, READ_SPRINT);
-  { const fe = M.expectSprint(F, M.newF(), FCTX), un = fe.contribution.Unassigned;
-    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${M.sumP(F)}); null role names merge into Unassigned`, fd.status.Other && fd.status.Other[0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${M.sumP(F)}SP` && un && fd.contribution.some(r => r.name === 'Unassigned'), { un, rows: fd.contribution.map(r => r.name) }); }
-  check('Fixture: literal owner "Unassigned" is one Team Contribution row; null points show "—" in detail; Blocked text in detail', await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return tile(${q(ST.contribution)}).querySelectorAll('.contribution-name').length === [...new Set([...tile(${q(ST.contribution)}).querySelectorAll('.contribution-name')].map(T))].length && [...tile(${q(ST.contribution)}).querySelectorAll('.contribution-name')].filter(x=>T(x)==='Unassigned').length===1 && r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`));
+  { const fe = M.expectSprint(F, M.newF(), FCTX), un = fe.matrix.Unassigned;
+    check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${M.sumP(F)}); null and literal "Unassigned" owners merge into one Unassigned grid row`, fd.status.Other && fd.status.Other[0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${M.sumP(F)}SP` && un && fd.matrix.o.Unassigned && eq(fd.matrix.o.Unassigned, un), { un, rows: Object.keys(fd.matrix.o) }); }
+  check('Fixture: "Dev to Testing" is not Dev to Test (stays Unassigned); Dev to Test with a named tester stays under that tester; null points show "—"; Blocked text in detail', await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`) && M.testerGroup(F.find(t => t.ticket === 'APP-2631')) === 'Unassigned' && M.testerGroup(F.find(t => t.ticket === 'APP-193')) === M.grpName(F.find(t => t.ticket === 'APP-193').tester) && fd.matrix.colTotals[M.grpName(F.find(t => t.ticket === 'APP-193').tester)] >= 1);
   { const fk = FJ.sprint.carriedOver.ticketKeys || [];
     await run(p, `clickEl(kpi(${q(UI.sprint.kpi.carried)}))`);
     const got = await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
@@ -848,7 +885,7 @@ async function suites(ctx) {
     await verifySprint(p, BURN_T, ff2, 'Hand-made sprint, status Done selected: scope and both lines recomputed for the filtered set', BCTX);
     const bd2 = await run(p, READ_BD), k2 = await run(p, READ_SPRINT);
     check('Hand-made sprint, Done only: scope 13 on every day, remaining [9,4,1,1], ideal starts at 13, no markers, mid-sprint 0, carried over unchanged (3)', eq(bd2.days.slice(0, 4).map(d => d.remaining), [9, 4, 1, 1]) && bd2.days[0].ideal === 13 && bd2.added.length === 0 && k2.kpis[3].value === '0' && k2.kpis[4].value === '3', { r: bd2.days.map(d => d.remaining), k: k2.kpis.map(x => x.value) });
-    await run(p, `clickReset()`); await run(p, `clickContribution('assignee', 'Bob')`); const ff3 = M.newF(); ff3.assignee = new Set(['Bob']);
+    await run(p, `clickReset()`); await run(p, `setDim('assignee', ['Bob'])`); const ff3 = M.newF(); ff3.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, ff3, 'Hand-made sprint, assignee Bob selected: burndown and KPIs follow the filter', BCTX);
     check('Hand-made sprint: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
@@ -882,10 +919,32 @@ async function suites(ctx) {
       check('Removed: clicking the red triangle opens "Removed Sep. 24, 2026" listing exactly APP-950 and APP-951 (status at removal, assignee), aria-pressed true, no filter changed', r.open && r.head.startsWith('Removed Sep. 24, 2026') && r.head.includes('2 tickets, 5 points') && eq(r.rows, [['APP-950', 'gone one', '3', 'In Progress', 'Ann'], ['APP-951', 'gone two', '2', 'To Do', 'Bob']]) && r.pressed === 'true' && r.tags === 0, r); }
     await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
     check('Removed: Escape closes the panel', !(await run(p, PANEL2)).open);
-    await run(p, `clickContribution('assignee', 'Bob')`); const fb = M.newF(); fb.assignee = new Set(['Bob']);
+    await run(p, `setDim('assignee', ['Bob'])`); const fb = M.newF(); fb.assignee = new Set(['Bob']);
     await verifySprint(p, BURN_T, fb, 'Removed, assignee Bob selected: the removed ticket of another assignee drops out, the scope and markers follow the filter', RCTX);
     { const b2 = await run(p, READ_BD); check('Removed, Bob only: scope [5,7,5,5,7,7,7] and one removal marker (APP-951, 2 points)', eq(b2.days.map(d => d.scope), [5, 7, 5, 5, 7, 7, 7]) && eq(b2.removed.map(r => [r.date, r.count, r.points]), [['2026-09-24', 1, 2]]), { s: b2.days.map(d => d.scope), r: b2.removed }); }
     check('Removed: no console errors', p.logs.length === 0, p.logs); }
+  await p.close();
+
+  console.log('\n--- Needs attention today and Self-tested with hand-made data (copy of the app) ---');
+  p = await open(url.attn + 'index.html');
+  { const AJ = JSON.parse(mkSprint(Object.assign({ carriedOver: ATT_CARRIED }, SP_OK), '2026-09-25', ATT_T)), ACTX = { sprint: AJ.sprint, today: AJ.refreshedAt, thr: 1 };
+    const A = UI.sprint.attention.reasons;
+    await verifySprint(p, ATT_T, M.newF(), 'Attention data: every tile equals the independent calculation', ACTX);
+    const a = (await run(p, READ_SPRINT)).attention;
+    check('Attention (by hand): APP-805 Open 12* carried over; APP-801 In Review 9 long-running; APP-802 blocked by APP-804 only (APP-803 is Done); APP-804 blocker recorded; APP-807 blocked by APP-999 (outside the sprint); Done APP-806 and APP-810 (blocker Done) are left out', eq(a.rows.map(r => [r.key, r.status, r.days, r.reasons]), [['APP-805', 'Open', '12*', [A.carried]], ['APP-801', 'In Review', '9', [A.long]], ['APP-802', 'In Progress', '2', [A.blocked('APP-804')]], ['APP-804', 'In Progress', '1', [A.blocker]], ['APP-807', 'In Progress', '0', [A.blocked('APP-999')]]]) && a.sub === UI.sprint.attention.sub(5), a.rows);
+    check('Attention (by hand): Missing line counts 1 no tester (APP-804 is Dev to Test), 1 no fix version, 1 no story points', a.foot === UI.sprint.attention.missing(1, 1, 1), a.foot);
+    check('Attention (by hand): no names (Ann, Tim, Bob) and no blocker text in the panel; blocker keys link to Jira', !['Ann', 'Tim', 'Bob', 'Zed Person', 'Waiting on', 'Old blocker'].some(x => a.text.includes(x)) && eq(a.rows.find(r => r.key === 'APP-802').links, [UI.jiraBrowse + 'APP-802', UI.jiraBrowse + 'APP-804']), a.text);
+    const mx = (await run(p, READ_SPRINT)).matrix;
+    check('Self-tested (by hand): Ann row = Tim 6, Self-tested 2 (APP-801 tester = assignee, APP-804 Dev to Test without tester), Unassigned 1 (APP-808); Bob row = Ann 1 (Dev to Test with another tester); columns Tim, Ann, Self-tested, Unassigned', eq(mx.o.Ann, { Tim: 6, 'Self-tested': 2, Unassigned: 1 }) && eq(mx.o.Bob, { Ann: 1 }) && eq(mx.hdr, ['Assignee', 'Tim', 'Ann', 'Self-tested', 'Unassigned', 'Total']) && mx.titles[3] === UI.sprint.matrix.selfTestedTitle, mx);
+    await run(p, `clickCell(${q(ST.matrix)}, 'Ann', 'Self-tested')`); const fa = M.newF(); fa.assignee = new Set(['Ann']); fa.tester = new Set(['Self-tested']);
+    const r = await verifySprint(p, ATT_T, fa, 'Attention data: the Ann / Self-tested cell filters every tile', ACTX);
+    check('Self-tested (by hand): the cell lists APP-801 and APP-804; the attention panel follows the filter', eq(r.d.detailKeys, ['APP-801', 'APP-804']) && eq(r.d.attention.rows.map(x => x.key), ['APP-801', 'APP-804']), { detail: r.d.detailKeys, attention: r.d.attention.rows.map(x => x.key) });
+    await run(p, `clickReset()`);
+    await run(p, `clickRow(${q(ST.status)}, 'Done')`); const fd2 = M.newF(); fd2.status = new Set(['Done']);
+    const r2 = await verifySprint(p, ATT_T, fd2, 'Attention data: status Done selected', ACTX);
+    check('Attention (by hand): with only Done tickets the panel says nothing needs attention', r2.d.attention.empty === UI.sprint.attention.none && r2.d.attention.rows.length === 0, r2.d.attention);
+    await run(p, `clickReset()`);
+    check('Attention data: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
 
   console.log('\n--- Jira links with odd data (copy of the app) ---');

@@ -116,9 +116,11 @@
     return m;
   }
 
-  // Cross-tab of two keys. opts: rowOrder / colOrder (arrays), lastCol (name pushed last).
+  // Cross-tab of two keys. opts: rowOrder / colOrder (arrays), lastCol (name pushed last) or
+  // lastCols (names pushed last, in the given order).
   function crossTab(tickets, rowKey, colKey, opts) {
     opts = opts || {};
+    var lastCols = opts.lastCols || (opts.lastCol ? [opts.lastCol] : []);
     var cells = {}, rt = {}, ct = {};
     tickets.forEach(function (t) {
       var r = rowKey(t), c = colKey(t);
@@ -130,12 +132,13 @@
       var keys = Object.keys(totals);
       if (given) return given.filter(function (k) { return totals[k]; });
       keys.sort(function (a, b) {
-        if (last) { if (a === last && b !== last) return 1; if (b === last && a !== last) return -1; }
+        var ra = last.indexOf(a), rb = last.indexOf(b);
+        if (ra !== rb) return ra === -1 ? -1 : rb === -1 ? 1 : ra - rb;
         return totals[b] - totals[a] || a.localeCompare(b);
       });
       return keys;
     }
-    var rows = order(rt, opts.rowOrder, null), cols = order(ct, opts.colOrder, opts.lastCol);
+    var rows = order(rt, opts.rowOrder, []), cols = order(ct, opts.colOrder, lastCols);
     var max = 0;
     rows.forEach(function (r) { cols.forEach(function (c) { max = Math.max(max, (cells[r] || {})[c] || 0); }); });
     return { rows: rows, cols: cols, cells: cells, rowTotals: rt, colTotals: ct, max: max };
@@ -725,11 +728,12 @@
     };
   }
 
-  // Heat grid inside a tile body. ct from crossTab; o: {corner, rowSel, colSel, unit, onCell(r, c, multi)}.
+  // Heat grid inside a tile body. ct from crossTab; o: {corner, rowSel, colSel, unit, onCell(r, c, multi),
+  // colTitles (optional: tooltip per column name, default the name)}.
   function heatGrid(t, ct, o) {
-    var anySel = o.rowSel.size > 0 || o.colSel.size > 0;
+    var anySel = o.rowSel.size > 0 || o.colSel.size > 0, colTitles = o.colTitles || {};
     var head = el('tr', null, [el('th', { class: 'corner', scope: 'col', text: o.corner })]
-      .concat(ct.cols.map(function (c) { return el('th', { scope: 'col', text: c, title: c }); }))
+      .concat(ct.cols.map(function (c) { return el('th', { scope: 'col', text: c, title: colTitles[c] || c }); }))
       .concat([el('th', { scope: 'col', text: 'Total' })]));
     var rows = ct.rows.map(function (r) {
       var tds = ct.cols.map(function (c) {

@@ -57,6 +57,12 @@ test('crossTab orders by totals, pushes lastCol last, honours given orders and r
   assert.deepEqual(given.rows, ['B', 'A']); assert.deepEqual(given.cols, ['Unassigned', 'X']);
 });
 
+test('crossTab lastCols pushes several columns last in the given order (Self-tested, then Unassigned)', () => {
+  const rows = [T({ tester: 'Self-tested' }), T({ tester: 'Self-tested' }), T({ tester: 'Self-tested' }), T({ tester: 'Unassigned' }), T({ tester: 'X' })];
+  const ct = AF.crossTab(rows, t => t.owner, t => t.tester, { lastCols: ['Self-tested', 'Unassigned'] });
+  assert.deepEqual(ct.cols, ['X', 'Self-tested', 'Unassigned']);
+});
+
 test('createStore: plain click selects only, second click clears, multi toggles, OR within and AND across', () => {
   const s = AF.createStore({ status: { label: 'Status', get: t => t.status }, owner: { label: 'Owner', get: t => t.owner } });
   const rows = [T({ ticket: 'a', status: 'Done', owner: 'A' }), T({ ticket: 'b', status: 'Open', owner: 'A' }), T({ ticket: 'c', status: 'Done', owner: 'B' })];

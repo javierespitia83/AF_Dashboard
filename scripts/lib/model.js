@@ -17,6 +17,9 @@ const natural = (a, b) => String(a).localeCompare(String(b), undefined, { numeri
 const isDevToTest = t => String(t.classifications || '').split('; ').includes('Dev to Test');
 const noTester = t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !isDevToTest(t);
 const longRunning = t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number' && t.statusAging >= THR_TIME;
+// Assignee x tester column (R001-17): Self-tested = Dev to Test with no tester, or tester = assignee;
+// Unassigned = no tester and not Dev to Test; otherwise the tester's name.
+const testerGroup = t => { const who = grpName(t.tester); if (who === 'Unassigned') return isDevToTest(t) ? UI.sprint.matrix.selfTested : 'Unassigned'; return who === grpName(t.owner) ? UI.sprint.matrix.selfTested : who; };
 
 // ---------- dates ----------
 const DAYMS = 86400000;
@@ -28,9 +31,9 @@ const f1 = x => String(Math.round(x * 10) / 10);
 const addedAfter = (t, sprint, thr) => { const a = dn(t.addedDate); return !isNaN(a) && a > dn(sprint.startDate) + thr; };
 
 // ---------- sprint filters ----------
-const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim() === '' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: t => grpName(t.tester), contributor: () => null, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
-const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), contributor: new Set(), fix: new Set(), parent: new Set() });
-const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || (d === 'contributor' ? (f[d].has(grpName(t.owner)) || f[d].has(grpName(t.tester))) : f[d].has(keyMap[d](t)))) && (!pred || pred(t)));
+const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim() === '' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: testerGroup, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
+const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), fix: new Set(), parent: new Set() });
+const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || f[d].has(keyMap[d](t))) && (!pred || pred(t)));
 
 // Independent burndown expectation.
 function expectBurn(all, ctx, thr, rem = []) {
@@ -64,6 +67,27 @@ function expectBurn(all, ctx, thr, rem = []) {
   return { n, total: mx, ti, inside, days, unplaced, mid: { count: mid.length, points: sumP(mid) }, by, rby, hasRemoved: Array.isArray(sp.removed), name: sp.name, limit: isoN(s + thr) };
 }
 
+// Needs attention today (R001-02) for the filtered set `all`; S is the whole snapshot (blocker status lookup).
+// Rows: not Done and long-running, carried over, blocked by a ticket not Done in S, or with blocker text.
+function expectAttention(all, S, sprint) {
+  const A = UI.sprint.attention.reasons, byKey = new Map(S.map(t => [t.ticket, t]));
+  const carried = sprint.carriedOver && Array.isArray(sprint.carriedOver.ticketKeys) ? sprint.carriedOver.ticketKeys : [];
+  const rows = [];
+  all.forEach(t => {
+    if (bucket(t.status) === 3) return;
+    const reasons = [];
+    if (longRunning(t)) reasons.push(A.long);
+    if (carried.includes(t.ticket)) reasons.push(A.carried);
+    const blockers = []; for (const m of String(t.linkedWorkItems || '').matchAll(/\b([A-Z][A-Z0-9]+-[0-9]+) \(is blocked by\)/g)) { const b = byKey.get(m[1]); if (!(b && bucket(b.status) === 3) && !blockers.includes(m[1])) blockers.push(m[1]); }
+    blockers.forEach(k => reasons.push(A.blocked(k)));
+    if (t.blocker != null && String(t.blocker).trim() !== '') reasons.push(A.blocker);
+    if (reasons.length) rows.push({ key: t.ticket, status: t.status, days: typeof t.statusAging === 'number' ? String(t.statusAging) + (t.statusAgingApprox ? '*' : '') : '—', aging: typeof t.statusAging === 'number' ? t.statusAging : -1, reasons });
+  });
+  rows.sort((a, b) => b.aging - a.aging || natural(a.key, b.key));
+  const missing = UI.sprint.attention.missing(all.filter(noTester).length, all.filter(t => t.fixVersion == null || String(t.fixVersion).trim() === '').length, all.filter(t => typeof t.points !== 'number' || !isFinite(t.points)).length);
+  return { rows, missing };
+}
+
 // Everything the sprint page should show for tickets S under filters f; ctx = { sprint, today, thr, closed }.
 function expectSprint(S, f, ctx) {
   const all = applyF(S, f, SKEY), P = sumP(all), TP = sumP(S);
@@ -87,13 +111,10 @@ function expectSprint(S, f, ctx) {
     String(all.filter(noTester).length), withAging.length ? String(all.filter(longRunning).length) : '—', avg === null ? '—' : f1(avg)];
   const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
   const typeBase = applyF(S, f, SKEY, ['type']); const typeG = group(typeBase, SKEY.type);
-  const cBase = applyF(S, f, SKEY, ['assignee', 'tester', 'contributor']);
-  const contrib = {};
-  cBase.forEach(t => { [...new Set([SKEY.assignee(t), SKEY.tester(t)])].forEach(n => { const r = contrib[n] || (contrib[n] = { assignee: 0, tester: 0, keys: new Map() }); if (SKEY.assignee(t) === n) r.assignee++; if (SKEY.tester(t) === n) r.tester++; r.keys.set(t.ticket, t); }); });
-  Object.keys(contrib).forEach(n => { const r = contrib[n], u = [...r.keys.values()]; r.total = `${u.length} W.I | ${sumP(u)} SP`; });
+  const attention = expectAttention(all, S, ctx.sprint);
   const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {};
   mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
-  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, contribution: contrib, cBase, matrix: mat, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
+  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, attention, matrix: mat, mBase, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
 }
 
 // ---------- backlog ----------
@@ -143,7 +164,7 @@ function contrast(fg, bg) { // fg, bg: [r, g, b] 0-255
 }
 
 module.exports = {
-  BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, noTester, longRunning,
+  BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, noTester, longRunning, testerGroup, expectAttention,
   dn, isoN, md, f1, addedAfter, SKEY, newF, applyF, expectBurn, expectSprint,
   AGEB, ageOf, dv, BKEY, newBF, hay, predFor, median, mostCommon, KEYRE, keysIn, linkErrors, contrast
 };

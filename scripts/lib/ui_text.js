@@ -17,8 +17,8 @@ const UI = {
   },
   jiraBrowse: 'https://mysnaplogic.atlassian.net/browse/',
   sprint: {
-    tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', contribution: 'Team Contribution', matrix: 'Assignee x tester', detail: 'Ticket detail' },
-    mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Team Contribution'],
+    tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', attention: 'Needs attention today', matrix: 'Assignee x tester', detail: 'Ticket detail' },
+    mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Needs attention today'],
     lowerRow: ['Ticket detail', 'Assignee x tester'],
     kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time'],
     kpi: { items: 'Work items', mid: 'Added mid-sprint', carried: 'Carried over', noTester: 'No tester & Not Dev to Test', time: 'Long-running work · ' + THR_TIME + '+ days', cycle: 'Avg cycle time' },
@@ -31,13 +31,18 @@ const UI = {
       noTesterPrefix: 'no tester, excluding Dev to Test'
     },
     empty: 'No work items match these filters. Remove a tag or use Reset all.',
-    tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', contributor: 'Team member', fix: 'Fix version', parent: 'Parent' },
+    tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', fix: 'Fix version', parent: 'Parent' },
     kpiTag: name => 'KPI: ' + name,
-    contribution: {
-      sub: 'Work Items (W.I) by Jira role',
-      headers: ['Name', 'Assignee W.I', 'Tester W.I', 'Total W.I | SP'],
-      note: 'Assignee and Tester work item counts can overlap. Story points are shared and count once.',
-      removedWording: 'Total W.I counts each ticket once'
+    attention: {
+      headers: ['Ticket', 'Status', 'Days', 'Reason'],
+      sub: n => `${n} open ticket${n === 1 ? '' : 's'}: long-running, carried over or blocked`,
+      none: 'Nothing needs attention under these filters.',
+      missing: (noTester, noFix, noPoints) => `Missing: ${noTester} no tester (excluding Dev to Test) · ${noFix} no fix version · ${noPoints} no story points`,
+      reasons: { long: 'Long-running · ' + THR_TIME + '+ days', carried: 'Carried over', blocked: key => 'Blocked by ' + key, blocker: 'Blocker recorded' }
+    },
+    matrix: {
+      selfTested: 'Self-tested',
+      selfTestedTitle: 'Tested by the assignee. No separate tester needed (Dev to Test, or the assignee is also the tester).'
     },
     detailHeaders: ['Ticket', 'Summary', 'Owner', 'Tester', 'Dev to Test', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version', 'Linked work items', 'Last sync update'],
     sortableHeaders: ['Ticket', 'Owner', 'Tester', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version'],

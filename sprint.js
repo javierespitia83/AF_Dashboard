@@ -163,8 +163,7 @@
       status: { label: 'Status', get: function (t) { return AF.BUCKETS[AF.bucketOf(t.status)]; } },
       type: { label: 'Type', get: function (t) { return AF.isBlank(t.type) ? '—' : String(t.type); } },
       assignee: { label: 'Assignee', get: function (t) { return AF.personName(t.owner); } },
-      tester: { label: 'Tester', get: function (t) { return AF.personName(t.tester); } },
-      contributor: { label: 'Team member', matches: function (t, selected) { return selected.has(AF.personName(t.owner)) || selected.has(AF.personName(t.tester)); } },
+      tester: { label: 'Tester', get: testerGroup }, // the Assignee x tester column, so a clicked cell matches its count
       fix: { label: 'Fix version', get: function (t) { return AF.isBlank(t.fixVersion) ? NONE : String(t.fixVersion); } },
       parent: { label: 'Parent', get: function (t) { return AF.isBlank(t.parent) ? NONE : String(t.parent); } }
     });
@@ -176,6 +175,14 @@
 
     function isDevToTest(t) {
       return String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
+    }
+    // Assignee x tester column (R001-17): Self-tested when a Dev to Test ticket has no tester or the tester
+    // is the assignee; Unassigned only for no tester and not Dev to Test (the No tester KPI); else the tester.
+    var SELF_TESTED = 'Self-tested';
+    function testerGroup(t) {
+      var who = AF.personName(t.tester);
+      if (who === 'Unassigned') return isDevToTest(t) ? SELF_TESTED : 'Unassigned';
+      return who === AF.personName(t.owner) ? SELF_TESTED : who;
     }
     function noTesterAndNotDevToTest(t) {
       var testerMissing = t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
@@ -216,7 +223,7 @@
     tBurn.body.classList.add('chart');
     var tStatus = AF.tile({ title: 'Tickets by status', sub: 'Click a status to filter' });
     var tType = AF.tile({ title: 'Tickets by type', sub: 'Click a type to filter' });
-    var tContribution = AF.tile({ title: 'Team Contribution', sub: 'Work Items (W.I) by Jira role' });
+    var tAttention = AF.tile({ title: 'Needs attention today', sub: '' });
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
 
@@ -242,7 +249,7 @@
     }
 
     app.appendChild(el('div', { class: 'kpis k8' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kTime.root, kCycle.root]));
-    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tContribution.root]));
+    app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tAttention.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
     // ---- filter bar controls (Fix version, Parent) ----
@@ -452,61 +459,70 @@
       }), { dim: 'type', header: 'Type', base: base, onClick: function (name, multi) { store.click('type', name, multi); } });
     }
 
-    // Team Contribution: one pass builds each person's role counts and unique tickets (C16).
-    function renderContributions() {
-      var base = store.apply(tickets, ['assignee', 'tester', 'contributor']);
-      var people = new Map();
-      function person(name) {
-        var r = people.get(name);
-        if (!r) { r = { name: name, assigneeItems: 0, testerItems: 0, tickets: new Map() }; people.set(name, r); }
-        return r;
+    // Needs attention today (R001-02): tickets not Done that are long-running, carried over or blocked.
+    // Rows show key, status, days and reasons only; no names and no blocker text, because the site is public.
+    var byKey = Object.create(null);
+    tickets.forEach(function (t) { byKey[t.ticket] = t; });
+    var BLOCKED_TITLE = 'Linked in Jira as "is blocked by". Links to a ticket that is Done in this sprint are left out; a ticket outside the sprint is assumed open.';
+    function openBlockers(t) { // keys linked as "is blocked by", except tickets Done in this snapshot
+      var out = [], re = /\b([A-Z][A-Z0-9]+-[0-9]+) \(is blocked by\)/g, text = String(t.linkedWorkItems || ''), m;
+      while ((m = re.exec(text))) {
+        var b = byKey[m[1]];
+        if (!(b && AF.bucketOf(b.status) === 3) && out.indexOf(m[1]) === -1) out.push(m[1]);
       }
-      base.forEach(function (t) {
-        var a = person(owner(t)), b = person(tester(t));
-        a.assigneeItems += 1; a.tickets.set(t.ticket, t);
-        b.testerItems += 1; b.tickets.set(t.ticket, t);
+      return out;
+    }
+    function attentionReasons(t) {
+      if (AF.bucketOf(t.status) === 3) return [];
+      var out = [];
+      if (inTimeInStatus(t)) out.push({ text: 'Long-running · ' + AF.config.timeInStatusThresholdDays + '+ days' });
+      if (carriedKeys && carriedKeys.indexOf(t.ticket) !== -1) out.push({ text: 'Carried over' });
+      openBlockers(t).forEach(function (key) { out.push({ text: 'Blocked by ', key: key }); });
+      if (!AF.isBlank(t.blocker)) out.push({ text: 'Blocker recorded', title: 'A blocker is recorded in the tracker; see Last sync update or the tracker for details.' });
+      return out;
+    }
+    function hasPoints(t) { return typeof t.points === 'number' && isFinite(t.points); }
+    var attentionCols = [
+      { label: 'Ticket', cls: 'nowrap', render: function (r) { return AF.ticketCell(r.t.ticket); } },
+      { label: 'Status', cls: 'status wrap-text', render: function (r) { return el('span', null, [AF.statusDot(AF.bucketOf(r.t.status)), AF.show(r.t.status)]); } },
+      { label: 'Days', cls: 'num', render: function (r) {
+          return AF.show(typeof r.t.statusAging === 'number' ? r.t.statusAging + (r.t.statusAgingApprox ? '*' : '') : null);
+        } },
+      { label: 'Reason', cls: 'reasons', render: function (r) {
+          return el('span', { class: 'reason-list' }, r.reasons.map(function (x) {
+            return el('span', { class: 'reason', title: x.key ? BLOCKED_TITLE : (x.title || null) }, [x.text, x.key ? AF.jira.link(x.key) : null]);
+          }));
+        } }
+    ];
+    function renderAttention(f) {
+      var rows = [];
+      f.forEach(function (t) { var reasons = attentionReasons(t); if (reasons.length) rows.push({ t: t, reasons: reasons }); });
+      rows.sort(function (a, b) { // most days in status first, no value last, then key
+        var x = typeof a.t.statusAging === 'number' ? a.t.statusAging : -1, y = typeof b.t.statusAging === 'number' ? b.t.statusAging : -1;
+        return y - x || AF.naturalCompare(a.t.ticket, b.t.ticket);
       });
-      var rows = Array.from(people.values()).map(function (r) {
-        var unique = Array.from(r.tickets.values());
-        return { name: r.name, assigneeItems: r.assigneeItems, testerItems: r.testerItems, workItems: unique.length, totalPoints: AF.sum(unique, 'points') };
-      }).sort(function (a, b) { return b.workItems - a.workItems || a.name.localeCompare(b.name); });
-      var sel = store.sel;
-      AF.rebuild(tContribution, function () {
-        if (!rows.length) { tContribution.body.appendChild(AF.emptyState(EMPTY)); return; }
-        tContribution.colhead.className = 'colhead contribution-grid';
-        ['Name', 'Assignee W.I', 'Tester W.I', 'Total W.I | SP'].forEach(function (h) { tContribution.colhead.appendChild(el('span', { text: h })); });
-        rows.forEach(function (row) {
-          function button(dim, text, ariaLabel, title) {
-            var selected = sel[dim].has(row.name), dimmed = sel[dim].size > 0 && !selected;
-            return el('button', {
-              type: 'button', 'data-key': dim + ':' + row.name, class: (dim === 'contributor' ? 'contribution-name' : 'contribution-value') + AF.stateClass(selected, dimmed),
-              'aria-pressed': selected ? 'true' : 'false', 'aria-label': ariaLabel, title: title,
-              onclick: function (event) { store.click(dim, row.name, AF.isMulti(event)); }
-            }, [text]);
-          }
-          // the visible cells are bare numbers, so each button says what it counts and what it filters (C19)
-          tContribution.body.appendChild(el('div', { class: 'contribution-grid contribution-row' }, [
-            button('contributor', row.name, row.name + ': show tickets where ' + row.name + ' is assignee or tester', 'Show tickets where ' + row.name + ' is assignee or tester'),
-            button('assignee', fmt(row.assigneeItems), row.name + ', Assignee W.I: ' + row.assigneeItems + '. Filter Assignee', 'Filter Assignee: ' + row.name),
-            button('tester', fmt(row.testerItems), row.name + ', Tester W.I: ' + row.testerItems + '. Filter Tester', 'Filter Tester: ' + row.name),
-            el('span', { class: 'contribution-total', text: row.workItems + ' W.I | ' + fmt(row.totalPoints) + ' SP' })
-          ]));
-        });
-        tContribution.foot.appendChild(el('div', { class: 'contribution-grid totalrow' }, [
-          el('span', { text: 'Total' }), el('span', { text: fmt(base.length) }), el('span', { text: fmt(base.length) }),
-          el('span', { class: 'contribution-total', text: base.length + ' W.I | ' + fmt(AF.sum(base, 'points')) + ' SP' })
+      tAttention.head.querySelector('.sub').textContent = rows.length + ' open ticket' + (rows.length === 1 ? '' : 's') + ': long-running, carried over or blocked';
+      AF.rebuild(tAttention, function () {
+        if (!f.length) { tAttention.body.appendChild(AF.emptyState(EMPTY)); return; }
+        if (rows.length) tAttention.body.appendChild(AF.buildTable(attentionCols, rows, { cls: 'data attention' }));
+        else tAttention.body.appendChild(AF.emptyState('Nothing needs attention under these filters.'));
+        tAttention.foot.appendChild(el('p', { class: 'attention-missing' }, [
+          el('strong', { text: 'Missing: ' }),
+          f.filter(noTesterAndNotDevToTest).length + ' no tester (excluding Dev to Test) · ' +
+          f.filter(function (t) { return AF.isBlank(t.fixVersion); }).length + ' no fix version · ' +
+          f.filter(function (t) { return !hasPoints(t); }).length + ' no story points'
         ]));
-        tContribution.foot.appendChild(el('p', { class: 'footnote', text: 'Assignee and Tester work item counts can overlap. Story points are shared and count once.' }));
       });
     }
 
     function renderMatrix() {
       var base = store.apply(tickets, ['assignee', 'tester'], { withExtra: true });
-      var ct = AF.crossTab(base, owner, tester, { lastCol: 'Unassigned' });
+      var ct = AF.crossTab(base, owner, testerGroup, { lastCols: [SELF_TESTED, 'Unassigned'] });
       AF.rebuild(tMatrix, function () {
         if (!ct.rows.length) { tMatrix.body.appendChild(AF.emptyState(EMPTY)); return; }
         AF.heatGrid(tMatrix, ct, {
           corner: 'Assignee', unit: 'work items', rowSel: store.sel.assignee, colSel: store.sel.tester,
+          colTitles: { 'Self-tested': 'Tested by the assignee. No separate tester needed (Dev to Test, or the assignee is also the tester).', Unassigned: 'No tester and not Dev to Test' },
           onCell: function (r, c, m) { store.clickPair('assignee', r, 'tester', c, m); }
         });
       });
@@ -598,7 +614,7 @@
       renderBurndown(f);
       renderStatus();
       renderTypes();
-      renderContributions();
+      renderAttention(f);
       syncLowerKpis();
       renderLower();
       updateBar();

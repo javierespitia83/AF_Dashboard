@@ -336,15 +336,6 @@ svg.burndown { display: block; }
 .bar-grid .name { display: flex; align-items: center; font-weight: 600; }
 .pair { text-align: right; font-weight: 700; font-size: 14px; white-space: pre; }
 .pair .sep { color: var(--muted); font-weight: 400; }
-.contribution-grid { display: grid; grid-template-columns: minmax(128px, 1.5fr) repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px; }
-.contribution-grid > :not(:first-child) { text-align: right; }
-.contribution-row { min-height: 36px; border-top: 1px solid var(--line-soft); }
-.contribution-name { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; border-radius: 4px; padding: 5px 6px; margin-left: -6px; background: transparent; color: var(--ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
-.contribution-value { justify-self: stretch; border: 0; border-radius: 4px; padding: 5px 8px; background: transparent; text-align: right; font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
-.contribution-name:hover, .contribution-name.is-selected, .contribution-value:hover, .contribution-value.is-selected { background: var(--teal-soft); color: var(--navy); }
-.contribution-name.is-dimmed, .contribution-value.is-dimmed { color: var(--muted); font-weight: 400; }
-.contribution-total { font-weight: 700; white-space: nowrap; }
-.contribution-grid.totalrow { padding-top: 6px; border-top: 2px solid var(--line); font-weight: 700; }
 .dist-grid { grid-template-columns: minmax(64px, 0.9fr) minmax(0, 1.4fr) 34px; }
 .dist-grid .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dist-grid .n { text-align: right; font-weight: 700; }
@@ -378,6 +369,12 @@ table.wider { min-width: 1500px; }
 .lower table.wider { min-width: 1000px; }
 .lower td.wrap { min-width: 160px; }
 .lower td.wrap-text { white-space: normal; overflow-wrap: break-word; }
+/* ---- Needs attention today (sprint main row): key, status, days, reasons; no names ---- */
+table.attention td.status { white-space: nowrap; }
+table.attention td.reasons { white-space: normal; }
+.reason-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.reason { display: inline-block; padding: 1px 7px; border-radius: 10px; background: var(--surface-sunk); border: 1px solid var(--line); font-size: 12px; line-height: 1.5; white-space: nowrap; }
+.attention-missing { margin: 0; font-size: 12.5px; line-height: 1.35; color: var(--ink); }
 .lower th.current-situation, .lower td.current-situation { min-width: 350px; }
 .empty { margin: 12px 4px; color: var(--muted); }
 .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-weight: 600; font-size: 12px; border: 1px solid rgba(0,0,0,0.12); white-space: nowrap; }

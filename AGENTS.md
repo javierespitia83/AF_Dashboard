@@ -24,7 +24,7 @@ node --test scripts/unit.test.js   # unit tests only
 
 Keep `scripts/run_acceptance.js` (and `scripts/lib/`) in sync with `SPEC.md`, `DATA_CONTRACT.md` and `ACCEPTANCE.md`. It must stay read-only with respect to the real data files and the tracker; it proves this by hashing every file in this folder before and after the run.
 
-**Run the acceptance harness whenever the app changes (rule of 2026-10-20).** After any change to an HTML page, `sprint.js`, `backlog.js`, `quality-intake.js`, `dashboard.js`, `dashboard.css`, the schemas or the fixtures, run `node scripts/run_acceptance.js` in the same pass and report PASS/FAIL, instead of waiting for the next full sync. The harness derives every expected value (tile counts, carried-over keys, Team Contribution, filters) and every test target (people, epics, matrix cells, the closed sprint) from the live sprint snapshots, `backlog.json`, `sprints.json` and `quality-intake.json`; do not hard-code counts, ticket keys or sprint ids in it. The only fixed values allowed are layout expectations and hand-made test data. UI wording the checks expect lives in one place, `scripts/lib/ui_text.js`. The harness only reads the data files, so it cannot hide a data problem: a data failure is fixed at the source (tracker or exporter), never by editing the expected values.
+**Run the acceptance harness whenever the app changes (rule of 2026-10-20).** After any change to an HTML page, `sprint.js`, `backlog.js`, `quality-intake.js`, `dashboard.js`, `dashboard.css`, the schemas or the fixtures, run `node scripts/run_acceptance.js` in the same pass and report PASS/FAIL, instead of waiting for the next full sync. The harness derives every expected value (tile counts, carried-over keys, Needs attention today, filters) and every test target (people, epics, matrix cells, the closed sprint) from the live sprint snapshots, `backlog.json`, `sprints.json` and `quality-intake.json`; do not hard-code counts, ticket keys or sprint ids in it. The only fixed values allowed are layout expectations and hand-made test data. UI wording the checks expect lives in one place, `scripts/lib/ui_text.js`. The harness only reads the data files, so it cannot hide a data problem: a data failure is fixed at the source (tracker or exporter), never by editing the expected values.
 
 ## Read before coding
 
@@ -65,7 +65,7 @@ Keep `scripts/run_acceptance.js` (and `scripts/lib/`) in sync with `SPEC.md`, `D
 
 - English only for UI text, comments, and file names.
 - Show real names (team-only tool). Add a visible "Internal — team only" note to each page footer.
-- Keep UI wording to the labels fixed in `SPEC.md` (including the combined "Team Contribution" table and `N W.I | P SP` metric format).
+- Keep UI wording to the labels fixed in `SPEC.md` (including the Needs attention today panel, the Self-tested grid column and the `N W.I | P SP` metric format).
 - Prefer small, clearly named functions: load, normalize, aggregate, render. Keep aggregation separate from rendering so the numbers can be checked (and unit-tested in Node).
 - When you change behavior, update `SPEC.md` / `DATA_CONTRACT.md` and add a line to `DECISIONS.md` in the same pass.
 
