@@ -458,7 +458,7 @@
   function buildTable(cols, rows, opts) {
     opts = opts || {};
     var head = el('tr', null, cols.map(function (c) {
-      return el('th', { scope: 'col', class: c.cls || null, text: c.label });
+      return el('th', { scope: 'col', class: c.cls || null, text: c.label, title: c.title || null });
     }));
     var body = el('tbody', null, rows.map(function (r, i) {
       return el('tr', null, cols.map(function (c) {

@@ -20,15 +20,15 @@ const UI = {
     tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', attention: 'Needs attention today', matrix: 'Assignee x tester', detail: 'Ticket detail' },
     mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Needs attention today'],
     lowerRow: ['Ticket detail', 'Assignee x tester'],
-    kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & Not Dev to Test', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time'],
-    kpi: { items: 'Work items', mid: 'Added mid-sprint', carried: 'Carried over', noTester: 'No tester & Not Dev to Test', time: 'Long-running work · ' + THR_TIME + '+ days', cycle: 'Avg cycle time' },
+    kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & not self-tested', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time'],
+    kpi: { items: 'Work items', mid: 'Added mid-sprint', carried: 'Carried over', noTester: 'No tester & not self-tested', time: 'Long-running work · ' + THR_TIME + '+ days', cycle: 'Avg cycle time' },
     hints: {
       itemsUnfiltered: 'tickets in the sprint',
       timeWithData: 'In Progress / In Review tickets', timeNoData: 'Days in status not available yet',
       cycle: n => n ? `days, over ${n} Done ticket${n === 1 ? '' : 's'}` : 'no Done tickets with a cycle time',
       mid: (points, thr) => `${points} points, added after day ${thr}`,
       carriedNull: 'Not calculated yet for this sprint', carriedNoFigures: 'No figures in the sprint snapshot',
-      noTesterPrefix: 'no tester, excluding Dev to Test'
+      noTesterPrefix: 'no tester, excluding Dev to Test and QA to Test'
     },
     empty: 'No work items match these filters. Remove a tag or use Reset all.',
     tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', fix: 'Fix version', parent: 'Parent' },
@@ -37,14 +37,16 @@ const UI = {
       headers: ['Ticket', 'Status', 'Days', 'Reason'],
       sub: n => `${n} open ticket${n === 1 ? '' : 's'}: long-running, carried over or blocked`,
       none: 'Nothing needs attention under these filters.',
-      missing: (noTester, noFix, noPoints) => `Missing: ${noTester} no tester (excluding Dev to Test) · ${noFix} no fix version · ${noPoints} no story points`,
+      missing: (noTester, noFix, noPoints) => `Missing: ${noTester} no tester (not self-tested) · ${noFix} no fix version · ${noPoints} no story points`,
       reasons: { long: 'Long-running · ' + THR_TIME + '+ days', carried: 'Carried over', blocked: key => 'Blocked by ' + key, blocker: 'Blocker recorded' }
     },
     matrix: {
       selfTested: 'Self-tested',
-      selfTestedTitle: 'Tested by the assignee. No separate tester needed (Dev to Test, or the assignee is also the tester).'
+      selfTestedTitle: 'Tested by the assignee. No separate tester needed (Dev to Test, QA to Test, or the assignee is also the tester).',
+      unassignedTitle: 'No tester and not self-tested (not Dev to Test or QA to Test)'
     },
-    detailHeaders: ['Ticket', 'Summary', 'Owner', 'Tester', 'Dev to Test', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version', 'Linked work items', 'Last sync update'],
+    selfTestedColumnTitle: 'Tested by the assignee. No separate tester needed (Dev to Test, QA to Test, or the assignee is also the tester).',
+    detailHeaders: ['Ticket', 'Summary', 'Owner', 'Tester', 'Self-tested', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version', 'Linked work items', 'Last sync update'],
     sortableHeaders: ['Ticket', 'Owner', 'Tester', 'Status', 'Days in status', 'Story points', 'Parent', 'Fix version'],
     statusHeader: 'Work items | Story points',
     burndown: {

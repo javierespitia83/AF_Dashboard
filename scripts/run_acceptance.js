@@ -46,6 +46,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); 
 const skips = [];
 const skip = (name, why) => { skips.push({ name, why }); console.log('SKIP ' + name + ' (' + why + ')'); };
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const eqObj = (a, b) => eq(Object.entries(a || {}).sort(), Object.entries(b || {}).sort()); // same keys and values, any order
 const J = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const asOfLabel = snapshot => {
   const d = new Date(snapshot.exportedAt || '');
@@ -74,7 +75,7 @@ const REMOVED = [
   { ticket: 'APP-950', points: 3, addedDate: '2026-09-22', removedDate: '2026-09-24', status: 'In Progress', owner: 'Ann', tester: 'Tim', fixVersion: '4.46', parent: null, summary: 'gone one' },
   { ticket: 'APP-951', points: 2, addedDate: '2026-09-23', removedDate: '2026-09-24', status: 'To Do', owner: 'Bob', tester: null, fixVersion: '4.46', parent: null, summary: 'gone two' }];
 const CARRIED = { count: 3, percent: 20, storyPoints: 8 };
-// Needs attention today and Self-tested (R001-02, R001-17); the expected rows and cells are worked out by hand below.
+// Needs attention today and Self-tested (R001-02, R001-17, R001-18); the expected rows and cells are worked out by hand below.
 const ATT_T = [
   TK({ ticket: 'APP-801', status: 'In Review', statusAging: 9, tester: 'Ann' }),
   TK({ ticket: 'APP-802', status: 'In Progress', statusAging: 2, linkedWorkItems: 'APP-803 (is blocked by), APP-804 (is blocked by), APP-809 (relates to)' }),
@@ -85,7 +86,9 @@ const ATT_T = [
   TK({ ticket: 'APP-807', status: 'In Progress', statusAging: 0, linkedWorkItems: 'APP-999 (is blocked by)' }),
   TK({ ticket: 'APP-808', status: 'To Do', tester: null, points: null, fixVersion: null }),
   TK({ ticket: 'APP-810', status: 'In Progress', statusAging: 3, linkedWorkItems: 'APP-803 (is blocked by)' }),
-  TK({ ticket: 'APP-811', owner: 'Bob', tester: 'Ann', classifications: 'Dev to Test' })];
+  TK({ ticket: 'APP-811', owner: 'Bob', tester: 'Ann', classifications: 'Dev to Test' }),
+  TK({ ticket: 'APP-812', tester: null, classifications: 'Customer Escalation; QA to Test' }),
+  TK({ ticket: 'APP-813', owner: 'Bob', tester: 'Tim', classifications: 'QA to Test' })];
 const ATT_CARRIED = { count: 2, percent: 20, storyPoints: 2, ticketKeys: ['APP-805', 'APP-806'] };
 const manifestFor = (sp, extraTop = {}, extraEntry = {}) => JSON.stringify(Object.assign({ current: sp.id, sprints: [Object.assign({ id: sp.id, name: sp.name, startDate: sp.startDate, endDate: sp.endDate, state: 'active', file: 'snapshots/sprint-' + sp.id + '.json' }, extraEntry)] }, extraTop));
 
@@ -269,11 +272,12 @@ async function suites(ctx) {
       if (!Object.keys(b).length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); }
       else {
         if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells', Object.keys(a).length, Object.keys(b).length]);
-        // R001-17: Self-tested and Unassigned are the last two columns; Unassigned holds exactly the No tester & Not Dev to Test tickets
+        // R001-17/18: Self-tested and Unassigned are the last two columns; Unassigned holds exactly the No tester & not self-tested tickets
         const cols = d.matrix.hdr.slice(1, -1), ST_COL = UI.sprint.matrix.selfTested, want = [ST_COL, 'Unassigned'].filter(cName => cols.includes(cName));
         if (!eq(cols.slice(cols.length - want.length), want)) errs.push(['matrix: Self-tested and Unassigned not last', cols]);
-        if ((d.matrix.colTotals.Unassigned || 0) !== e.mBase.filter(M.noTester).length) errs.push(['matrix: Unassigned column total differs from no tester & not Dev to Test', d.matrix.colTotals.Unassigned, e.mBase.filter(M.noTester).length]);
+        if ((d.matrix.colTotals.Unassigned || 0) !== e.mBase.filter(M.noTester).length) errs.push(['matrix: Unassigned column total differs from no tester & not self-tested', d.matrix.colTotals.Unassigned, e.mBase.filter(M.noTester).length]);
         if (cols.includes(ST_COL) && d.matrix.titles[d.matrix.hdr.indexOf(ST_COL)] !== UI.sprint.matrix.selfTestedTitle) errs.push(['matrix: Self-tested tooltip', d.matrix.titles[d.matrix.hdr.indexOf(ST_COL)]]);
+        if (cols.includes('Unassigned') && d.matrix.titles[d.matrix.hdr.indexOf('Unassigned')] !== UI.sprint.matrix.unassignedTitle) errs.push(['matrix: Unassigned tooltip', d.matrix.titles[d.matrix.hdr.indexOf('Unassigned')]]);
       } }
     if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
     if (d.detailSub !== `${e.all.length} of ${Srows.length} work items`) errs.push(['detail sub', d.detailSub]);
@@ -423,7 +427,7 @@ async function suites(ctx) {
     await verifySprint(p, S, f, 'Reset all clears the Type selection'); }
   const noTesterKeys = S.filter(M.noTester).map(t => t.ticket);
   const noTesterKpi = await run(p, `const k=kpi(${q(UI.sprint.kpi.noTester)}); return {value:T(k.querySelector('.value')), hint:T(k.querySelector('.hint'))}`);
-  check('No tester & Not Dev to Test KPI excludes exact Dev to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith(UI.sprint.hints.noTesterPrefix), { count: noTesterKeys.length, hint: noTesterKpi.hint });
+  check('No tester & not self-tested KPI excludes exact Dev to Test and QA to Test classifications', noTesterKpi.value === String(noTesterKeys.length) && noTesterKpi.hint.startsWith(UI.sprint.hints.noTesterPrefix), { count: noTesterKeys.length, hint: noTesterKpi.hint });
   const detailKeys = () => run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
   { const tisKeys = S.filter(M.longRunning).map(t => t.ticket);
     await run(p, `clickReset()`);
@@ -436,7 +440,7 @@ async function suites(ctx) {
   await run(p, `clickEl(kpi(${q(UI.sprint.kpi.noTester)}))`);
   let lowerKeys = await detailKeys();
   const resetEnabled = await run(p, `return !document.querySelector('.resetall').disabled`);
-  check('Click No tester & Not Dev to Test filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
+  check('Click No tester & not self-tested filters the lower section to matching tickets and activates Reset all', eq([...lowerKeys].sort(), [...noTesterKeys].sort()) && resetEnabled, { expected: noTesterKeys.length, actual: lowerKeys.length, resetEnabled });
   { // removing the KPI tag clears only the KPI filter and keeps a regular filter
     await run(p, `clickRow(${q(ST.status)}, 'Done')`);
     const tags = await run(p, `return readCommon().tags`);
@@ -496,15 +500,15 @@ async function suites(ctx) {
     await run(p, `clickReset()`); f = M.newF();
     await verifySprint(p, S, f, 'Reset all clears everything; Reset is disabled again');
   } else skip('Click, replace and multi-select checks on Type rows', 'the active sprint has fewer than three types');
-  // Self-tested cell (R001-17): the assignee's tickets they test themselves (Dev to Test without a tester, or tester = assignee)
+  // Self-tested cell (R001-17, R001-18): the assignee's tickets they test themselves (Dev to Test or QA to Test without a tester, or tester = assignee)
   { const mm = M.expectSprint(S, M.newF(), CTX).matrix, STC = UI.sprint.matrix.selfTested;
     const rowsWith = Object.keys(mm).filter(r => mm[r][STC]).sort((a, b) => mm[b][STC] - mm[a][STC] || a.localeCompare(b));
     if (rowsWith.length) {
       const who = rowsWith[0];
       await run(p, `clickCell(${q(ST.matrix)}, ${q(who)}, ${q(STC)})`); f.assignee = new Set([who]); f.tester = new Set([STC]);
       const r = await verifySprint(p, S, f, `Matrix cell "${who} / Self-tested" filters to that assignee's self-tested tickets; the tag reads "Tester: Self-tested"`);
-      const direct = S.filter(t => M.grpName(t.owner) === who && ((M.grpName(t.tester) === 'Unassigned' && M.isDevToTest(t)) || (M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) === who))).map(t => t.ticket).sort();
-      check('Self-tested cell equals the direct count (Dev to Test with no tester, or tester = assignee), and a Dev to Test ticket with another tester stays under that tester', eq([...r.d.detailKeys].sort(), direct) && S.filter(t => M.isDevToTest(t) && M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) !== M.grpName(t.owner)).every(t => M.testerGroup(t) === M.grpName(t.tester)), { got: r.d.detailKeys.length, direct: direct.length });
+      const direct = S.filter(t => M.grpName(t.owner) === who && ((M.grpName(t.tester) === 'Unassigned' && M.selfTestClass(t)) || (M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) === who))).map(t => t.ticket).sort();
+      check('Self-tested cell equals the direct count (Dev to Test or QA to Test with no tester, or tester = assignee), and a ticket with one of those classifications and another tester stays under that tester', eq([...r.d.detailKeys].sort(), direct) && S.filter(t => M.selfTestClass(t) && M.grpName(t.tester) !== 'Unassigned' && M.grpName(t.tester) !== M.grpName(t.owner)).every(t => M.testerGroup(t) === M.grpName(t.tester)), { got: r.d.detailKeys.length, direct: direct.length });
       await run(p, `clickReset()`); f = M.newF(); await verifySprint(p, S, f, 'Reset all clears the Self-tested cell');
     } else skip('Self-tested matrix cell', 'no self-tested tickets in the active sprint'); }
 
@@ -589,8 +593,8 @@ async function suites(ctx) {
   check('Controls are real elements (rows and cells are buttons, selects and inputs)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall')].every(b=>b.tagName==='BUTTON') && document.getElementById('f-fix').tagName==='SELECT'`));
   check('Light mode, no external fonts', await run(p, `const m=getComputedStyle(document.body).backgroundColor.match(/\\d+/g).map(Number); return m.every(x=>x>200) && getComputedStyle(document.documentElement).colorScheme!=='dark'`));
   check('Empty values: no null/undefined/NaN text in tiles or tables (excluding ticket prose)', await run(p, `const t=[...document.querySelectorAll('.kpis, .main')].map(n=>n.textContent).join(' ') + [...document.querySelectorAll('.tile-body tbody td:not(.wrap)')].map(n=>n.textContent).join(' '); return !/NaN|undefined|\\bnull\\b/.test(t)`));
-  const dt = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), devToTest:T(tr.children[ix('Dev to Test')]), days:T(tr.children[ix('Days in status')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
-  check('Detail table: exact summary and last sync update are preserved; Dev to Test reflects exact classification; Days in status with * when approximate; required columns; empty values and original status text', eq(dt[0].hdr, UI.sprint.detailHeaders) && dt.every((r, i) => r.summary === (S[i].summary || '—') && r.situation === (S[i].lastSyncUpdate || '—') && r.pts === (S[i].points == null ? '—' : String(S[i].points)) && r.tester === M.grpName(S[i].tester) && r.devToTest === (M.isDevToTest(S[i]) ? 'Yes' : '—') && r.days === (typeof S[i].statusAging === 'number' ? S[i].statusAging + (S[i].statusAgingApprox ? '*' : '') : '—') && r.status === S[i].status && r.parent === (S[i].parent || '—') && r.fix === (S[i].fixVersion || '—')));
+  const dt = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), selfTested:T(tr.children[ix('Self-tested')]), selfTitle:tr.closest('table').querySelectorAll('thead th')[ix('Self-tested')].getAttribute('title'), days:T(tr.children[ix('Days in status')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
+  check('Detail table: exact summary and last sync update are preserved; Self-tested shows Dev to Test, QA to Test, Same person or a dash (in that precedence) with its tooltip; Days in status with * when approximate; required columns; empty values and original status text', eq(dt[0].hdr, UI.sprint.detailHeaders) && dt.every((r, i) => r.summary === (S[i].summary || '—') && r.situation === (S[i].lastSyncUpdate || '—') && r.pts === (S[i].points == null ? '—' : String(S[i].points)) && r.tester === M.grpName(S[i].tester) && r.selfTested === M.selfTestReason(S[i]) && r.selfTitle === UI.sprint.selfTestedColumnTitle && r.days === (typeof S[i].statusAging === 'number' ? S[i].statusAging + (S[i].statusAgingApprox ? '*' : '') : '—') && r.status === S[i].status && r.parent === (S[i].parent || '—') && r.fix === (S[i].fixVersion || '—')));
   { const L1 = await run(p, `return {ticket: colCells(${q(ST.detail)},'Ticket'), parent: colCells(${q(ST.detail)},'Parent'), linked: colCells(${q(ST.detail)},'Linked work items'), summary: colCells(${q(ST.detail)},'Summary'), situation: colCells(${q(ST.detail)},'Last sync update')}`);
     check('Jira links (sprint): every Ticket cell is a link with the exact href, new tab, noopener', M.linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket').length === 0 && L1.ticket.every(c => c.links.length === 1), M.linkErrors(L1.ticket, S.map(t => t.ticket), 'ticket'));
     check('Jira links (sprint): every key in Parent is its own link, text unchanged, none when no key', M.linkErrors(L1.parent, S.map(t => t.parent)).length === 0, M.linkErrors(L1.parent, S.map(t => t.parent)));
@@ -601,7 +605,7 @@ async function suites(ctx) {
   await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
   { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); }
     check('Jira links: Tab reaches a link and it shows a visible focus outline', li && li.outline !== 'none' && parseFloat(li.w) >= 2, li); }
-  check('Needs attention today wording: title, subtitle, Ticket/Status/Days/Reason headers and the Missing line; Team Contribution is no longer on the sprint page', await run(p, `const t=tile(${q(ST.attention)}); return !!t && /^\\d+ open tickets?: long-running, carried over or blocked$/.test(T(t.querySelector('.sub'))) && (!t.querySelector('thead') || [...t.querySelectorAll('thead th')].map(T).join('|')===${q(UI.sprint.attention.headers.join('|'))}) && /^Missing: \\d+ no tester \\(excluding Dev to Test\\) · \\d+ no fix version · \\d+ no story points$/.test(T(t.querySelector('.tile-foot'))) && !tile('Team Contribution')`));
+  check('Needs attention today wording: title, subtitle, Ticket/Status/Days/Reason headers and the Missing line; Team Contribution is no longer on the sprint page', await run(p, `const t=tile(${q(ST.attention)}); return !!t && /^\\d+ open tickets?: long-running, carried over or blocked$/.test(T(t.querySelector('.sub'))) && (!t.querySelector('thead') || [...t.querySelectorAll('thead th')].map(T).join('|')===${q(UI.sprint.attention.headers.join('|'))}) && /^Missing: \\d+ no tester \\(not self-tested\\) · \\d+ no fix version · \\d+ no story points$/.test(T(t.querySelector('.tile-foot'))) && !tile('Team Contribution')`));
   check('Sprint: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
@@ -817,6 +821,35 @@ async function suites(ctx) {
   check('Quality Intake: no console errors after interactions', p.logs.length === 0, p.logs);
   await p.close();
 
+  // =============== R001-18 expected values, all four sprints ===============
+  // Fixed values from the Project Improvements Log, R001-18 (data of 2026-10-30): the old rule (Dev to Test only)
+  // and the new one (Dev to Test or QA to Test). Closed sprints are frozen, so their values stay fixed. The active
+  // sprint changes at every export, so its fixed values are checked only on the export they were taken from
+  // (exportedAt below); later exports SKIP them, while the rule itself is still checked against the model everywhere.
+  console.log('\n--- R001-18: self-tested rule, expected values per sprint (Project Improvements Log) ---');
+  { const R18 = [
+      { id: 12191, exportedAt: '2026-10-30T13:09:35-07:00', kpi: [7, 4], self: [46, 49], unassigned: 4, column: { 'Dev to Test': 11, 'QA to Test': 3, 'Same person': 36, '—': 28 }, dashOther: 24 },
+      { id: 12176, kpi: [0, 0], self: [38, 38], unassigned: 0 },
+      { id: 12119, kpi: [0, 0], self: [47, 47], unassigned: 0 },
+      { id: 4697, kpi: [19, 19], self: [25, 25], unassigned: 19 }];
+    const oldNoTester = t => M.grpName(t.tester) === 'Unassigned' && !M.isDevToTest(t);
+    const oldGroup = t => M.grpName(t.tester) === 'Unassigned' ? (M.isDevToTest(t) ? 'Self-tested' : 'Unassigned') : (M.grpName(t.tester) === M.grpName(t.owner) ? 'Self-tested' : M.grpName(t.tester));
+    for (const x of R18) {
+      const entry = MANIFEST.sprints.find(e => e.id === x.id);
+      if (!entry) { skip(`R001-18 sprint ${x.id}`, 'not in sprints.json'); continue; }
+      const snap = J(entry.file), T = snap.tickets;
+      if (x.exportedAt && snap.exportedAt !== x.exportedAt) { skip(`R001-18 sprint ${x.id}: fixed expected values`, `the snapshot is a later export (${snap.exportedAt}) than the one the log values come from (${x.exportedAt})`); continue; }
+      const pg = await open(base + 'index.html?sprint=' + x.id);
+      const got = await run(pg, `const m=matrixOf(${q(ST.matrix)}); const det=tile(${q(ST.detail)}), hdr=[...det.querySelectorAll('thead th')].map(T), ix=hdr.indexOf('Self-tested'); const col={}; det.querySelectorAll('tbody tr').forEach(tr=>{const v=T(tr.children[ix]); col[v]=(col[v]||0)+1;}); return { kpi: T(kpi(${q(UI.sprint.kpi.noTester)}).querySelector('.value')), self: m.colTotals['Self-tested']||0, unassigned: m.colTotals['Unassigned']||0, col, attention: T(tile(${q(ST.attention)}).querySelector('.tile-foot')) }`);
+      const oldK = T.filter(oldNoTester).length, oldS = T.filter(t => oldGroup(t) === 'Self-tested').length;
+      const dashOther = T.filter(t => M.selfTestReason(t) === '—' && M.grpName(t.tester) !== 'Unassigned').length;
+      check(`R001-18 sprint ${x.id}: the snapshot gives the log's old values under the old rule (no tester KPI ${x.kpi[0]}, grid Self-tested ${x.self[0]})`, oldK === x.kpi[0] && oldS === x.self[0], { oldK, oldS });
+      check(`R001-18 sprint ${x.id}: page shows No tester & not self-tested ${x.kpi[1]}, grid Self-tested ${x.self[1]}, Unassigned ${x.unassigned} (= the KPI), and the attention Missing line uses the same count`, got.kpi === String(x.kpi[1]) && got.self === x.self[1] && got.unassigned === x.unassigned && got.unassigned === x.kpi[1] && got.attention.startsWith(`Missing: ${x.kpi[1]} no tester (not self-tested)`), got);
+      if (x.column) check(`R001-18 sprint ${x.id}: Self-tested column counts Dev to Test ${x.column['Dev to Test']}, QA to Test ${x.column['QA to Test']}, Same person ${x.column['Same person']}, dash ${x.column['—']} (${x.dashOther} tested by another person, ${x.column['—'] - x.dashOther} with no tester)`, eqObj(got.col, x.column) && dashOther === x.dashOther, { col: got.col, dashOther });
+      check(`R001-18 sprint ${x.id}: no console errors`, pg.logs.length === 0, pg.logs);
+      await pg.close();
+    } }
+
   // =============== FIXTURE ===============
   console.log('\n--- Fixture edge cases (copy of the app) ---');
   p = await open(url.fixture + 'index.html');
@@ -825,7 +858,7 @@ async function suites(ctx) {
   const fd = await run(p, READ_SPRINT);
   { const fe = M.expectSprint(F, M.newF(), FCTX), un = fe.matrix.Unassigned;
     check(`Fixture: "Blocked" is an Other row counted in totals (Total ${F.length} / ${M.sumP(F)}); null and literal "Unassigned" owners merge into one Unassigned grid row`, fd.status.Other && fd.status.Other[0] === 1 && fd.statusFoot.replace(/\s+/g, '') === `Total${F.length}W.I|${M.sumP(F)}SP` && un && fd.matrix.o.Unassigned && eq(fd.matrix.o.Unassigned, un), { un, rows: Object.keys(fd.matrix.o) }); }
-  check('Fixture: "Dev to Testing" is not Dev to Test (stays Unassigned); Dev to Test with a named tester stays under that tester; null points show "—"; Blocked text in detail', await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`) && M.testerGroup(F.find(t => t.ticket === 'APP-2631')) === 'Unassigned' && M.testerGroup(F.find(t => t.ticket === 'APP-193')) === M.grpName(F.find(t => t.ticket === 'APP-193').tester) && fd.matrix.colTotals[M.grpName(F.find(t => t.ticket === 'APP-193').tester)] >= 1);
+  check('Fixture: "Dev to Testing" is not Dev to Test (stays Unassigned and shows a dash in Self-tested); Dev to Test with a named tester stays under that tester; null points show "—"; Blocked text in detail', await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T)); const r=rows.find(r=>r[0]==='APP-3053'); return r[hdr.indexOf('Story points')]==='—' && r[hdr.indexOf('Status')]==='Blocked'`) && M.testerGroup(F.find(t => t.ticket === 'APP-2631')) === 'Unassigned' && M.testerGroup(F.find(t => t.ticket === 'APP-193')) === M.grpName(F.find(t => t.ticket === 'APP-193').tester) && fd.matrix.colTotals[M.grpName(F.find(t => t.ticket === 'APP-193').tester)] >= 1);
   { const fk = FJ.sprint.carriedOver.ticketKeys || [];
     await run(p, `clickEl(kpi(${q(UI.sprint.kpi.carried)}))`);
     const got = await run(p, `return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]))`);
@@ -932,13 +965,15 @@ async function suites(ctx) {
     await verifySprint(p, ATT_T, M.newF(), 'Attention data: every tile equals the independent calculation', ACTX);
     const a = (await run(p, READ_SPRINT)).attention;
     check('Attention (by hand): APP-805 Open 12* carried over; APP-801 In Review 9 long-running; APP-802 blocked by APP-804 only (APP-803 is Done); APP-804 blocker recorded; APP-807 blocked by APP-999 (outside the sprint); Done APP-806 and APP-810 (blocker Done) are left out', eq(a.rows.map(r => [r.key, r.status, r.days, r.reasons]), [['APP-805', 'Open', '12*', [A.carried]], ['APP-801', 'In Review', '9', [A.long]], ['APP-802', 'In Progress', '2', [A.blocked('APP-804')]], ['APP-804', 'In Progress', '1', [A.blocker]], ['APP-807', 'In Progress', '0', [A.blocked('APP-999')]]]) && a.sub === UI.sprint.attention.sub(5), a.rows);
-    check('Attention (by hand): Missing line counts 1 no tester (APP-804 is Dev to Test), 1 no fix version, 1 no story points', a.foot === UI.sprint.attention.missing(1, 1, 1), a.foot);
+    check('Attention (by hand): Missing line counts 1 no tester (APP-804 is Dev to Test, APP-812 QA to Test), 1 no fix version, 1 no story points', a.foot === UI.sprint.attention.missing(1, 1, 1), a.foot);
     check('Attention (by hand): no names (Ann, Tim, Bob) and no blocker text in the panel; blocker keys link to Jira', !['Ann', 'Tim', 'Bob', 'Zed Person', 'Waiting on', 'Old blocker'].some(x => a.text.includes(x)) && eq(a.rows.find(r => r.key === 'APP-802').links, [UI.jiraBrowse + 'APP-802', UI.jiraBrowse + 'APP-804']), a.text);
     const mx = (await run(p, READ_SPRINT)).matrix;
-    check('Self-tested (by hand): Ann row = Tim 6, Self-tested 2 (APP-801 tester = assignee, APP-804 Dev to Test without tester), Unassigned 1 (APP-808); Bob row = Ann 1 (Dev to Test with another tester); columns Tim, Ann, Self-tested, Unassigned', eq(mx.o.Ann, { Tim: 6, 'Self-tested': 2, Unassigned: 1 }) && eq(mx.o.Bob, { Ann: 1 }) && eq(mx.hdr, ['Assignee', 'Tim', 'Ann', 'Self-tested', 'Unassigned', 'Total']) && mx.titles[3] === UI.sprint.matrix.selfTestedTitle, mx);
+    check('Self-tested (by hand): Ann row = Tim 6, Self-tested 3 (APP-801 tester = assignee, APP-804 Dev to Test and APP-812 QA to Test without tester), Unassigned 1 (APP-808); Bob row = Ann 1, Tim 1 (Dev to Test and QA to Test with another tester); columns Tim, Ann, Self-tested, Unassigned; tooltips', eqObj(mx.o.Ann, { Tim: 6, 'Self-tested': 3, Unassigned: 1 }) && eqObj(mx.o.Bob, { Ann: 1, Tim: 1 }) && eq(mx.hdr, ['Assignee', 'Tim', 'Ann', 'Self-tested', 'Unassigned', 'Total']) && mx.titles[3] === UI.sprint.matrix.selfTestedTitle && mx.titles[4] === UI.sprint.matrix.unassignedTitle, mx);
+    { const col = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T), ix=hdr.indexOf('Self-tested'); return [...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>[T(tr.children[0]), T(tr.children[ix])])`);
+      check('Self-tested column (by hand): APP-801 Same person; APP-804 and APP-811 Dev to Test (also with another tester); APP-812 and APP-813 QA to Test; every other ticket a dash', eq(col, [['APP-801', 'Same person'], ['APP-802', '—'], ['APP-803', '—'], ['APP-804', 'Dev to Test'], ['APP-805', '—'], ['APP-806', '—'], ['APP-807', '—'], ['APP-808', '—'], ['APP-810', '—'], ['APP-811', 'Dev to Test'], ['APP-812', 'QA to Test'], ['APP-813', 'QA to Test']]), col); }
     await run(p, `clickCell(${q(ST.matrix)}, 'Ann', 'Self-tested')`); const fa = M.newF(); fa.assignee = new Set(['Ann']); fa.tester = new Set(['Self-tested']);
     const r = await verifySprint(p, ATT_T, fa, 'Attention data: the Ann / Self-tested cell filters every tile', ACTX);
-    check('Self-tested (by hand): the cell lists APP-801 and APP-804; the attention panel follows the filter', eq(r.d.detailKeys, ['APP-801', 'APP-804']) && eq(r.d.attention.rows.map(x => x.key), ['APP-801', 'APP-804']), { detail: r.d.detailKeys, attention: r.d.attention.rows.map(x => x.key) });
+    check('Self-tested (by hand): the cell lists APP-801, APP-804 and APP-812; the attention panel follows the filter (APP-812 is Done)', eq(r.d.detailKeys, ['APP-801', 'APP-804', 'APP-812']) && eq(r.d.attention.rows.map(x => x.key), ['APP-801', 'APP-804']), { detail: r.d.detailKeys, attention: r.d.attention.rows.map(x => x.key) });
     await run(p, `clickReset()`);
     await run(p, `clickRow(${q(ST.status)}, 'Done')`); const fd2 = M.newF(); fd2.status = new Set(['Done']);
     const r2 = await verifySprint(p, ATT_T, fd2, 'Attention data: status Done selected', ACTX);
