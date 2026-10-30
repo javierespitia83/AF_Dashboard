@@ -9,6 +9,7 @@
       "status": "In Progress",
       "type": "Bug",
       "tester": "Pavan V",
+      "classifications": "Dev to Test; Customer Reported",
       "points": 2,
       "parent": "APP-189 – Monitor enhancements",
       "linkedWorkItems": "APP-2944",
@@ -20,7 +21,8 @@
       "discussed": "Yes",
       "doneDate": null,
       "addedDate": null,
-      "cycleTime": null
+      "cycleTime": null,
+      "statusAging": 9
     },
     {
       "ticket": "APP-2631",
@@ -28,6 +30,7 @@
       "status": "In Progress",
       "type": "Story",
       "tester": null,
+      "classifications": "Dev to Testing",
       "points": 5,
       "parent": "APP-55 – App Foundation PSWAT",
       "linkedWorkItems": null,
@@ -39,7 +42,9 @@
       "discussed": "No",
       "doneDate": null,
       "addedDate": "2026-09-27",
-      "cycleTime": null
+      "cycleTime": null,
+      "statusAging": 3,
+      "statusAgingApprox": true
     },
     {
       "ticket": "APP-3053",
@@ -47,6 +52,7 @@
       "status": "Blocked",
       "type": null,
       "tester": null,
+      "classifications": null,
       "points": null,
       "parent": null,
       "linkedWorkItems": null,
@@ -58,7 +64,8 @@
       "discussed": "No",
       "doneDate": null,
       "addedDate": null,
-      "cycleTime": null
+      "cycleTime": null,
+      "statusAging": null
     },
     {
       "ticket": "APP-2944",
@@ -66,6 +73,7 @@
       "status": "Done",
       "type": "Sub-task",
       "tester": null,
+      "classifications": null,
       "points": 2,
       "parent": null,
       "linkedWorkItems": null,
@@ -77,7 +85,8 @@
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes",
-      "cycleTime": 3
+      "cycleTime": 3,
+      "statusAging": 3
     }
   ],
   "sprint": {
@@ -88,7 +97,26 @@
     "carriedOver": {
       "count": 12,
       "percent": 17.6,
-      "storyPoints": 34
-    }
+      "storyPoints": 34,
+      "ticketKeys": [
+        "APP-193"
+      ]
+    },
+    "removed": [
+      {
+        "ticket": "APP-3001",
+        "removedDate": "2026-09-29",
+        "points": 3,
+        "addedDate": null,
+        "summary": "Fixture: a ticket that left the sprint mid-way",
+        "status": "In Progress",
+        "type": "Story",
+        "owner": "Alan Le",
+        "tester": null,
+        "fixVersion": "4.46",
+        "parent": null,
+        "note": "Fixture edge case: removal record with a note and no addedDate (in scope from day one)."
+      }
+    ]
   }
 }

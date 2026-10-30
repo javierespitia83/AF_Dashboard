@@ -7,7 +7,8 @@
       "startDate": "2026-09-22",
       "endDate": "2026-10-09",
       "state": "active",
-      "file": "sprint.json"
+      "file": "snapshots/sprint-12119.json",
+      "note": "Fixture: the active entry points at snapshots/sprint-<id>.json like every other sprint (there is no root sprint.json since 2026-10-26)."
     },
     {
       "id": 4697,

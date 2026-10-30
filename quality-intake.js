@@ -8,10 +8,13 @@
     { label: 'APP Bugs', key: 'appBugs' }
   ];
 
+  // Load errors and drawing errors get different messages (C6): a bug in render() is not "can't load the file".
   AF.loadJson('quality-intake.json').then(function (data) {
     if (!data || !Array.isArray(data.sprints)) throw new Error('missing "sprints" array');
     return data;
-  }).then(render).catch(function (err) { AF.showError(app, 'quality-intake.json', err); });
+  }).then(function (data) {
+    try { render(data); } catch (err) { AF.showRenderError(app, err); }
+  }, function (err) { AF.showError(app, 'quality-intake.json', err); });
 
   function shown(value) {
     return value === null || value === undefined || value === '' ? 'n/a' : String(value);
@@ -39,7 +42,8 @@
       ]);
     });
     if (!rows.length) return el('p', { class: 'empty', text: 'No ticket details are available for this count.' });
-    return el('div', { class: 'qi-ticket-scroll', tabindex: '0', 'aria-label': 'Quality intake tickets' }, [
+    // focusable, labelled region only when it overflows (set after layout in render)
+    return el('div', { class: 'qi-ticket-scroll' }, [
       el('table', { class: 'data qi-ticket-table' }, [el('thead', null, [header]), el('tbody', null, rows)])
     ]);
   }
@@ -48,10 +52,7 @@
     AF.clear(app);
     AF.setUpdated(data.refreshedAt, data.exportedAt);
     if (!data.sprints.length) {
-      app.appendChild(el('section', { class: 'message neutral' }, [
-        el('h2', { text: 'No quality intake data is available' }),
-        el('p', { text: 'Run python3 05_Automation/export_dashboard_snapshots.py, then reload.' })
-      ]));
+      AF.emptyMessage(app, 'No quality intake data is available', 'Run python3 05_Automation/export_dashboard_snapshots.py, then reload.');
       return;
     }
 
@@ -83,7 +84,6 @@
       ]);
       var rows = SOURCES.map(function (source) {
         var count = sprint.counts && sprint.counts[source.key];
-        var list = Array.isArray(sprint.tickets) ? sprint.tickets.filter(function (ticket) { return ticket.source === source.label; }) : [];
         var key = String(sprint.sprintId) + '|' + source.key;
         var isOpen = expanded === key;
         var countCell = typeof count === 'number' && isFinite(count)
@@ -124,6 +124,8 @@
     Array.prototype.forEach.call(app.querySelectorAll('.qi-ticket-scroll'), function (list) {
       if (list.scrollHeight <= list.clientHeight + 1) return;
       var count = list.querySelectorAll('tbody tr').length;
+      list.setAttribute('tabindex', '0');
+      list.setAttribute('role', 'region');
       list.setAttribute('aria-label', 'Quality intake ticket list; scroll to view all ' + count + ' tickets');
       list.parentNode.insertBefore(el('p', {
         class: 'qi-scroll-hint',

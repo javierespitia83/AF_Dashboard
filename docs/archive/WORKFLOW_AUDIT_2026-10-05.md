@@ -1,5 +1,7 @@
 # AI workflow and dashboard review
 
+> Archived on 2026-10-29 (DECISIONS D81). It describes the state of 2026-10-05: for example the root `sprint.json`, which was retired on 2026-10-26 (D73). Paths like `AF_Snaplogic/...` mean `$AF_SNAPLOGIC_ROOT/...` (README "Paths"). Do not update it; the current documents are in the repository root.
+
 Review date: 2026-10-05
 
 ## Scope

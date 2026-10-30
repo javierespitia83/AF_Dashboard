@@ -47,7 +47,9 @@
   }
   AF.backlog = { dorFromQuery: dorFromQuery, searchFor: searchFor, ageOf: ageOf };
 
-  AF.loadSnapshot('backlog.json').then(init, function (err) { AF.showError(app, 'backlog.json', err); });
+  AF.loadSnapshot('backlog.json').then(function (data) {
+    try { init(data); } catch (err) { AF.showRenderError(app, err); } // a drawing bug is not reported as a load error (C7)
+  }, function (err) { AF.showError(app, 'backlog.json', err); });
 
   function init(data) {
     var tickets = data.tickets;
@@ -55,10 +57,7 @@
     AF.clear(app);
     app.classList.add('bl');
     if (!tickets.length) {
-      app.appendChild(el('section', { class: 'message neutral' }, [
-        el('h2', { text: 'No backlog tickets in this snapshot' }),
-        el('p', { text: 'Run a backlog refinement pass, then python3 05_Automation/export_dashboard_snapshots.py, and reload.' })
-      ]));
+      AF.emptyMessage(app, 'No backlog tickets in this snapshot', 'Run a backlog refinement pass, then python3 05_Automation/export_dashboard_snapshots.py, and reload.');
       return;
     }
 
@@ -86,12 +85,8 @@
     var ageKeys = AGE.filter(function (k) { return k !== AGE[5] || allAge[AGE[5]]; });
 
     // ---- shell ----
-    function kpi(kind, label) {
-      var value = el('div', { class: 'value' }), hint = el('div', { class: 'hint' });
-      return { root: el('section', { class: 'tile kpi ' + kind }, [el('div', { class: 'label', text: label }), value, hint]), value: value, hint: hint };
-    }
-    var kTotal = kpi('items', 'Backlog tickets'), kPoints = kpi('points', 'Estimated story points');
-    var kRefine = kpi('plain', 'Needing refinement'), kSplit = kpi('plain', 'Needs splitting'), kMedian = kpi('plain', 'Median days in status');
+    var kTotal = AF.kpi('items', 'Backlog tickets'), kPoints = AF.kpi('points', 'Estimated story points');
+    var kRefine = AF.kpi('plain', 'Needing refinement'), kSplit = AF.kpi('plain', 'Needs splitting'), kMedian = AF.kpi('plain', 'Median days in status');
     var tDor = AF.tile({ title: 'Readiness (DoR)', sub: 'Click to filter' });
     var tPrio = AF.tile({ title: 'Priority', sub: 'Click to filter' });
     var tType = AF.tile({ title: 'Type', sub: 'Click to filter' });
@@ -114,9 +109,10 @@
     var allEpic = AF.countBy(tickets, K.epic);
     var epicKeys = Object.keys(allEpic).filter(function (k) { return k !== NOEPIC; })
       .sort(function (a, b) { return allEpic[b] - allEpic[a] || a.localeCompare(b); }).concat(allEpic[NOEPIC] ? [NOEPIC] : []);
-    var epicBtn = el('button', { type: 'button', class: 'epicbtn', id: 'epic-btn', 'aria-haspopup': 'true', 'aria-expanded': 'false', onclick: function () { setEpicOpen(epicPop.hidden); } });
+    // A disclosure button (aria-expanded + aria-controls) for a group of checkboxes; not a menu, so no aria-haspopup (C20).
+    var epicBtn = el('button', { type: 'button', class: 'epicbtn', id: 'epic-btn', 'aria-expanded': 'false', 'aria-controls': 'epic-pop', onclick: function () { setEpicOpen(epicPop.hidden); } });
     var epicOpts = {};
-    var epicPop = el('div', { class: 'epicpop', role: 'group', 'aria-label': 'Epics', hidden: true }, [
+    var epicPop = el('div', { class: 'epicpop', id: 'epic-pop', role: 'group', 'aria-label': 'Epics', hidden: true }, [
       el('div', { class: 'epichead' }, [
         el('span', { text: 'Tick one or more epics' }),
         el('button', { type: 'button', class: 'epicclear', text: 'Clear', onclick: function () { store.set('epic', []); } })
