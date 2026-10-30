@@ -173,21 +173,31 @@
     var visible = [0, 1, 2, 3].concat(hasOther ? [AF.OTHER] : []);
     var carriedKeys = sprint.carriedOver && Array.isArray(sprint.carriedOver.ticketKeys) ? sprint.carriedOver.ticketKeys : null;
 
-    function isDevToTest(t) {
-      return String(t.classifications || '').split('; ').indexOf('Dev to Test') !== -1;
-    }
-    // Assignee x tester column (R001-17): Self-tested when a Dev to Test ticket has no tester or the tester
-    // is the assignee; Unassigned only for no tester and not Dev to Test (the No tester KPI); else the tester.
+    // Self-tested rule (R001-17, R001-18): the exact classification `Dev to Test` or `QA to Test`, or tester = assignee.
     var SELF_TESTED = 'Self-tested';
+    var SELF_TESTED_TITLE = 'Tested by the assignee. No separate tester needed (Dev to Test, QA to Test, or the assignee is also the tester).';
+    function classificationList(t) { return String(t.classifications || '').split('; '); }
+    function hasSelfTestClassification(t) {
+      var c = classificationList(t);
+      return c.indexOf('Dev to Test') !== -1 || c.indexOf('QA to Test') !== -1;
+    }
+    function testerMissing(t) { return AF.personName(t.tester) === 'Unassigned'; }
+    function sameTesterAsAssignee(t) { return !testerMissing(t) && AF.personName(t.tester) === AF.personName(t.owner); }
+    // Ticket detail "Self-tested" value, in precedence order: Dev to Test, QA to Test, Same person, else null (dash).
+    function selfTestReason(t) {
+      var c = classificationList(t);
+      if (c.indexOf('Dev to Test') !== -1) return 'Dev to Test';
+      if (c.indexOf('QA to Test') !== -1) return 'QA to Test';
+      return sameTesterAsAssignee(t) ? 'Same person' : null;
+    }
+    // Assignee x tester column: Self-tested when a self-test classification has no tester or the tester is the
+    // assignee; Unassigned only for no tester and not self-tested (the No tester KPI); else the tester (also when
+    // the ticket has a self-test classification but another person tests it).
     function testerGroup(t) {
-      var who = AF.personName(t.tester);
-      if (who === 'Unassigned') return isDevToTest(t) ? SELF_TESTED : 'Unassigned';
-      return who === AF.personName(t.owner) ? SELF_TESTED : who;
+      if (testerMissing(t)) return hasSelfTestClassification(t) ? SELF_TESTED : 'Unassigned';
+      return sameTesterAsAssignee(t) ? SELF_TESTED : AF.personName(t.tester);
     }
-    function noTesterAndNotDevToTest(t) {
-      var testerMissing = t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
-      return testerMissing && !isDevToTest(t);
-    }
+    function noTesterAndNotSelfTested(t) { return testerMissing(t) && !hasSelfTestClassification(t); }
     function inTimeInStatus(t) {
       return (t.status === 'In Progress' || t.status === 'In Review') &&
         typeof t.statusAging === 'number' && isFinite(t.statusAging) &&
@@ -203,7 +213,7 @@
     var LOWER_FILTERS = {
       midSprint: { label: 'Added mid-sprint', pred: addedMidSprint },
       carriedOver: { label: 'Carried over', pred: function (t) { return carriedKeys.indexOf(t.ticket) !== -1; } },
-      noTester: { label: 'No tester & Not Dev to Test', pred: noTesterAndNotDevToTest },
+      noTester: { label: 'No tester & not self-tested', pred: noTesterAndNotSelfTested },
       timeInStatus: { label: timeLabel, pred: inTimeInStatus }
     };
     function lowerFilter() { var x = store.extra(); return x ? x.id : null; }
@@ -289,8 +299,8 @@
       kPoints.hint.textContent = filtered ? 'of ' + fmt(TP) : 'missing counts as 0';
       kDone.value.textContent = P > 0 ? Math.round(doneP / P * 100) + '%' : '—';
       kDone.hint.textContent = fmt(doneP) + ' of ' + fmt(P) + ' points done';
-      kNoTester.value.textContent = String(f.filter(noTesterAndNotDevToTest).length);
-      kNoTester.hint.textContent = 'no tester, excluding Dev to Test · of ' + f.length + ' work items';
+      kNoTester.value.textContent = String(f.filter(noTesterAndNotSelfTested).length);
+      kNoTester.hint.textContent = 'no tester, excluding Dev to Test and QA to Test · of ' + f.length + ' work items';
       var tis = f.filter(inTimeInStatus), withAging = f.filter(function (t) {
         return (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number';
       });
@@ -508,7 +518,7 @@
         else tAttention.body.appendChild(AF.emptyState('Nothing needs attention under these filters.'));
         tAttention.foot.appendChild(el('p', { class: 'attention-missing' }, [
           el('strong', { text: 'Missing: ' }),
-          f.filter(noTesterAndNotDevToTest).length + ' no tester (excluding Dev to Test) · ' +
+          f.filter(noTesterAndNotSelfTested).length + ' no tester (not self-tested) · ' +
           f.filter(function (t) { return AF.isBlank(t.fixVersion); }).length + ' no fix version · ' +
           f.filter(function (t) { return !hasPoints(t); }).length + ' no story points'
         ]));
@@ -522,7 +532,7 @@
         if (!ct.rows.length) { tMatrix.body.appendChild(AF.emptyState(EMPTY)); return; }
         AF.heatGrid(tMatrix, ct, {
           corner: 'Assignee', unit: 'work items', rowSel: store.sel.assignee, colSel: store.sel.tester,
-          colTitles: { 'Self-tested': 'Tested by the assignee. No separate tester needed (Dev to Test, or the assignee is also the tester).', Unassigned: 'No tester and not Dev to Test' },
+          colTitles: { 'Self-tested': SELF_TESTED_TITLE, Unassigned: 'No tester and not self-tested (not Dev to Test or QA to Test)' },
           onCell: function (r, c, m) { store.clickPair('assignee', r, 'tester', c, m); }
         });
       });
@@ -545,7 +555,7 @@
       { label: 'Summary', cls: 'wrap', render: function (t) { return AF.show(t.summary); } },
       { label: 'Owner', cls: 'owner wrap-text', render: owner },
       { label: 'Tester', cls: 'tester wrap-text', render: tester },
-      { label: 'Dev to Test', cls: 'nowrap', render: function (t) { return AF.show(isDevToTest(t) ? 'Yes' : null); } },
+      { label: 'Self-tested', cls: 'nowrap', title: SELF_TESTED_TITLE, render: function (t) { return AF.show(selfTestReason(t)); } },
       { label: 'Status', cls: 'status wrap-text', render: function (t) { return el('span', null, [AF.statusDot(AF.bucketOf(t.status)), AF.show(t.status)]); } },
       { label: 'Days in status', cls: 'num', render: function (t) {
           return AF.show(typeof t.statusAging === 'number' ? t.statusAging + (t.statusAgingApprox ? '*' : '') : null);

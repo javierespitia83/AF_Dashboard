@@ -2,7 +2,7 @@
 /*
  * model.js — the harness's independent expected-value model, written separately from the app code
  * (never calls dashboard.js) so a bug in the app cannot hide in its own expectations.
- * The duplication of a few rules (status buckets, Unassigned grouping, Dev to Test) is deliberate (C49).
+ * The duplication of a few rules (status buckets, Unassigned grouping, the self-tested rule) is deliberate (C49).
  */
 const { UI, THR_TIME } = require('./ui_text');
 
@@ -15,11 +15,16 @@ const sumP = rows => rows.reduce((a, t) => a + pt(t.points), 0);
 const group = (rows, kf) => { const m = {}; rows.forEach(t => { const k = kf(t); (m[k] = m[k] || { i: 0, p: 0 }); m[k].i++; m[k].p += pt(t.points); }); return m; };
 const natural = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
 const isDevToTest = t => String(t.classifications || '').split('; ').includes('Dev to Test');
-const noTester = t => (t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned') && !isDevToTest(t);
+const isQaToTest = t => String(t.classifications || '').split('; ').includes('QA to Test');
+const selfTestClass = t => isDevToTest(t) || isQaToTest(t); // R001-18: QA to Test counts like Dev to Test
+const noTesterValue = t => t.tester == null || String(t.tester).trim() === '' || String(t.tester).trim() === 'Unassigned';
+const noTester = t => noTesterValue(t) && !selfTestClass(t); // KPI "No tester & not self-tested"
+// Ticket detail "Self-tested" column (R001-18): Dev to Test, QA to Test, Same person (tester = assignee), else a dash.
+const selfTestReason = t => isDevToTest(t) ? 'Dev to Test' : isQaToTest(t) ? 'QA to Test' : (!noTesterValue(t) && grpName(t.tester) === grpName(t.owner)) ? 'Same person' : '—';
 const longRunning = t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number' && t.statusAging >= THR_TIME;
-// Assignee x tester column (R001-17): Self-tested = Dev to Test with no tester, or tester = assignee;
-// Unassigned = no tester and not Dev to Test; otherwise the tester's name.
-const testerGroup = t => { const who = grpName(t.tester); if (who === 'Unassigned') return isDevToTest(t) ? UI.sprint.matrix.selfTested : 'Unassigned'; return who === grpName(t.owner) ? UI.sprint.matrix.selfTested : who; };
+// Assignee x tester column (R001-17, R001-18): Self-tested = Dev to Test or QA to Test with no tester, or tester = assignee;
+// Unassigned = no tester and not self-tested; otherwise the tester's name.
+const testerGroup = t => { const who = grpName(t.tester); if (who === 'Unassigned') return selfTestClass(t) ? UI.sprint.matrix.selfTested : 'Unassigned'; return who === grpName(t.owner) ? UI.sprint.matrix.selfTested : who; };
 
 // ---------- dates ----------
 const DAYMS = 86400000;
@@ -164,7 +169,7 @@ function contrast(fg, bg) { // fg, bg: [r, g, b] 0-255
 }
 
 module.exports = {
-  BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, noTester, longRunning, testerGroup, expectAttention,
+  BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, isQaToTest, selfTestClass, selfTestReason, noTester, longRunning, testerGroup, expectAttention,
   dn, isoN, md, f1, addedAfter, SKEY, newF, applyF, expectBurn, expectSprint,
   AGEB, ageOf, dv, BKEY, newBF, hay, predFor, median, mostCommon, KEYRE, keysIn, linkErrors, contrast
 };
