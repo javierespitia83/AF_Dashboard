@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T16:00:57-07:00",
+  "refreshedAt": "2026-10-30",
+  "exportedAt": "2026-10-30T05:21:44-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1691,11 +1691,26 @@
       "dor": "Well-Formed",
       "points": null,
       "needsSplitting": "Yes",
-      "days": 0,
+      "days": 1,
       "epic": "APP-3224 – Move settings in user object out and reduce size of snapshot",
       "risk": null,
       "quickCheck": "AC and scope are explicit in the ticket's own description (8 acceptance criteria); expected behavior covers both tab types, cap feedback, existing-tab reactivation and over-limit restore.",
-      "cluster": "APP-2981",
+      "cluster": "APP-2981, APP-3275",
+      "created": "2026-10-29"
+    },
+    {
+      "ticket": "APP-3275",
+      "summary": "Cap each persisted bench snapshot at 1MB and warn the user when one is skipped",
+      "type": "Story",
+      "priority": "Lowest",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": null,
+      "days": 1,
+      "epic": "APP-3224 – Move settings in user object out and reduce size of snapshot",
+      "risk": "Notification mechanism is TBD (depends on the React canvas in review); an aggregate cap is a stated follow-up, out of scope.",
+      "quickCheck": "AC and scope are in the ticket's own description (11 acceptance criteria); expected output is a 1MB per-bench snapshot cap with a persistent warning and a gated leave-confirmation.",
+      "cluster": "APP-2981, APP-3266",
       "created": "2026-10-29"
     }
   ]

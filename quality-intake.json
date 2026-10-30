@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T16:00:57-07:00",
+  "refreshedAt": "2026-10-30",
+  "exportedAt": "2026-10-30T05:21:44-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-10-28",
-      "weekdays": 3,
+      "windowEnd": "2026-10-29",
+      "weekdays": 4,
       "partial": true,
       "counts": {
-        "pswat": 1,
-        "appBugs": 1
+        "pswat": 2,
+        "appBugs": 2
       },
       "ratesPer10Weekdays": {
-        "pswat": 3.33,
-        "appBugs": 3.33
+        "pswat": 5.0,
+        "appBugs": 5.0
       },
       "tickets": [
         {
@@ -749,6 +749,15 @@
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3244"
         },
         {
+          "source": "APP Bugs",
+          "key": "APP-3262",
+          "summary": "Git link is pointing to default branch in the repo",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3262"
+        },
+        {
           "source": "PSWAT",
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
@@ -756,6 +765,15 @@
           "status": "To Do",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2770",
+          "summary": "Delete a Task",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2770"
         }
       ]
     }
