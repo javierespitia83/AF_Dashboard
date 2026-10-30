@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-30",
-  "exportedAt": "2026-10-30T05:21:44-07:00",
+  "exportedAt": "2026-10-30T07:52:13-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -59,10 +59,10 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "Intermittent Issue's while connecting the snaps at the Designer",
-      "lastSyncUpdate": "In Progress since 10/29 (Vlad Storona, 3 pts). 10/29: Martin Becker asked Vlad Storona whether there is any risk to the December release; Support is asking for updates.",
+      "lastSyncUpdate": "In Progress since 10/29 (Vlad Storona, 3 pts). 10/30: Vlad Storona told Martin Becker he sees no risk at the moment and expects the fix to ship on time.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3173",
@@ -84,7 +84,7 @@
       "lastSyncUpdate": "In Review. 10/28 daily: fix ready; PR #6134 created 9:32 AM PT; sized 3 pts. Vlad Storona to log the reasoning (RCA field) in the ticket.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3225",
@@ -150,7 +150,7 @@
       "lastSyncUpdate": "In Review since 10/29 (Guannan He). No Jira comments yet.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3230",
@@ -194,7 +194,7 @@
       "lastSyncUpdate": "In Review. PR #6137 created 10/29 (develop), after Poornima Srikantesh noted that morning there was no PR. Tester: Anumeha Singh.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2978",
@@ -235,10 +235,10 @@
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "[Docs] Document behavior when the user can access multiple orgs",
-      "lastSyncUpdate": "In Review. 10/28: Shenyi Lu had no further feedback. 10/29: Kalpana Malladi asked Ruth Stento for a peer review of the multi-environment sessions section.",
+      "lastSyncUpdate": "In Review. Docs PR merged 10/30. 10/29: Kalpana Malladi asked Ruth Stento for a peer review of the multi-environment sessions section.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3123",
@@ -253,7 +253,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "QA Task: Canary Automation Regression for CP and Studio Week2, release 4.46",
@@ -319,7 +319,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "QA Task: Manual Regression for 4.46",
@@ -455,10 +455,10 @@
       "statusAging": 17,
       "statusAgingApprox": false,
       "summary": "Display locked & invited account indicator in Admin Manager",
-      "lastSyncUpdate": "In Progress. 10/22: Pavan V noted it is blocked by APP-2970 (In Review).",
+      "lastSyncUpdate": "In Progress. 10/29 daily: blocker APP-2970 merged. Pavan V asked for one feature branch for APP-2968 and APP-2969; Barbora Novakova can provide one (split only for review).",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2969",
@@ -477,8 +477,8 @@
       "statusAging": 15,
       "statusAgingApprox": false,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "lastSyncUpdate": "In Progress. 10/28 daily: Barbora Novakova working on API changes; depends on APP-2970, which Salim Abdul expects to finish today.",
-      "blocker": "Dependency: APP-2970 (Salim Abdul) to be completed first.",
+      "lastSyncUpdate": "In Progress. 10/29 daily: APP-2970 merged, so Barbora Novakova resumes work. Pavan V asked for one feature branch for APP-2968 and APP-2969; Barbora can provide one.",
+      "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
     },
@@ -499,7 +499,7 @@
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "Update Appcues account ID to new provisioned account",
-      "lastSyncUpdate": "In Review. 10/28 daily: in code review (PR #6126 created 10/27). Barbora Novakova has no blockers.",
+      "lastSyncUpdate": "In Review. 10/29 daily: in peer review (PR #6126); no QA cycle needed. Barbora Novakova has no blockers.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -517,7 +517,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "QA Task: Canary Automation Regression for CP and Studio Week2, release 4.46",
@@ -583,7 +583,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "High Critical Manual Regression Analysis for CP and Studio",
@@ -605,7 +605,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "Medium Manual Regression Analysis for CP and Studio",
@@ -639,7 +639,7 @@
     {
       "ticket": "APP-3240",
       "owner": "Bornali Nath",
-      "status": "Open",
+      "status": "Done",
       "type": "Task",
       "tester": "Bornali Nath",
       "classifications": null,
@@ -647,13 +647,13 @@
       "parent": "APP-3150 – Epic to track QA Activities for App Sprint 11-06",
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-10-30",
       "addedDate": null,
-      "cycleTime": null,
-      "statusAging": 4,
-      "statusAgingApprox": true,
+      "cycleTime": 4,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "JRE 21 regression run analysis",
-      "lastSyncUpdate": "Open. No Jira comments yet.",
+      "lastSyncUpdate": "Done 10/30. JRE 21 regression run analysis completed.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -741,7 +741,7 @@
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "Asset Catalog: five UI defects (tab history, search paging, custom metadata, saved columns)",
-      "lastSyncUpdate": "In Progress. 10/28 daily: Indrajeet Kane continuing; story points still needed (sizing requested).",
+      "lastSyncUpdate": "In Progress. 10/29 daily: Indrajeet Kane continuing; no blockers. Story points still needed.",
       "blocker": "Story points needed for sizing.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -807,10 +807,10 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "Resend invitation email — Admin Manager UI action",
-      "lastSyncUpdate": "In Progress. Test cases look good; TestRail IDs are pending for addition to the ticket.",
+      "lastSyncUpdate": "In Progress. 10/30: Bornali Nath added the test cases to TestRail and shared the IDs for automation.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3072",
@@ -854,7 +854,7 @@
       "lastSyncUpdate": "In Review. 10/28 daily: approved; conflicts wait on the 4.46 branch merge. Feature flag now working; Poornima Srikantesh resumes testing today.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "Yes"
+      "discussed": "No"
     },
     {
       "ticket": "APP-3127",
@@ -869,7 +869,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-27",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 1,
       "statusAging": 3,
       "statusAgingApprox": false,
       "summary": "QA Task : Studio And CP Regression Analysis - Oct23",
@@ -935,7 +935,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-28",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 2,
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "QA Task : Manual Regression for 4.46",
@@ -979,7 +979,7 @@
       "fixVersion": "4.46",
       "doneDate": "2026-10-28",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 2,
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "QA Task: Regression Fixes Flaky Tests",
@@ -1404,7 +1404,7 @@
       "lastSyncUpdate": "In Review; Dev to Test. PR #7184 merged to develop 10/29. Git test runs depend on GHEC/GHES (IT ticket open). 10/27: Ruth Stento set Impacts doc to yes.",
       "blocker": "GHEC data residency instance not ready and GHES license expired; IT ticket open. Does not block this release, but blocks Git test runs afterward.",
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2801",
@@ -1426,7 +1426,7 @@
       "lastSyncUpdate": "In Progress. 10/29: Salim Abdul traced the failure to mcp_metadata left in tasks from the MCP preview (rejected by the 4.44 schema) and questioned whether a fix is wanted.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-2970",
@@ -1485,14 +1485,14 @@
       "fixVersion": null,
       "doneDate": "2026-10-28",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 2,
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "User randomly gets logged out of elastic pod before session timeout limit",
       "lastSyncUpdate": "Done 10/28. 10/26: Steve Goodwin commented this is as designed and a doc subtask will be added. 10/27 daily: Vishal Soni reported it resolved; to close once the customer confirms; Carlos Espitia to follow up.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3010",
@@ -1507,7 +1507,7 @@
       "fixVersion": null,
       "doneDate": "2026-10-29",
       "addedDate": null,
-      "cycleTime": null,
+      "cycleTime": 3,
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "Resend invitation email — Inner API",
@@ -1533,7 +1533,7 @@
       "statusAging": 8,
       "statusAgingApprox": false,
       "summary": "[Backend] Mechanism to notify user if schedule task misses",
-      "lastSyncUpdate": "In Review. 10/28 daily: merged; QA waiting on the APP-2978 UI check. Anumeha Singh and Poornima Srikantesh to test.",
+      "lastSyncUpdate": "In Review; merged. 10/29 daily: not blocked; QA testing the backend and UI tickets, helped by a script from Vlad Storona for the missed notification. To be marked Done after UI testing.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1621,10 +1621,10 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "Sysadmin — System Jobs page (lift-and-shift from Classic Manager)",
-      "lastSyncUpdate": "In Progress. 10/27 daily: Alan Le plans to start it after APP-2721. PR #6129 created 10/27 (Jira automation); re-added to the sprint 10/27 (5 pts).",
+      "lastSyncUpdate": "In Progress. 10/29 daily: Alan Le working on the system jobs lift and shift. Dev to Test: sysadmin-only feature with unit tests, no QA cycle. PR #6129 created 10/27.",
       "blocker": null,
       "demoOrSpike": null,
-      "discussed": "No"
+      "discussed": "Yes"
     },
     {
       "ticket": "APP-3246",
@@ -1643,7 +1643,7 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "[TechDebt] [Asset Catalog] Retire duplicate accounts and hourly models",
-      "lastSyncUpdate": "PRs in review per the 10/28 daily (Jira In Review since 8:42 AM PT; PR #1633 merged 10/27). Indrajeet Kane to merge most of them.",
+      "lastSyncUpdate": "In Review. 10/29 daily: all reviews done and PRs merged to develop; Indrajeet Kane to test it, then take it to UAT and production.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1665,7 +1665,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "Working Account returns HTTP : 500 \"Metadata failed to load\" without any user update and cause production failures.",
-      "lastSyncUpdate": "In Review. Production bug; another occurrence reported 10/29 on an account fixed earlier. Salim Abdul recommends reverting the APP-1821 change; Vishal Soni to coordinate a patch before 4.46.",
+      "lastSyncUpdate": "In Review. Production bug; another occurrence reported 10/29 on an account fixed earlier. Salim Abdul recommends reverting the APP-1821 change. Pending: confirm whether the fix ships as a patch/hotfix or with 4.46.1 (Daily check 10/30).",
       "blocker": "Production issue affecting several customers; patch and release plan to be coordinated.",
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1688,6 +1688,72 @@
       "statusAgingApprox": false,
       "summary": "restyle app settings dialog with jellyroll component",
       "lastSyncUpdate": "Open. Added to the sprint 10/29 from Backlog (Prioritized); tester Pavan V. 10/27: Mario Rojas asked Jackie Curry design questions on the settings drawer; no reply yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3263",
+      "owner": "Mario Rojas",
+      "status": "Open",
+      "type": "Task",
+      "tester": null,
+      "classifications": null,
+      "points": null,
+      "parent": null,
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-30",
+      "cycleTime": null,
+      "statusAging": 1,
+      "statusAgingApprox": true,
+      "summary": "[UX / Design] Design handoff workspace: landing, product views, ticket pages, search",
+      "lastSyncUpdate": "Open. Added to the sprint 10/30 after approval at the 10/29 daily (Derek Fung). Estimate 3, possibly 5; to be split into tasks, with story points and Fix Version still to set.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "Yes"
+    },
+    {
+      "ticket": "APP-3264",
+      "owner": "Mario Rojas",
+      "status": "Open",
+      "type": "Sub-task",
+      "tester": null,
+      "classifications": null,
+      "points": null,
+      "parent": "APP-3263 – [UX / Design] Design handoff workspace: landing, product views, ticket pages, search",
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-30",
+      "cycleTime": null,
+      "statusAging": 1,
+      "statusAgingApprox": true,
+      "summary": "[UX Spike] Feasibility: product context from the real UI code",
+      "lastSyncUpdate": "Open. Sub-task of APP-3263: feasibility of building the product context from the real UI code. No Jira comments yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
+    },
+    {
+      "ticket": "APP-3265",
+      "owner": "Mario Rojas",
+      "status": "Open",
+      "type": "Sub-task",
+      "tester": null,
+      "classifications": null,
+      "points": null,
+      "parent": "APP-3263 – [UX / Design] Design handoff workspace: landing, product views, ticket pages, search",
+      "linkedWorkItems": null,
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-10-30",
+      "cycleTime": null,
+      "statusAging": 1,
+      "statusAgingApprox": true,
+      "summary": "[UX / Design] Move existing designs into the handoff workspace",
+      "lastSyncUpdate": "Open. Sub-task of APP-3263: move existing designs into the workspace after the design is approved. No Jira comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"

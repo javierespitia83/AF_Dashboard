@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-30",
-  "exportedAt": "2026-10-30T05:21:44-07:00",
+  "exportedAt": "2026-10-30T07:52:13-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1712,6 +1712,36 @@
       "quickCheck": "AC and scope are in the ticket's own description (11 acceptance criteria); expected output is a 1MB per-bench snapshot cap with a persistent warning and a gated leave-confirmation.",
       "cluster": "APP-2981, APP-3266",
       "created": "2026-10-29"
+    },
+    {
+      "ticket": "APP-3277",
+      "summary": "HL7 Parser: Preview data is not showing and Output Bytes value shown as zero when we parse 3.5 MB HL7 file",
+      "type": "Bug",
+      "priority": "Low",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": null,
+      "risk": "Epic not defined yet; unclear whether Output Bytes is a UI or a backend statistic.",
+      "quickCheck": "From description alone: repro steps, actual vs expected and the analysis (preview-only UI issue) are in the ticket's own description.",
+      "cluster": "APP-3278",
+      "created": "2026-10-30"
+    },
+    {
+      "ticket": "APP-3278",
+      "summary": "HL7 Formatter Output Not Displayed in Text Preview",
+      "type": "Bug",
+      "priority": "Low",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": null,
+      "risk": "Epic on the App Foundation board not defined yet.",
+      "quickCheck": "From description alone: repro steps with test input, actual vs expected and the analysis (preview-only UI issue) are in the ticket's own description.",
+      "cluster": "APP-3277",
+      "created": "2026-10-30"
     }
   ]
 }

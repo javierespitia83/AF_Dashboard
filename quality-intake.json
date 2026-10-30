@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-10-30",
-  "exportedAt": "2026-10-30T05:21:44-07:00",
+  "exportedAt": "2026-10-30T07:52:13-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -762,7 +762,7 @@
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
           "type": "Bug",
-          "status": "To Do",
+          "status": "In Code Review",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
         },
