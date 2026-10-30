@@ -45,7 +45,7 @@ Every page has one `h1` (visually hidden on the sprint and backlog pages, visibl
 ## 5. Cross-filter model (Current sprint and Backlog)
 
 - **Dimensions.** Sprint: Status, Type, Assignee, Tester (the Assignee x tester column group, which includes `Self-tested`; D84), Fix version, Parent. Assignee and Tester are set from the Assignee x tester cells. Backlog: DoR, Priority, Type, Age (days in current status), Epic (§7.4), plus a text search. A selection per dimension is a set of values.
-- **Combining.** Several values in one dimension combine with OR; different dimensions combine with AND; the text search (backlog) is AND with everything.
+- **Combining.** Several values in one dimension combine with OR; different dimensions combine with AND; the text search (both pages; §6.4, §7.3) is AND with everything.
 - **Click behavior** on a clickable element (a bar row, a person row, a matrix cell):
   - On status rows, every plain click toggles that status independently, so repeated clicks can select or clear several statuses without modifier keys. On other clickable elements, a plain click **selects only that value** in that dimension (replacing any other value in it).
   - Clicking a selected status clears only that status; clicking the only selected value in another dimension **clears** that dimension.
@@ -60,7 +60,7 @@ Every page has one `h1` (visually hidden on the sprint and backlog pages, visibl
 
 ## 6. Page 1 — Current sprint (`index.html`)
 
-Dimensions: Status, Type, Assignee, Tester, Fix version, Parent. The filter bar also holds two selects, **Fix version** and **Parent** (options from the data, plus `(none)`). Choosing an option sets that dimension to one value; "All" clears it.
+Dimensions: Status, Type, Assignee, Tester, Fix version, Parent. The filter bar also holds two selects, **Fix version** and **Parent** (options from the data, plus `(none)`). Choosing an option sets that dimension to one value; "All" clears it. The filter bar starts with the **search box** (§6.4).
 
 **Sprint selection:** when `sprints.json` is valid, show a keyboard-accessible native select labelled **Sprint** in the top bar. Default to the manifest entry whose id is `current`. Each option shows the sprint name and `(active)` or `(closed)`; do not repeat dates in the option label. A `?sprint=<id>` URL parameter selects that manifest entry; an unknown id shows a clear error while leaving the selector available. Changing the select updates the query parameter with `history.replaceState` and loads the selected snapshot without a full-page reload. Snapshot loads are cached in memory; changing sprints resets all filters. Never construct a path from the query parameter: resolve the id through the manifest; each entry's file must be `snapshots/sprint-<id>.json` (D74; unknown manifest keys are ignored). A missing or invalid manifest shows a clear error naming `sprints.json`, with no selector and no fallback (there is no root `sprint.json`, D73). A snapshot whose `sprint.id`, `startDate` or `endDate` differ from its manifest entry is refused with a message saying so. Because of these checks every rendered sprint has a `sprint` object with valid dates. If the user picks another sprint while one is loading, only the last choice is shown.
 
@@ -115,6 +115,11 @@ A line chart of story points remaining, day by day, for the current sprint (the 
 - **Colours:** remaining line navy `#1f3a5f` with small dots; ideal line gray, dashed; scope line light gray, thin, stepped; today marker teal; addition markers amber. Text and numbers carry the information, not colour alone.
 - **Accessibility:** the SVG has an `aria-label` summarising the chart and the same figures appear in the subtitle. The per-day figures of the tooltips (date, scope, remaining, ideal, done that day) are also in a visually hidden table after the chart, for screen readers.
 
+### 6.4 Search (R001-19)
+One search box at the start of the filter bar, placeholder "Search by key, title, status, Self-tested, fix version, person...". It matches **only**: (1) the ticket key, partial allowed; (2) summary words; (3) the status (`in review`, `in progress`, `done`, `open`); (4) the Self-tested column value (`dev to test`, `qa to test`, `same person`, and `self-tested`, which matches any of the three); (5) the parent / epic, by key or title; (6) the fix version (`4.46`, `4.46.1.0`); (7) the assignee name; (8) the tester name. Nothing else (not Last sync update, linked work items, type or points). Whole phrases: `in review`, `in progress` (status), `dev to test`, `qa to test`, `same person`, `self-tested` (Self-tested column). The Ticket detail counter "n of N work items" shows the result count.
+
+**Behaviour (both pages, R001-19, D86).** Not case or accent sensitive. The query is split into words; the known phrases of the page are matched first as **whole phrases against their own field** (so `dev to test` returns only Dev to Test tickets, not every ticket containing the words dev, to and test); every other word must match at least one allowed field, and several words are **AND**. A word matches a key anywhere in it (partial keys: `2970`, `APP-29`), the start of a word of a text field (`pipe` finds Pipeline, `4.46` finds 4.46.1.0), or a Jira key inside the parent or epic. When the query names a ticket key exactly (`APP-2970` or `2970`) that ticket comes first in the table. The search is AND with every tile, chart and grid filter, appears as a tag "Search: “…”", updates as the user types, and has a clear button (×); Reset all and the tag × also clear it. The text is kept in the page URL as `q` (`?q=in%20review`), and a link with `?q=` restores it; on the sprint page `sprint` keeps working alongside it (`?sprint=12176&q=in%20review`).
+
 ## 7. Page 2 — Backlog (`backlog.html`)
 
 Dimensions: DoR, Priority, Type, Age, Epic. The filter bar holds the **Epic multi-select** (see §7.4) and the **search box** (see §7.3) next to the tags.
@@ -137,8 +142,10 @@ Detail     [ Backlog table (full width) ]
 - **Readiness x priority** (dimensions DoR and Priority) — heat grid, rows = priorities, columns = DoR values, cell = ticket count; click filters both.
 - **Backlog table** — filtered tickets in sheet order (the refinement ranking; no re-ranking). Columns: Ticket, Summary, DoR status (coloured pill), Priority, Type, Story points, Days in status, Epic, Needs splitting, Risk / open question, Related / cluster. Header shows "Showing X of Y tickets". Sticky header, inner scroll, wrapped text.
 
-### 7.3 Search
-Case-insensitive; trimmed. Matches `ticket`, `summary`, `epic`, `cluster`, `risk`. **DoR prefix search:** if the trimmed query is at least 3 characters and is a prefix of `missing`, `weak`, `well-formed`, `n/a (epic)` or `ready`, it filters by DoR status instead of matching text (`mis`, `miss`, `missi`, `missing` all give DoR = Missing; `wea`, `weak` give Weak; `wel`, `well`, `well-formed` give Well-Formed; `n/a`, `n/a (epic)` give N/A (Epic); `rea`, `read`, `ready` give Ready, which only matches older data). Under 3 characters, or not a prefix, it is a normal text search. The search is AND with every other filter and updates as the user types. While a DoR prefix is active a small hint says "Searching by readiness: DoR = Missing" and the search appears as a tag.
+### 7.3 Search (R001-19; replaces the DoR prefix search of D22 / D51)
+One search box in the filter bar, placeholder "Search by key, title, status, epic...". It matches **only**: (1) the ticket key, partial allowed (`2970`, `APP-29`); (2) summary words; (3) the DoR status, as the words `well-formed`, `weak`, `missing`; (4) the epic, by key or title. Nothing else (not type, priority, risk, the split flag, cluster or the comment draft). Whole phrase: `well-formed` (DoR). `weak` and `missing` are plain words, so they also find summaries with a word starting with them. "Showing X of Y tickets" shows the result count. The former readiness hint ("Searching by readiness: …") is gone.
+
+**Behaviour (both pages, R001-19, D86).** Not case or accent sensitive. The query is split into words; the known phrases of the page are matched first as **whole phrases against their own field** (so `dev to test` returns only Dev to Test tickets, not every ticket containing the words dev, to and test); every other word must match at least one allowed field, and several words are **AND**. A word matches a key anywhere in it (partial keys: `2970`, `APP-29`), the start of a word of a text field (`pipe` finds Pipeline, `4.46` finds 4.46.1.0), or a Jira key inside the parent or epic. When the query names a ticket key exactly (`APP-2970` or `2970`) that ticket comes first in the table. The search is AND with every tile, chart and grid filter, appears as a tag "Search: “…”", updates as the user types, and has a clear button (×); Reset all and the tag × also clear it. The text is kept in the page URL as `q` (`?q=in%20review`), and a link with `?q=` restores it; on the sprint page `sprint` keeps working alongside it (`?sprint=12176&q=in%20review`).
 
 ### 7.4 Epic filter (multi-select with checkboxes, D48)
 A button in the filter bar labelled **Epic** (with the number of selected epics when any, e.g. "Epic (2)") opens a dropdown panel with one **checkbox per epic**. Several epics can be ticked at once; the page then shows the tickets of all ticked epics together (OR within the dimension, AND with every other filter and the search), so Carlos can compare or add up, for example, APP-718 and APP-55.
@@ -167,7 +174,7 @@ The exporter validates each populated source count against the number of matchin
 | Ctrl, Cmd or Shift + click | Add or remove the value (multi-select). |
 | Click × on a filter tag | Remove that value. |
 | Fix version / Parent selects (sprint) | Set that dimension to one value; All clears it. |
-| Backlog search | Text or DoR-prefix search, AND with the rest. |
+| Search box (both pages) | Free-text search over the page's allowed fields (§6.4, §7.3), AND with the rest; × clears it; kept in the URL as `q`. |
 | Backlog Epic dropdown | Tick several epics with checkboxes; the page shows their tickets together (§7.4). |
 | Reset all | Clear all selections, selects and search. |
 | Hover | Native tooltips on bars and cells show status, work items and story points (or the count). |

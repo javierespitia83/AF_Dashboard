@@ -33,6 +33,8 @@ const UI = {
     empty: 'No work items match these filters. Remove a tag or use Reset all.',
     tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', fix: 'Fix version', parent: 'Parent' },
     kpiTag: name => 'KPI: ' + name,
+    searchTag: q => 'Search: “' + String(q).trim() + '”',
+    placeholder: 'Search by key, title, status, Self-tested, fix version, person...',
     attention: {
       headers: ['Ticket', 'Status', 'Days', 'Reason'],
       sub: n => `${n} open ticket${n === 1 ? '' : 's'}: long-running, carried over or blocked`,
@@ -73,6 +75,7 @@ const UI = {
     sub: (n, total) => `Showing ${n} of ${total} tickets`,
     dorTag: dor => 'Search: DoR = ' + dor,
     textTag: q => 'Search: “' + q + '”',
+    placeholder: 'Search by key, title, status, epic...',
     dorHint: dor => `Searching by readiness: DoR = ${dor}.`,
     epicButton: n => 'Epic' + (n ? ' (' + n + ')' : '') + ' ▾',
     noEpic: '(no epic)',

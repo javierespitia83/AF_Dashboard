@@ -40,6 +40,41 @@ const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || S
 const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), fix: new Set(), parent: new Set() });
 const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || f[d].has(keyMap[d](t))) && (!pred || pred(t)));
 
+// ---------- free-text search (R001-19), written separately from dashboard.js ----------
+const sfold = v => String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const SSPLIT = /[\s,;:()\[\]{}|"'“”‘’!?*]+/;
+const swords = v => sfold(v).split(SSPLIT).map(w => w.replace(/^[.\-\/]+|[.\-\/]+$/g, '')).filter(Boolean);
+const blankV = v => v == null || String(v).trim() === '';
+const keyHit = (v, w) => !blankV(v) && sfold(v).includes(w);
+const textHit = (v, w) => !blankV(v) && swords(v).some(x => x.startsWith(w));
+const linkedHit = (v, w) => textHit(v, w) || (!blankV(v) && (sfold(v).match(/\b[a-z][a-z0-9]+-[0-9]+\b/g) || []).some(k => k.includes(w)));
+const HIT = { key: keyHit, text: textHit, linked: linkedHit };
+const named = v => grpName(v) === 'Unassigned' ? null : v;
+const reasonOrNull = t => { const r = selfTestReason(t); return r === '—' ? null : r; };
+// allowed fields and whole phrases per page (SPEC §6.4, §7.3)
+const SEARCH = {
+  sprint: {
+    fields: t => [['key', t.ticket], ['text', t.summary], ['text', t.status], ['text', reasonOrNull(t)], ['linked', t.parent], ['text', t.fixVersion], ['text', named(t.owner)], ['text', named(t.tester)]],
+    phrases: { 'in review': t => t.status === 'In Review', 'in progress': t => t.status === 'In Progress', 'dev to test': t => reasonOrNull(t) === 'Dev to Test', 'qa to test': t => reasonOrNull(t) === 'QA to Test', 'same person': t => reasonOrNull(t) === 'Same person', 'self-tested': t => reasonOrNull(t) !== null }
+  },
+  backlog: {
+    fields: t => [['key', t.ticket], ['text', t.summary], ['text', t.dor], ['linked', t.epic]],
+    phrases: { 'well-formed': t => t.dor === 'Well-Formed' }
+  }
+};
+// { pred, tag, exact } for a query on a page, or null when the query is blank
+function searchModel(q, page) {
+  const P = SEARCH[page]; let rest = ' ' + swords(q).join(' ') + ' '; const tests = [];
+  Object.keys(P.phrases).sort((a, b) => b.length - a.length).forEach(ph => { while (rest.includes(' ' + ph + ' ')) { tests.push(P.phrases[ph]); rest = rest.replace(' ' + ph + ' ', ' '); } });
+  const ws = rest.trim() ? rest.trim().split(' ') : [];
+  if (!tests.length && !ws.length) return null;
+  ws.forEach(w => tests.push(t => P.fields(t).some(([k, v]) => HIT[k](v, w))));
+  const keyWs = ws.filter(w => /^[a-z][a-z0-9]+-[0-9]+$/.test(w) || /^[0-9]+$/.test(w));
+  const exact = t => { const k = sfold(t.ticket); return keyWs.some(w => k === w || k.slice(k.lastIndexOf('-') + 1) === w); };
+  return { pred: t => tests.every(f => f(t)), tag: 'Search: “' + String(q).trim() + '”', exact };
+}
+const exactFirst = (rows, s) => s ? rows.filter(s.exact).concat(rows.filter(t => !s.exact(t))) : rows;
+
 // Independent burndown expectation.
 function expectBurn(all, ctx, thr, rem = []) {
   const sp = ctx.sprint;
@@ -95,11 +130,12 @@ function expectAttention(all, S, sprint) {
 
 // Everything the sprint page should show for tickets S under filters f; ctx = { sprint, today, thr, closed }.
 function expectSprint(S, f, ctx) {
-  const all = applyF(S, f, SKEY), P = sumP(all), TP = sumP(S);
+  const srch = ctx.q ? searchModel(ctx.q, 'sprint') : null, sp = srch ? srch.pred : null; // R001-19: the search applies to every tile
+  const all = applyF(S, f, SKEY, [], sp), P = sumP(all), TP = sumP(S);
   const doneP = sumP(all.filter(t => bucket(t.status) === 3));
-  const active = Object.keys(f).some(d => f[d].size);
+  const active = Object.keys(f).some(d => f[d].size) || !!sp;
   const thr = ctx.thr;
-  const bd = expectBurn(all, ctx, thr, Array.isArray(ctx.sprint.removed) ? applyF(ctx.sprint.removed, f, SKEY) : []);
+  const bd = expectBurn(all, ctx, thr, Array.isArray(ctx.sprint.removed) ? applyF(ctx.sprint.removed, f, SKEY, [], sp) : []);
   const cyc = all.filter(t => bucket(t.status) === 3 && typeof t.cycleTime === 'number'), avg = cyc.length ? cyc.reduce((a, t) => a + t.cycleTime, 0) / cyc.length : null;
   const co = ctx.sprint.carriedOver; let carriedV, carriedH;
   if (!co) { carriedV = '—'; carriedH = UI.sprint.hints.carriedNull; }
@@ -114,12 +150,12 @@ function expectSprint(S, f, ctx) {
   // order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Long-running work, Avg cycle time
   const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—', String(bd.mid.count), carriedV,
     String(all.filter(noTester).length), withAging.length ? String(all.filter(longRunning).length) : '—', avg === null ? '—' : f1(avg)];
-  const stBase = applyF(S, f, SKEY, ['status']); const stG = group(stBase, SKEY.status);
-  const typeBase = applyF(S, f, SKEY, ['type']); const typeG = group(typeBase, SKEY.type);
+  const stBase = applyF(S, f, SKEY, ['status'], sp); const stG = group(stBase, SKEY.status);
+  const typeBase = applyF(S, f, SKEY, ['type'], sp); const typeG = group(typeBase, SKEY.type);
   const attention = expectAttention(all, S, ctx.sprint);
-  const mBase = applyF(S, f, SKEY, ['assignee', 'tester']); const mat = {};
+  const mBase = applyF(S, f, SKEY, ['assignee', 'tester'], sp); const mat = {};
   mBase.forEach(t => { const r = SKEY.assignee(t), c = SKEY.tester(t); (mat[r] = mat[r] || {})[c] = (mat[r][c] || 0) + 1; });
-  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, attention, matrix: mat, mBase, detailKeys: all.map(t => t.ticket), points: P, totalPoints: TP, kpiHints: kh, bd };
+  return { kpiValues: kp, active, all, status: stG, stBase, types: typeG, typeBase, attention, matrix: mat, mBase, detailKeys: exactFirst(all, srch).map(t => t.ticket), searchTag: srch ? srch.tag : null, points: P, totalPoints: TP, kpiHints: kh, bd };
 }
 
 // ---------- backlog ----------
@@ -170,6 +206,6 @@ function contrast(fg, bg) { // fg, bg: [r, g, b] 0-255
 
 module.exports = {
   BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, isQaToTest, selfTestClass, selfTestReason, noTester, longRunning, testerGroup, expectAttention,
-  dn, isoN, md, f1, addedAfter, SKEY, newF, applyF, expectBurn, expectSprint,
+  sfold, swords, searchModel, exactFirst, dn, isoN, md, f1, addedAfter, SKEY, newF, applyF, expectBurn, expectSprint,
   AGEB, ageOf, dv, BKEY, newBF, hay, predFor, median, mostCommon, KEYRE, keysIn, linkErrors, contrast
 };

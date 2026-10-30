@@ -198,6 +198,34 @@
       return sameTesterAsAssignee(t) ? SELF_TESTED : AF.personName(t.tester);
     }
     function noTesterAndNotSelfTested(t) { return testerMissing(t) && !hasSelfTestClassification(t); }
+
+    // ---- search (R001-19, SPEC §6.4): the only fields and whole phrases the box may match ----
+    function named(v) { var n = AF.personName(v); return n === 'Unassigned' ? null : n; }
+    var SEARCH_SPEC = {
+      fields: [
+        { kind: 'key', get: function (t) { return t.ticket; } },
+        { kind: 'text', get: function (t) { return t.summary; } },
+        { kind: 'text', get: function (t) { return t.status; } },
+        { kind: 'text', get: selfTestReason },
+        { kind: 'linked', get: function (t) { return t.parent; } },
+        { kind: 'text', get: function (t) { return t.fixVersion; } },
+        { kind: 'text', get: function (t) { return named(t.owner); } },
+        { kind: 'text', get: function (t) { return named(t.tester); } }
+      ],
+      phrases: [
+        { text: 'in review', test: function (t) { return t.status === 'In Review'; } },
+        { text: 'in progress', test: function (t) { return t.status === 'In Progress'; } },
+        { text: 'dev to test', test: function (t) { return selfTestReason(t) === 'Dev to Test'; } },
+        { text: 'qa to test', test: function (t) { return selfTestReason(t) === 'QA to Test'; } },
+        { text: 'same person', test: function (t) { return selfTestReason(t) === 'Same person'; } },
+        { text: 'self-tested', test: function (t) { return selfTestReason(t) !== null; } }
+      ]
+    };
+    var search = null;
+    function setQuery(q) {
+      search = AF.compileSearch(q, SEARCH_SPEC);
+      store.setSearch(search ? q : '', search && search.pred, search ? search.tag : '');
+    }
     function inTimeInStatus(t) {
       return (t.status === 'In Progress' || t.status === 'In Review') &&
         typeof t.statusAging === 'number' && isFinite(t.statusAging) &&
@@ -282,7 +310,13 @@
     }
     var fixCtl = selectCtl('fix', 'Fix version', distinct(store.dims.fix.get));
     var parentCtl = selectCtl('parent', 'Parent', distinct(store.dims.parent.get));
-    var updateBar = AF.filterBar(barBox, store, [fixCtl.root, parentCtl.root]);
+    var searchCtl = AF.searchBox({ placeholder: 'Search by key, title, status, Self-tested, fix version, person...', value: AF.urlParam('q'), onChange: setQuery });
+    var updateBar = AF.filterBar(barBox, store, [searchCtl.root, fixCtl.root, parentCtl.root]);
+    function syncSearch() { // the tag ×, Reset all and the clear button all end here
+      if (!store.search.pred) search = null;
+      searchCtl.sync(store.search.q);
+      AF.setUrlParam('q', store.search.pred ? store.search.q.trim() : '');
+    }
     function syncCtl(ctl, dim) {
       var s = store.sel[dim];
       ctl.sel.value = s.size === 0 ? '' : s.size === 1 ? Array.from(s)[0] : '__multi';
@@ -579,7 +613,7 @@
       });
     }
     function sortableDetailTable(rows) {
-      var table = AF.buildTable(detailCols, sortDetailRows(rows), { cls: 'data wider' });
+      var table = AF.buildTable(detailCols, AF.exactFirst(sortDetailRows(rows), search), { cls: 'data wider' }); // a searched key comes first
       Array.prototype.forEach.call(table.querySelectorAll('thead th'), function (th, index) {
         var label = detailCols[index].label;
         if (!detailSortGetters[label]) return;
@@ -628,6 +662,7 @@
       syncLowerKpis();
       renderLower();
       updateBar();
+      syncSearch();
       syncCtl(fixCtl, 'fix');
       syncCtl(parentCtl, 'parent');
     }
@@ -635,6 +670,7 @@
       if (reason === 'extra') { syncLowerKpis(); renderLower(); updateBar(); } // a KPI filter changes only the lower section
       else render();
     });
+    if (AF.urlParam('q')) setQuery(AF.urlParam('q')); // a link with ?q= restores the search (no subscriber yet)
     render();
     AF.store = store; AF.tickets = tickets; // exposed for console checks
   }

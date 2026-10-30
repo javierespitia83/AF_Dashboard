@@ -119,6 +119,13 @@ button { font: inherit; color: inherit; }
 }
 .ctl select { max-width: 280px; }
 .ctl input { width: 300px; }
+/* search box with a clear button (R001-19) */
+.searchwrap { position: relative; display: inline-flex; align-items: center; }
+.searchctl input { width: 300px; padding-right: 26px; }
+.searchctl input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.search-clear { position: absolute; right: 4px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 16px; line-height: 1; padding: 2px 5px; border-radius: 4px; cursor: pointer; }
+.search-clear:hover { color: var(--navy); background: var(--hover); }
+.search-clear[hidden] { display: none; }
 .epicwrap { position: relative; }
 .epicbtn { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-weight: 600; }
 .epicbtn:hover { border-color: var(--navy); }
@@ -138,8 +145,6 @@ button { font: inherit; color: inherit; }
 }
 .resetall:hover:not(:disabled) { background: var(--navy); color: #fff; }
 .resetall:disabled { opacity: 0.4; cursor: default; } /* disabled controls are exempt from the contrast minimum */
-.dorhint { color: var(--muted); font-size: 12px; flex-basis: 100%; margin: -2px 0 0; }
-.dorhint:empty { display: none; }
 
 .foot { flex: none; height: var(--foot-h); display: flex; align-items: center; padding: 0 16px; color: var(--muted); font-size: 12px; }
 

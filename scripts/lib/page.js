@@ -73,7 +73,7 @@ const c = readCommon();
 const dist = t => { const o={}, sel=[], dim=[]; rowsOf(t).forEach(r=>{ const n=T(r.querySelector('.name')); o[n]=+T(r.querySelector('.n')); if(r.classList.contains('is-selected')) sel.push(n); if(r.classList.contains('is-dimmed')) dim.push(n); }); return {o, sel, dim, order:Object.keys(o)}; };
 const tb = tile(${q(BT.table)}); const hdr=[...tb.querySelectorAll('thead th')].map(T);
 const rows=[...tb.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T));
-return Object.assign(c, { dor: dist(${q(BT.dor)}), priority: dist(${q(BT.priority)}), type: dist(${q(BT.type)}), age: dist(${q(BT.age)}), matrix: matrixOf(${q(BT.matrix)}), hdr, keys: rows.map(r=>r[0]), rows, sub: T(tb.querySelector('.sub')), tableEmpty: emptyIn(${q(BT.table)}), empties:{dor:emptyIn(${q(BT.dor)}),priority:emptyIn(${q(BT.priority)}),type:emptyIn(${q(BT.type)}),age:emptyIn(${q(BT.age)}),matrix:emptyIn(${q(BT.matrix)})}, hint: T(document.querySelector('.dorhint')), q: document.getElementById('q').value });
+return Object.assign(c, { dor: dist(${q(BT.dor)}), priority: dist(${q(BT.priority)}), type: dist(${q(BT.type)}), age: dist(${q(BT.age)}), matrix: matrixOf(${q(BT.matrix)}), hdr, keys: rows.map(r=>r[0]), rows, sub: T(tb.querySelector('.sub')), tableEmpty: emptyIn(${q(BT.table)}), empties:{dor:emptyIn(${q(BT.dor)}),priority:emptyIn(${q(BT.priority)}),type:emptyIn(${q(BT.type)}),age:emptyIn(${q(BT.age)}),matrix:emptyIn(${q(BT.matrix)})}, q: document.getElementById('q').value });
 `;
 
 // Page geometry: scroll size, tile boxes, tile body overflow, elements beyond the viewport.
@@ -82,4 +82,9 @@ const LAYOUT = `const d=document.scrollingElement; const bodies=[...document.que
 // Scroll regions: every scroll box is focusable + labelled exactly when it scrolls (C19).
 const SCROLL_REGIONS = `return [...document.querySelectorAll('.tile-body, .qi-ticket-scroll')].map(b => { const cs=getComputedStyle(b); const can=/auto|scroll/.test(cs.overflowY+' '+cs.overflowX); const scrolls = can && (b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1); return { scrolls, tabindex: b.getAttribute('tabindex'), role: b.getAttribute('role'), label: b.getAttribute('aria-label') }; });`;
 
-module.exports = { H, run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, LAYOUT, SCROLL_REGIONS };
+// Search state (R001-19): input, clear button, URL parameter q, tags, and the rows of a table tile.
+const READ_SEARCH = t => `const i=document.getElementById('q'), c=document.querySelector('.search-clear'), tb=tile(${q(t)});
+return { value: i.value, placeholder: i.placeholder, clearHidden: c ? c.hidden : null, url: new URLSearchParams(location.search).get('q'), sprintParam: new URLSearchParams(location.search).get('sprint'),
+  tags: readCommon().tags, keys: [...tb.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0])), sub: T(tb.querySelector('.sub')), empty: emptyIn(${q(t)}) };`;
+
+module.exports = { H, run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS };
