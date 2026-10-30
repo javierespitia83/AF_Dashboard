@@ -33,7 +33,7 @@ const files = require('./lib/files');
 const { validate, unsupportedKeywords } = require('./lib/schema');
 const M = require('./lib/model');
 const { UI } = require('./lib/ui_text');
-const { run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS } = require('./lib/page');
+const { run, READ_BD, READ_SPRINT, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS } = require('./lib/page');
 
 const ROOT = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const OWN_SCRATCH = !process.argv[3];
@@ -286,8 +286,6 @@ async function suites(ctx) {
     if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
     if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
     if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
-    const wantFix = f.fix.size === 0 ? '' : f.fix.size === 1 ? [...f.fix][0] : '__multi', wantPar = f.parent.size === 0 ? '' : f.parent.size === 1 ? [...f.parent][0] : '__multi';
-    if (d.fixSel !== wantFix || d.parentSel !== wantPar) errs.push(['select sync', d.fixSel, d.parentSel]);
     check(label, errs.length === 0, errs.slice(0, 4));
     return { e, d };
   }
@@ -311,12 +309,6 @@ async function suites(ctx) {
     { const baseRows = M.applyF(Brows, f, M.BKEY, ['dor', 'priority'], ps.pred); const mat = {}; baseRows.forEach(t => { const r = M.BKEY.priority(t), cc = M.BKEY.dor(t); (mat[r] = mat[r] || {})[cc] = ((mat[r] || {})[cc] || 0) + 1; });
       const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(cc => { out[r + '|' + cc] = o[r][cc]; })); return out; }; const a = flat(d.matrix.o), b = flat(mat);
       if (!baseRows.length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); } else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells']); }
-    { const E = await run(page, READ_EPIC), baseRows = M.applyF(Brows, f, M.BKEY, ['epic'], ps.pred), cnt = {}; baseRows.forEach(t => { const v = M.BKEY.epic(t); cnt[v] = (cnt[v] || 0) + 1; });
-      const whole = {}; Brows.forEach(t => { const v = M.BKEY.epic(t); whole[v] = (whole[v] || 0) + 1; });
-      const wantOrder = Object.keys(whole).filter(k => k !== UI.backlog.noEpic).sort((a, b) => whole[b] - whole[a] || a.localeCompare(b)).concat(whole[UI.backlog.noEpic] ? [UI.backlog.noEpic] : []);
-      if (!eq(E.opts.map(o => o.name), wantOrder)) errs.push(['epic option order', E.opts.map(o => o.name).slice(0, 5), wantOrder.slice(0, 5)]);
-      E.opts.forEach(o => { if (o.n !== (cnt[o.name] || 0)) errs.push(['epic option count', o.name, o.n, cnt[o.name] || 0]); if (o.checked !== f.epic.has(o.name)) errs.push(['epic checkbox', o.name, o.checked]); if (o.type !== 'checkbox') errs.push(['epic option is not a checkbox', o.name]); });
-      if (E.btn !== UI.backlog.epicButton(f.epic.size)) errs.push(['epic button label', E.btn]); }
     if (!eq(d.keys, M.exactFirst(all, sm).map(t => t.ticket))) errs.push(['table keys', d.keys.length, all.length]);
     if (d.sub !== UI.backlog.sub(all.length, Brows.length)) errs.push(['table sub', d.sub]);
     if (!all.length && !d.tableEmpty) errs.push(['table empty-state missing']);
@@ -416,9 +408,7 @@ async function suites(ctx) {
 
   let f = M.newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
-  { const opts = await run(p, `return {fix:[...document.getElementById('f-fix').options].map(o=>o.value), parent:[...document.getElementById('f-parent').options].map(o=>o.value)}`);
-    const want = vals => { const k = [...new Set(vals.map(v => v == null || String(v).trim() === '' ? '(none)' : String(v)))]; const named = k.filter(x => x !== '(none)').sort(M.natural); return [''].concat(named, k.includes('(none)') ? ['(none)'] : [], ['__multi']); };
-    check('Fix version and Parent options are in natural order (4.9 before 4.10), (none) last', eq(opts.fix, want(S.map(t => t.fixVersion))) && eq(opts.parent, want(S.map(t => t.parent))), opts); }
+  check('Sprint page (R001-19): the filter bar has the search box and no dropdown filters (no Fix version, Parent, Status, Type, Assignee or Tester select); the Sprint selector stays', await run(p, `const bar=document.getElementById('filterbar'); return !!bar.querySelector('input#q') && bar.querySelectorAll('select').length === 0 && !document.getElementById('f-fix') && !document.getElementById('f-parent') && document.querySelectorAll('select').length === 1 && !!document.getElementById('sprint-select')`));
   { const typeName = Object.keys(M.expectSprint(S, f, CTX).types)[0];
     await run(p, `clickRow(${q(ST.type)}, ${q(typeName)})`); f.type = new Set([typeName]);
     await verifySprint(p, S, f, `Click Type "${typeName}": filters the dashboard and preserves the type distribution`);
@@ -545,29 +535,17 @@ async function suites(ctx) {
       check('Contrast: dimmed heat-grid cells (outside the selection) keep their text at full opacity with at least 4.5:1', lowContrast(cellsC).length === 0 && (cellsC.length < 2 || cellsC.some(r => r.dimmed)), lowContrast(cellsC).slice(0, 6)); }
     await run(p, `clickCell(${q(ST.matrix)}, ${q(rA)}, ${q(cT)})`); f.assignee = new Set(); f.tester = new Set();
     await verifySprint(p, S, f, 'Clicking the same matrix cell again clears both'); }
-  // selects
-  const fixes = [...new Set(S.map(t => t.fixVersion).filter(Boolean))].sort(M.natural), pars = [...new Set(S.map(t => t.parent).filter(Boolean))].sort(M.natural);
-  if (fixes.length && pars.length) {
-    await run(p, `setSel('f-fix', ${q(fixes[0])})`); f.fix = new Set([fixes[0]]);
-    await verifySprint(p, S, f, `Fix version select "${fixes[0]}" filters every tile and shows a tag`);
-    await run(p, `setSel('f-parent', ${q(pars[0])})`); f.parent = new Set([pars[0]]);
-    await verifySprint(p, S, f, `Parent select "${pars[0]}" combines with Fix version (AND)`);
-    await run(p, `setSel('f-fix', '')`); f.fix = new Set();
-    await verifySprint(p, S, f, 'Fix version "All" clears that dimension');
-    if (S.some(t => !t.parent)) { await run(p, `setSel('f-parent', '(none)')`); f.parent = new Set(['(none)']); await verifySprint(p, S, f, 'Parent "(none)" selects tickets without a parent'); }
-    await run(p, `clickReset()`); f = M.newF();
-    await verifySprint(p, S, f, 'Reset all also resets the selects');
-  } else skip('Fix version and Parent select checks', 'the active sprint has no fix version or no parent values');
-  // zero results
-  let zero = null;
-  for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const fx of fixes) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.fixVersion === fx)) { zero = [sName, 'f-fix', 'fix', fx]; break; } if (zero) break; }
-  if (!zero) for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const pr of pars) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.parent === pr)) { zero = [sName, 'f-parent', 'parent', pr]; break; } if (zero) break; }
-  if (zero) {
-    await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setSel(${q(zero[1])}, ${q(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
-    const z = await verifySprint(p, S, f, `Zero results (${zero[0]} + ${zero[2]} ${zero[3]}): KPIs 0, empty-state in tiles and table, no errors`);
-    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.attention === z.d.detailEmpty, z.d.detailEmpty);
-    await run(p, `clickReset()`); f = M.newF();
-  } else check('Zero results case available in data', false, 'no empty combination');
+  // zero results: a status tile and a search that excludes it
+  { let zero = null;
+    for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue;
+      const other = S.find(t => M.BN[M.bucket(t.status)] !== sName && /^[A-Z][A-Z0-9]+-\d+$/.test(t.ticket));
+      if (other && !S.filter(M.searchModel(other.ticket, 'sprint').pred).some(t => M.BN[M.bucket(t.status)] === sName)) { zero = [sName, other.ticket]; break; } }
+    if (zero) {
+      await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setQ(${q(zero[1])})`); f.status = new Set([zero[0]]);
+      const z = await verifySprint(p, S, f, `Zero results (status ${zero[0]} + search "${zero[1]}"): KPIs 0, empty-state in tiles and table, no errors`, Object.assign({}, CTX, { q: zero[1] }));
+      check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.attention === z.d.detailEmpty, z.d.detailEmpty);
+      await run(p, `clickReset()`); f = M.newF();
+    } else check('Zero results case available in data', false, 'no empty combination'); }
   // scroll position kept (Ticket detail; filter by the most common type)
   await run(p, `tile(${q(ST.detail)}).querySelector('.tile-body').scrollTop = 150`);
   await run(p, `clickRow(${q(ST.type)}, ${q(typeNames[0])})`); f.type = new Set([typeNames[0]]);
@@ -589,7 +567,7 @@ async function suites(ctx) {
     await verifySprint(p, S, f, 'Keyboard: Space on the same row clears it');
   }
   await run(p, `clickReset()`); f = M.newF();
-  check('Controls are real elements (rows and cells are buttons, selects and inputs)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall')].every(b=>b.tagName==='BUTTON') && document.getElementById('f-fix').tagName==='SELECT'`));
+  check('Controls are real elements (rows, cells, tags, Reset all and the clear button are buttons; the search is an input)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall, .search-clear')].every(b=>b.tagName==='BUTTON') && document.getElementById('q').tagName==='INPUT'`));
   check('Light mode, no external fonts', await run(p, `const m=getComputedStyle(document.body).backgroundColor.match(/\\d+/g).map(Number); return m.every(x=>x>200) && getComputedStyle(document.documentElement).colorScheme!=='dark'`));
   check('Empty values: no null/undefined/NaN text in tiles or tables (excluding ticket prose)', await run(p, `const t=[...document.querySelectorAll('.kpis, .main')].map(n=>n.textContent).join(' ') + [...document.querySelectorAll('.tile-body tbody td:not(.wrap)')].map(n=>n.textContent).join(' '); return !/NaN|undefined|\\bnull\\b/.test(t)`));
   const dt = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), selfTested:T(tr.children[ix('Self-tested')]), selfTitle:tr.closest('table').querySelectorAll('thead th')[ix('Self-tested')].getAttribute('title'), days:T(tr.children[ix('Days in status')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
@@ -750,52 +728,7 @@ async function suites(ctx) {
     check('Icons: every Priority and Type tile row has the right single icon before its (unchanged) name; unknown values have none; icons are decorative with no text', r.prio.every(x => eq(x.icons, want('priority', PR, x.name)) && x.hidden) && r.type.every(x => eq(x.icons, want('type', TY, x.name)) && x.hidden) && r.prio.some(x => x.icons.length) && r.type.some(x => x.icons.length), { p: r.prio, t: r.type });
     check('Icons: every Priority and Type table cell has the right single icon; the cell text is exactly the value (or a dash)', B.every((t, i) => eq(r.pc[i], t.priority && PR.includes(t.priority) ? ['priority:' + t.priority] : []) && eq(r.tc[i], t.type && TY.includes(t.type) ? ['type:' + t.type] : []) && r.ptxt[i] === (t.priority || '—') && r.ttxt[i] === (t.type || '—')), { pc: r.pc.slice(0, 3), ptxt: r.ptxt.slice(0, 3) });
     check('Icons: no image elements were added (inline SVG only)', r.imgs === 0); }
-  // epic multi-select (SPEC §7.4): the two epics with the most tickets
-  { const cnt = {}; B.forEach(t => { cnt[M.BKEY.epic(t)] = (cnt[M.BKEY.epic(t)] || 0) + 1; });
-    const epics = Object.keys(cnt).filter(k => k !== UI.backlog.noEpic);
-    const ranked = M.mostCommon(B, M.BKEY.epic, [UI.backlog.noEpic]);
-    const [e1, e2] = ranked, short = e => String(e).split(/\s/)[0];
-    const tick = n => run(p, `const l=[...document.querySelectorAll('.epicopt')].find(l => l.querySelector('.name').textContent === ${q(n)}); l.querySelector('input').click();`);
-    check('Epic filter: closed at the start, button says "Epic ▾", a disclosure (aria-expanded + aria-controls, no aria-haspopup), one checkbox per epic plus (no epic)', (r => !r.open && r.expanded === 'false' && r.haspopup === null && r.controls === 'epic-pop' && r.popId === 'epic-pop' && r.btn === UI.backlog.epicButton(0) && r.opts.length === epics.length + (cnt[UI.backlog.noEpic] ? 1 : 0))(await run(p, READ_EPIC)), await run(p, READ_EPIC).then(r => ({ haspopup: r.haspopup, controls: r.controls, n: r.opts.length })));
-    await run(p, `document.getElementById('epic-btn').click()`);
-    check('Epic filter: clicking the button opens the panel (aria-expanded=true)', (r => r.open && r.expanded === 'true')(await run(p, READ_EPIC)));
-    await verifyBacklog(p, B, bf, query, 'Epic panel open: nothing is filtered yet and the option counts equal the data');
-    if (e1 && e2) {
-      await tick(e1); bf.epic = new Set([e1]);
-      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e1)} filters every KPI, tile, the matrix and the table; tag "Epic: ..." appears`);
-      check('Epic filter: the panel stays open while ticking', (r => r.open)(await run(p, READ_EPIC)));
-      await tick(e2); bf.epic.add(e2);
-      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e2)} as well shows both epics together (OR): numbers equal the union`);
-      { const d = await run(p, READ_BACKLOG), want = B.filter(t => [e1, e2].includes(M.BKEY.epic(t))).length;
-        check(`Epic: ${short(e1)} + ${short(e2)} together = ${want} tickets (${cnt[e1]} + ${cnt[e2]}); button reads "Epic (2)"`, want === cnt[e1] + cnt[e2] && d.kpis[0].value === String(want) && (await run(p, READ_EPIC)).btn === UI.backlog.epicButton(2), d.kpis[0]); }
-      await run(p, `clickRow(${q(BT.dor)}, ${q(dor1)})`); bf.dor = new Set([dor1]);
-      await verifyBacklog(p, B, bf, query, `Epic combines with a DoR selection by AND (${short(e1)} + ${short(e2)}, DoR ${dor1})`);
-      await run(p, `setQ('weak')`); query = 'weak';
-      await verifyBacklog(p, B, bf, query, 'Epic combines with the search by AND');
-      await run(p, `setQ('')`); query = ''; await run(p, `clickReset()`); bf = M.newBF();
-      check('Epic: Reset all unticks every checkbox and closes nothing it should not', (r => r.opts.every(o => !o.checked) && r.btn === UI.backlog.epicButton(0))(await run(p, READ_EPIC)));
-      await tick(e1); bf.epic = new Set([e1]);
-      if (cnt[UI.backlog.noEpic]) { await tick(UI.backlog.noEpic); bf.epic.add(UI.backlog.noEpic); }
-      await verifyBacklog(p, B, bf, query, 'Epic: "(no epic)" can be ticked together with an epic');
-      const tagIx = (await run(p, `return readCommon().tags`)).findIndex(t => t === 'Epic: ' + e1);
-      await run(p, `clickTagX(${tagIx})`); bf.epic.delete(e1);
-      await verifyBacklog(p, B, bf, query, 'Epic: removing the tag with x unticks that checkbox only');
-      await run(p, `document.querySelector('.epicclear').click()`); bf.epic = new Set();
-      await verifyBacklog(p, B, bf, query, 'Epic: Clear unticks every epic');
-      check('Epic: clicking a tag x (outside the panel) closed the panel, as any click outside does', !(await run(p, READ_EPIC)).open);
-    } else skip('Epic multi-select checks', 'the backlog has fewer than two epics');
-    await run(p, `document.getElementById('epic-btn').click()`);
-    check('Epic: Clear keeps the panel open', (await run(p, `document.querySelector('.epicclear').click(); return !document.querySelector('.epicpop').hidden`)));
-    await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
-    { const r = await run(p, READ_EPIC), act = await run(p, `const a = document.activeElement; return a ? a.tagName + '#' + a.id + '.' + a.className : null`);
-      check('Epic: Escape closes the panel and returns focus to the button', !r.open && r.expanded === 'false' && act === 'BUTTON#epic-btn.epicbtn', { r: r.open, ex: r.expanded, act }); }
-    await run(p, `document.getElementById('epic-btn').click()`); await run(p, `document.querySelector('.kpi').click()`);
-    check('Epic: a click outside the panel closes it', (r => !r.open)(await run(p, READ_EPIC)));
-    await run(p, `document.getElementById('epic-btn').click()`);
-    const lay = await run(p, LAYOUT);
-    check('Epic: opening the panel adds no page scroll and keeps the panel inside the viewport', lay.sh <= lay.ih && lay.sw <= lay.iw && await run(p, `const r=document.querySelector('.epicpop').getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.bottom<=innerHeight`), lay);
-    await run(p, `document.getElementById('epic-btn').click()`);
-    await verifyBacklog(p, B, bf, query, 'Epic: opening and closing the panel changed no filter'); }
+  check('Backlog page (R001-19): the filter bar has the search box and no Epic dropdown (no button, panel or checkboxes)', await run(p, `return !!document.querySelector('#filterbar input#q') && !document.getElementById('epic-btn') && !document.querySelector('.epicpop, .epicopt') && document.querySelectorAll('#filterbar select').length === 0`));
   // keyboard
   await run(p, `document.activeElement && document.activeElement.blur()`);
   let bfk = null; for (let i = 0; i < 40 && !bfk; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile(${q(BT.dor)}).contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); if (r) bfk = r; }
@@ -803,9 +736,6 @@ async function suites(ctx) {
   if (bfk) { await p.key('Enter', 'Enter', 13, '\r'); bf.dor = new Set([bfk.name]);
     await verifyBacklog(p, B, bf, query, 'Keyboard: Enter selects the focused DoR row'); }
   await run(p, `clickReset()`); bf = M.newBF();
-  await run(p, `document.getElementById('q').focus()`); await p.key('Tab', 'Tab', 9, undefined, 8);
-  { const ek = await run(p, `const a=document.activeElement; return a && a.id==='epic-btn' ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`);
-    check('Epic: the button is reachable with Tab (just before the search box) and shows a visible focus outline', ek && ek.outline !== 'none' && parseFloat(ek.w) >= 2, ek); }
   check('Backlog: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   for (const [w, h, mode] of [[1440, 900, 'dash'], [1536, 864, 'dash'], [1280, 720, 'fallback'], [800, 900, 'fallback'], [480, 900, 'fallback']]) {
     await p.resize(w, h); const r = await run(p, LAYOUT);

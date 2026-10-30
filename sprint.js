@@ -158,14 +158,11 @@
       return;
     }
 
-    var NONE = AF.NONE;
     var store = AF.createStore({
       status: { label: 'Status', get: function (t) { return AF.BUCKETS[AF.bucketOf(t.status)]; } },
       type: { label: 'Type', get: function (t) { return AF.isBlank(t.type) ? '—' : String(t.type); } },
       assignee: { label: 'Assignee', get: function (t) { return AF.personName(t.owner); } },
-      tester: { label: 'Tester', get: testerGroup }, // the Assignee x tester column, so a clicked cell matches its count
-      fix: { label: 'Fix version', get: function (t) { return AF.isBlank(t.fixVersion) ? NONE : String(t.fixVersion); } },
-      parent: { label: 'Parent', get: function (t) { return AF.isBlank(t.parent) ? NONE : String(t.parent); } }
+      tester: { label: 'Tester', get: testerGroup } // the Assignee x tester column, so a clicked cell matches its count
     });
     var owner = function (t) { return AF.personName(t.owner); };
     var tester = function (t) { return AF.personName(t.tester); };
@@ -290,36 +287,13 @@
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tAttention.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
-    // ---- filter bar controls (Fix version, Parent) ----
-    function selectCtl(dim, label, values) {
-      var sel = el('select', {
-        id: 'f-' + dim,
-        onchange: function () {
-          if (sel.value === '') store.set(dim, []);
-          else if (sel.value !== '__multi') store.set(dim, [sel.value]);
-        }
-      }, [el('option', { value: '', text: 'All' })]
-        .concat(values.map(function (v) { return el('option', { value: v, text: v }); }))
-        .concat([el('option', { value: '__multi', text: 'Multiple', disabled: true })]));
-      return { sel: sel, root: el('div', { class: 'ctl' }, [el('label', { for: 'f-' + dim, text: label }), sel]) };
-    }
-    function distinct(fn) { // natural order, so Fix version 4.9 comes before 4.10 (C14); (none) last
-      var seen = {}; tickets.forEach(function (t) { seen[fn(t)] = true; });
-      var keys = Object.keys(seen).filter(function (k) { return k !== NONE; }).sort(AF.naturalCompare);
-      return seen[NONE] ? keys.concat([NONE]) : keys;
-    }
-    var fixCtl = selectCtl('fix', 'Fix version', distinct(store.dims.fix.get));
-    var parentCtl = selectCtl('parent', 'Parent', distinct(store.dims.parent.get));
+    // ---- filter bar: the search box (R001-19) ----
     var searchCtl = AF.searchBox({ placeholder: 'Search by key, title, status, Self-tested, fix version, person...', value: AF.urlParam('q'), onChange: setQuery });
-    var updateBar = AF.filterBar(barBox, store, [searchCtl.root, fixCtl.root, parentCtl.root]);
+    var updateBar = AF.filterBar(barBox, store, [searchCtl.root]); // Fix version and Parent dropdowns removed (R001-19): the search covers them
     function syncSearch() { // the tag ×, Reset all and the clear button all end here
       if (!store.search.pred) search = null;
       searchCtl.sync(store.search.q);
       AF.setUrlParam('q', store.search.pred ? store.search.q.trim() : '');
-    }
-    function syncCtl(ctl, dim) {
-      var s = store.sel[dim];
-      ctl.sel.value = s.size === 0 ? '' : s.size === 1 ? Array.from(s)[0] : '__multi';
     }
 
     // ---- renderers ----
@@ -663,8 +637,6 @@
       renderLower();
       updateBar();
       syncSearch();
-      syncCtl(fixCtl, 'fix');
-      syncCtl(parentCtl, 'parent');
     }
     store.subscribe(function (reason) {
       if (reason === 'extra') { syncLowerKpis(); renderLower(); updateBar(); } // a KPI filter changes only the lower section

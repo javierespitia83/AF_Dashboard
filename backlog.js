@@ -11,7 +11,6 @@
   function dorClass(v) { return Object.prototype.hasOwnProperty.call(DOR_CLASS, v) ? DOR_CLASS[v] : 'other'; }
   var PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest'];
   var AGE = ['0–30', '31–90', '91–180', '181–365', '366+', 'No value'];
-  var NOEPIC = '(no epic)';
 
   function val(v) { return AF.isBlank(v) ? DASH : String(v); }
   function ageOf(t) {
@@ -52,10 +51,9 @@
       dor: { label: 'DoR', get: function (t) { return val(t.dor); } },
       priority: { label: 'Priority', get: function (t) { return val(t.priority); } },
       type: { label: 'Type', get: function (t) { return val(t.type); } },
-      age: { label: 'Age', get: ageOf },
-      epic: { label: 'Epic', get: function (t) { return AF.isBlank(t.epic) ? NOEPIC : String(t.epic); } }
+      age: { label: 'Age', get: ageOf }
     });
-    var K = { dor: store.dims.dor.get, priority: store.dims.priority.get, type: store.dims.type.get, age: store.dims.age.get, epic: store.dims.epic.get };
+    var K = { dor: store.dims.dor.get, priority: store.dims.priority.get, type: store.dims.type.get, age: store.dims.age.get };
 
     // Value lists from the whole data so tile rows stay stable while filtering.
     function ordered(counts, preferred) {
@@ -93,35 +91,7 @@
     }
     var searchBox = AF.searchBox({ placeholder: 'Search by key, title, status, epic...', value: AF.urlParam('q'), onChange: setQuery });
     var searchCtl = searchBox.root;
-    // ---- filter bar: Epic multi-select with checkboxes (SPEC 7.4, D48) ----
-    var allEpic = AF.countBy(tickets, K.epic);
-    var epicKeys = Object.keys(allEpic).filter(function (k) { return k !== NOEPIC; })
-      .sort(function (a, b) { return allEpic[b] - allEpic[a] || a.localeCompare(b); }).concat(allEpic[NOEPIC] ? [NOEPIC] : []);
-    // A disclosure button (aria-expanded + aria-controls) for a group of checkboxes; not a menu, so no aria-haspopup (C20).
-    var epicBtn = el('button', { type: 'button', class: 'epicbtn', id: 'epic-btn', 'aria-expanded': 'false', 'aria-controls': 'epic-pop', onclick: function () { setEpicOpen(epicPop.hidden); } });
-    var epicOpts = {};
-    var epicPop = el('div', { class: 'epicpop', id: 'epic-pop', role: 'group', 'aria-label': 'Epics', hidden: true }, [
-      el('div', { class: 'epichead' }, [
-        el('span', { text: 'Tick one or more epics' }),
-        el('button', { type: 'button', class: 'epicclear', text: 'Clear', onclick: function () { store.set('epic', []); } })
-      ]),
-      el('div', { class: 'epiclist' }, epicKeys.map(function (k) {
-        var box = el('input', { type: 'checkbox', value: k, onchange: function () { store.click('epic', k, true); } });
-        var n = el('span', { class: 'n' });
-        epicOpts[k] = { box: box, n: n };
-        return el('label', { class: 'epicopt', title: k }, [box, el('span', { class: 'name', text: k }), n]);
-      }))
-    ]);
-    var epicCtl = el('div', { class: 'ctl epicwrap' }, [epicBtn, epicPop]);
-    function setEpicOpen(open) { epicPop.hidden = !open; epicBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
-    document.addEventListener('click', function (e) { if (!epicPop.hidden && !epicCtl.contains(e.target)) setEpicOpen(false); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !epicPop.hidden) { setEpicOpen(false); epicBtn.focus(); } });
-    function syncEpic() { // updates state only, never rebuilds the panel, so focus and the open state survive a filter change
-      var counts = AF.countBy(store.apply(tickets, 'epic'), K.epic), sel = store.sel.epic;
-      epicKeys.forEach(function (k) { epicOpts[k].box.checked = sel.has(k); epicOpts[k].n.textContent = String(counts[k] || 0); });
-      epicBtn.textContent = 'Epic' + (sel.size ? ' (' + sel.size + ')' : '') + ' \u25be';
-    }
-    var updateBar = AF.filterBar(barBox, store, [epicCtl, searchCtl]);
+    var updateBar = AF.filterBar(barBox, store, [searchCtl]); // Epic dropdown removed (R001-19): the search finds an epic by key or title
 
     // ---- renderers ----
     function renderKpis(f) {
@@ -212,7 +182,6 @@
       renderMatrix();
       renderTable(f);
       updateBar();
-      syncEpic();
       if (!store.search.pred) search = null; // the tag ×, Reset all and the clear button all end here
       searchBox.sync(store.search.q);
       AF.setUrlParam('q', store.search.pred ? store.search.q.trim() : '');

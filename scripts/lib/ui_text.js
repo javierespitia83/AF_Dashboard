@@ -31,7 +31,7 @@ const UI = {
       noTesterPrefix: 'no tester, excluding Dev to Test and QA to Test'
     },
     empty: 'No work items match these filters. Remove a tag or use Reset all.',
-    tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester', fix: 'Fix version', parent: 'Parent' },
+    tagLabels: { status: 'Status', type: 'Type', assignee: 'Assignee', tester: 'Tester' },
     kpiTag: name => 'KPI: ' + name,
     searchTag: q => 'Search: “' + String(q).trim() + '”',
     placeholder: 'Search by key, title, status, Self-tested, fix version, person...',
@@ -71,13 +71,10 @@ const UI = {
     tiles: { dor: 'Readiness (DoR)', priority: 'Priority', type: 'Type', age: 'Days in status', matrix: 'Readiness x priority', table: 'Backlog tickets' },
     headers: ['Ticket', 'Summary', 'DoR status', 'Priority', 'Type', 'Story points', 'Days in status', 'Epic', 'Needs splitting', 'Risk / open question', 'Related / cluster'],
     empty: 'No backlog tickets match these filters. Remove a tag or use Reset all.',
-    tagLabels: { dor: 'DoR', priority: 'Priority', type: 'Type', age: 'Age', epic: 'Epic' },
+    tagLabels: { dor: 'DoR', priority: 'Priority', type: 'Type', age: 'Age' },
     sub: (n, total) => `Showing ${n} of ${total} tickets`,
-    dorTag: dor => 'Search: DoR = ' + dor,
     textTag: q => 'Search: “' + q + '”',
     placeholder: 'Search by key, title, status, epic...',
-    dorHint: dor => `Searching by readiness: DoR = ${dor}.`,
-    epicButton: n => 'Epic' + (n ? ' (' + n + ')' : '') + ' ▾',
     noEpic: '(no epic)',
     noTickets: /No backlog tickets in this snapshot/
   },

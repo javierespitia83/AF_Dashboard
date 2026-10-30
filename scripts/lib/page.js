@@ -59,14 +59,9 @@ rowsOf(${q(ST.type)}).forEach(r => { const label=r.querySelector('.name'), n=T(l
 const at = tile(${q(ST.attention)}); const attention = { sub: T(at.querySelector('.sub')), hdr: [...at.querySelectorAll('thead th')].map(T), rows: [...at.querySelectorAll('tbody tr')].map(tr => ({ key: T(tr.children[0]), status: T(tr.children[1]), days: T(tr.children[2]), reasons: [...tr.children[3].querySelectorAll('.reason')].map(T), links: [...tr.querySelectorAll('a')].map(a => a.getAttribute('href')) })), foot: T(at.querySelector('.tile-foot')), text: T(at), empty: emptyIn(${q(ST.attention)}) };
 const det = tile(${q(ST.detail)}); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
 const statusFoot = T(tile(${q(ST.status)}).querySelector('.tile-foot'));
-return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile(${q(ST.type)}).querySelector('.tile-foot')), attention, matrix: matrixOf(${q(ST.matrix)}), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn(${q(ST.detail)}), empties: {status: emptyIn(${q(ST.status)}), type: emptyIn(${q(ST.type)}), attention: attention.empty, matrix: emptyIn(${q(ST.matrix)})}, statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
+return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile(${q(ST.type)}).querySelector('.tile-foot')), attention, matrix: matrixOf(${q(ST.matrix)}), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn(${q(ST.detail)}), empties: {status: emptyIn(${q(ST.status)}), type: emptyIn(${q(ST.type)}), attention: attention.empty, matrix: emptyIn(${q(ST.matrix)})}, statusFoot });
 `;
 
-const READ_EPIC = `
-const btn = document.getElementById('epic-btn'), pop = document.querySelector('.epicpop');
-return { btn: T(btn), expanded: btn.getAttribute('aria-expanded'), open: !!pop && !pop.hidden && getComputedStyle(pop).display !== 'none', haspopup: btn.getAttribute('aria-haspopup'), controls: btn.getAttribute('aria-controls'), popId: pop && pop.id,
-  opts: [...document.querySelectorAll('.epicopt')].map(l => ({ name: T(l.querySelector('.name')), n: +T(l.querySelector('.n')), checked: l.querySelector('input').checked, type: l.querySelector('input').type })) };
-`;
 
 const READ_BACKLOG = `
 const c = readCommon();
@@ -87,4 +82,4 @@ const READ_SEARCH = t => `const i=document.getElementById('q'), c=document.query
 return { value: i.value, placeholder: i.placeholder, clearHidden: c ? c.hidden : null, url: new URLSearchParams(location.search).get('q'), sprintParam: new URLSearchParams(location.search).get('sprint'),
   tags: readCommon().tags, keys: [...tb.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0])), sub: T(tb.querySelector('.sub')), empty: emptyIn(${q(t)}) };`;
 
-module.exports = { H, run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS };
+module.exports = { H, run, READ_BD, READ_SPRINT, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS };

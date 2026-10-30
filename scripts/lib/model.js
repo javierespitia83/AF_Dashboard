@@ -36,8 +36,8 @@ const f1 = x => String(Math.round(x * 10) / 10);
 const addedAfter = (t, sprint, thr) => { const a = dn(t.addedDate); return !isNaN(a) && a > dn(sprint.startDate) + thr; };
 
 // ---------- sprint filters ----------
-const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim() === '' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: testerGroup, fix: t => t.fixVersion || '(none)', parent: t => t.parent || '(none)' };
-const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set(), fix: new Set(), parent: new Set() });
+const SKEY = { status: t => BN[bucket(t.status)], type: t => t.type == null || String(t.type).trim() === '' ? '—' : String(t.type), assignee: t => grpName(t.owner), tester: testerGroup };
+const newF = () => ({ status: new Set(), type: new Set(), assignee: new Set(), tester: new Set() });
 const applyF = (rows, f, keyMap, except = [], pred = null) => rows.filter(t => Object.keys(f).every(d => except.includes(d) || !f[d].size || f[d].has(keyMap[d](t))) && (!pred || pred(t)));
 
 // ---------- free-text search (R001-19), written separately from dashboard.js ----------
@@ -163,15 +163,7 @@ const AGEB = ['0–30', '31–90', '91–180', '181–365', '366+', 'No value'];
 const ageOf = t => typeof t.days !== 'number' ? AGEB[5] : t.days <= 30 ? AGEB[0] : t.days <= 90 ? AGEB[1] : t.days <= 180 ? AGEB[2] : t.days <= 365 ? AGEB[3] : AGEB[4];
 const dv = v => (v == null || String(v).trim() === '') ? '—' : String(v);
 const BKEY = { dor: t => dv(t.dor), priority: t => dv(t.priority), type: t => dv(t.type), age: ageOf, epic: t => (t.epic === null || t.epic === undefined || String(t.epic).trim() === '') ? UI.backlog.noEpic : String(t.epic) };
-const newBF = () => ({ dor: new Set(), priority: new Set(), type: new Set(), age: new Set(), epic: new Set() });
-const hay = t => [t.ticket, t.summary, t.epic, t.cluster, t.risk].filter(v => v != null && String(v).trim() !== '').join('\n').toLowerCase();
-const DOR_WORDS = [['missing', 'Missing'], ['weak', 'Weak'], ['well-formed', 'Well-Formed'], ['n/a (epic)', 'N/A (Epic)'], ['ready', 'Ready']];
-function predFor(q) {
-  const s = String(q || '').trim().toLowerCase();
-  if (!s) return { pred: null, tag: '', dor: null };
-  for (const [w, L] of DOR_WORDS) if (s.length >= 3 && w.startsWith(s)) return { pred: t => t.dor === L, tag: UI.backlog.dorTag(L), dor: L };
-  return { pred: t => hay(t).includes(s), tag: UI.backlog.textTag(String(q).trim()), dor: null };
-}
+const newBF = () => ({ dor: new Set(), priority: new Set(), type: new Set(), age: new Set() });
 const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 // value with the most tickets (ties broken by name), optionally excluding some values
 function mostCommon(rows, keyFn, exclude = []) {
@@ -207,5 +199,5 @@ function contrast(fg, bg) { // fg, bg: [r, g, b] 0-255
 module.exports = {
   BN, bucket, pt, grpName, sumP, group, natural, isDevToTest, isQaToTest, selfTestClass, selfTestReason, noTester, longRunning, testerGroup, expectAttention,
   sfold, swords, searchModel, exactFirst, dn, isoN, md, f1, addedAfter, SKEY, newF, applyF, expectBurn, expectSprint,
-  AGEB, ageOf, dv, BKEY, newBF, hay, predFor, median, mostCommon, KEYRE, keysIn, linkErrors, contrast
+  AGEB, ageOf, dv, BKEY, newBF, median, mostCommon, KEYRE, keysIn, linkErrors, contrast
 };

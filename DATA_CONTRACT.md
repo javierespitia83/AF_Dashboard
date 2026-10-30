@@ -132,7 +132,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 
 "Work items" means number of tickets. Every number on the page is computed over a **filtered set**: the tickets that match the active cross-filters (see `SPEC.md` §5).
 
-**Filter dimension values** (the exact key a click selects):
+**Filter dimension values** (the exact key a click selects). Fix version and Parent (sprint) and Epic (backlog) are no longer dimensions since 2026-10-30 (R001-19, D87): the search (§7) matches them instead.
 
 | Page | Dimension | Value of a ticket |
 |---|---|---|
@@ -140,13 +140,10 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Sprint | Type | exact `type` value, or `—` when null |
 | Sprint | Assignee | `owner` (null, blank or `Unassigned` → `Unassigned`) |
 | Sprint | Tester | tester group (R001-17, R001-18): `Self-tested` when `classifications` has the exact `Dev to Test` or `QA to Test` and `tester` is null, blank or `Unassigned`, or when `tester` equals `owner`; `Unassigned` when there is no tester and the ticket is not self-tested; otherwise `tester` (also for a ticket with one of those classifications that another person tests) |
-| Sprint | Fix version | `fixVersion`, or `(none)` when null |
-| Sprint | Parent | `parent` (full string, key plus summary), or `(none)` when null |
 | Backlog | DoR | `dor` as exported, or `—` when null |
 | Backlog | Priority | `priority`, or `—` when null |
 | Backlog | Type | `type`, or `—` when null |
 | Backlog | Age | bucket of `days`: `0–30`, `31–90`, `91–180`, `181–365`, `366+`, or `No value` when null |
-| Backlog | Epic | `epic` (full string, key plus summary), or `(no epic)` when null |
 
 **Combining:** values inside one dimension are OR; different dimensions are AND; the text search of either page (§7) is AND with all of them. A tile for dimension D is computed over the set filtered by every dimension **except D** (a matrix tile except both of its dimensions); KPI tiles, Needs attention today and the ticket table use the set filtered by everything (the KPI filters scope only the lower section).
 
