@@ -1,7 +1,7 @@
 {
-  "refreshedAt": "2026-10-29",
-  "exportedAt": "2026-10-29T14:59:40+00:00",
-  "source": "03_Team_Enablement/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
+  "refreshedAt": "2026-10-30",
+  "exportedAt": "2026-10-30T10:30:31-07:00",
+  "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
       "sprintId": 4697,
@@ -731,11 +731,11 @@
       "weekdays": 4,
       "partial": true,
       "counts": {
-        "pswat": 4,
+        "pswat": 2,
         "appBugs": 2
       },
       "ratesPer10Weekdays": {
-        "pswat": 10.0,
+        "pswat": 5.0,
         "appBugs": 5.0
       },
       "tickets": [
@@ -759,39 +759,21 @@
         },
         {
           "source": "PSWAT",
-          "key": "PSWAT-2766",
-          "summary": "SnapLogic Create Snap - Failed with status code: 400 [error: {\"error_list\":[{\"message\":\"a task already exists with job_id 64d225c47752e7ccc88e7025\"}]}]",
-          "type": "Bug",
-          "status": "Open",
-          "created": "2026-10-27",
-          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2766"
-        },
-        {
-          "source": "PSWAT",
-          "key": "PSWAT-2767",
-          "summary": "[Designer] Unknown snap automatically added to parent/child pipelines causing execution failures",
-          "type": "Bug",
-          "status": "Open",
-          "created": "2026-10-28",
-          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2767"
-        },
-        {
-          "source": "PSWAT",
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
           "type": "Bug",
-          "status": "Open",
+          "status": "In Code Review",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
         },
         {
           "source": "PSWAT",
-          "key": "PSWAT-2769",
-          "summary": "Update org.apache.activemq:activemq-broker to version to 5.19.7 or higher",
+          "key": "PSWAT-2770",
+          "summary": "Delete a Task",
           "type": "Bug",
           "status": "Open",
-          "created": "2026-10-28",
-          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2769"
+          "created": "2026-10-29",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2770"
         }
       ]
     }
