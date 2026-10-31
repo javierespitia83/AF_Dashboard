@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-10-30",
-  "exportedAt": "2026-10-30T13:09:35-07:00",
+  "refreshedAt": "2026-10-31",
+  "exportedAt": "2026-10-31T07:44:08-07:00",
   "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-10-29",
-      "weekdays": 4,
+      "windowEnd": "2026-10-30",
+      "weekdays": 5,
       "partial": true,
       "counts": {
-        "pswat": 2,
-        "appBugs": 2
+        "pswat": 5,
+        "appBugs": 6
       },
       "ratesPer10Weekdays": {
-        "pswat": 5.0,
-        "appBugs": 5.0
+        "pswat": 10.0,
+        "appBugs": 12.0
       },
       "tickets": [
         {
@@ -758,6 +758,42 @@
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3262"
         },
         {
+          "source": "APP Bugs",
+          "key": "APP-3277",
+          "summary": "HL7 Parser: Preview data is not showing and Output Bytes value shown as zero when we parse 3.5 MB HL7 file",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3277"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3278",
+          "summary": "HL7 Formatter Output Not Displayed in Text Preview",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3278"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3279",
+          "summary": "Notification dropdown: clicking a message doesn't mark it as read.",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3279"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3280",
+          "summary": "500 internal server error on UAT Infrastructure, Metrics page",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3280"
+        },
+        {
           "source": "PSWAT",
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
@@ -774,6 +810,33 @@
           "status": "Open",
           "created": "2026-10-29",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2770"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2771",
+          "summary": "GitHub Enterprise Server Validation failing with error SSLError(SSLError(1, '[SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1007)'))",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2771"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2772",
+          "summary": "SnapLogic Snowflake Ultra Pipeline stuck in Production and Did Not Auto-Restart",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2772"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2773",
+          "summary": "JCC: SLFS expr import request hangs ~15 min with no response and no control-plane record, then Ultra pipeline init fails",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-30",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2773"
         }
       ]
     }
