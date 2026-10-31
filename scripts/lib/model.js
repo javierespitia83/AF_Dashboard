@@ -59,7 +59,7 @@ const SEARCH = {
   },
   backlog: {
     fields: t => [['key', t.ticket], ['text', t.summary], ['text', t.dor], ['linked', t.epic]],
-    phrases: { 'well-formed': t => t.dor === 'Well-Formed' }
+    phrases: { 'well-formed': t => t.dor === 'Well-Formed', weak: t => t.dor === 'Weak', missing: t => t.dor === 'Missing' } // DoR words only (2026-10-31)
   }
 };
 // { pred, tag, exact } for a query on a page, or null when the query is blank

@@ -20,7 +20,8 @@
   }
 
   // Search (R001-19, SPEC §7.3): key (partial), summary words, DoR status, epic (key or title); nothing else.
-  // `well-formed` is a whole phrase on the DoR field. Replaces the DoR prefix search of D22 / D51.
+  // `well-formed`, `weak` and `missing` are whole phrases on the DoR field only (2026-10-31 follow-up).
+  // Replaces the DoR prefix search of D22 / D51.
   var SEARCH_SPEC = {
     fields: [
       { kind: 'key', get: function (t) { return t.ticket; } },
@@ -28,7 +29,11 @@
       { kind: 'text', get: function (t) { return t.dor; } },
       { kind: 'linked', get: function (t) { return t.epic; } }
     ],
-    phrases: [{ text: 'well-formed', test: function (t) { return t.dor === 'Well-Formed'; } }]
+    phrases: [
+      { text: 'well-formed', test: function (t) { return t.dor === 'Well-Formed'; } },
+      { text: 'weak', test: function (t) { return t.dor === 'Weak'; } },
+      { text: 'missing', test: function (t) { return t.dor === 'Missing'; } }
+    ]
   };
   function searchFor(q) { return AF.compileSearch(q, SEARCH_SPEC); }
   AF.backlog = { searchFor: searchFor, ageOf: ageOf };

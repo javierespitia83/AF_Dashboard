@@ -690,8 +690,12 @@ async function suites(ctx) {
     await ask(t0.ticket.slice(0, -1), 'Backlog search, key (partial prefix)');
     const word = (B.map(t => t.summary).join(' ').match(/[A-Za-z]{7,}/g) || ['ticket'])[0].toLowerCase();
     { const r = await ask(word, `Backlog search, summary word "${word}"`); check(`Backlog search: summary word "${word}" finds at least one ticket`, r.all.length > 0, r.all.length); }
-    for (const dw of ['weak', 'missing']) { const L = dw[0].toUpperCase() + dw.slice(1); const r = await ask(dw, `Backlog search, DoR word "${dw}"`);
-      check(`Backlog search: "${dw}" includes every DoR ${L} ticket (${B.filter(t => t.dor === L).length}); other matches come from allowed fields only (${r.all.length - B.filter(t => t.dor === L).length})`, B.filter(t => t.dor === L).every(t => r.all.includes(t)), r.all.length); }
+    for (const dw of ['weak', 'missing']) { const L = dw[0].toUpperCase() + dw.slice(1); const r = await ask(dw, `Backlog search, whole phrase "${dw}" (DoR only)`);
+      check(`Backlog search: "${dw}" is a whole phrase on DoR: exactly the ${B.filter(t => t.dor === L).length} ${L} tickets`, eq(r.all.map(t => t.ticket), B.filter(t => t.dor === L).map(t => t.ticket)), r.all.length); }
+    { const titled = B.filter(t => t.dor !== 'Missing' && M.swords(t.summary).some(w => w.startsWith('missing')));
+      if (titled.length) { await run(p, `setQ('missing')`); const keys = (await run(p, READ_SEARCH(BT.table))).keys;
+        check(`Backlog search: a title that merely contains "missing" no longer matches "missing" (${titled.map(t => t.ticket).join(', ')})`, titled.every(t => !keys.includes(t.ticket)), { titled: titled.map(t => t.ticket), n: keys.length }); }
+      else skip('Backlog search: title containing "missing"', 'no backlog title outside DoR Missing contains the word'); }
     { const r = await ask('well-formed', 'Backlog search, whole phrase "well-formed"'); check(`Backlog search: "well-formed" is a whole phrase on DoR: exactly the ${B.filter(t => t.dor === 'Well-Formed').length} Well-Formed tickets`, eq(r.all.map(t => t.ticket), B.filter(t => t.dor === 'Well-Formed').map(t => t.ticket)), r.all.length); }
     const te = B.find(t => !M.dv(t.epic).startsWith('—') && /^[A-Z][A-Z0-9]+-\d+/.test(t.epic));
     if (te) { const ek = te.epic.match(/^[A-Z][A-Z0-9]+-\d+/)[0], ew = (te.epic.replace(ek, '').match(/[A-Za-z]{5,}/) || [null])[0];
