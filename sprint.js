@@ -158,14 +158,11 @@
       return;
     }
 
-    var NONE = AF.NONE;
     var store = AF.createStore({
       status: { label: 'Status', get: function (t) { return AF.BUCKETS[AF.bucketOf(t.status)]; } },
       type: { label: 'Type', get: function (t) { return AF.isBlank(t.type) ? '—' : String(t.type); } },
       assignee: { label: 'Assignee', get: function (t) { return AF.personName(t.owner); } },
-      tester: { label: 'Tester', get: testerGroup }, // the Assignee x tester column, so a clicked cell matches its count
-      fix: { label: 'Fix version', get: function (t) { return AF.isBlank(t.fixVersion) ? NONE : String(t.fixVersion); } },
-      parent: { label: 'Parent', get: function (t) { return AF.isBlank(t.parent) ? NONE : String(t.parent); } }
+      tester: { label: 'Tester', get: testerGroup } // the Assignee x tester column, so a clicked cell matches its count
     });
     var owner = function (t) { return AF.personName(t.owner); };
     var tester = function (t) { return AF.personName(t.tester); };
@@ -198,6 +195,34 @@
       return sameTesterAsAssignee(t) ? SELF_TESTED : AF.personName(t.tester);
     }
     function noTesterAndNotSelfTested(t) { return testerMissing(t) && !hasSelfTestClassification(t); }
+
+    // ---- search (R001-19, SPEC §6.4): the only fields and whole phrases the box may match ----
+    function named(v) { var n = AF.personName(v); return n === 'Unassigned' ? null : n; }
+    var SEARCH_SPEC = {
+      fields: [
+        { kind: 'key', get: function (t) { return t.ticket; } },
+        { kind: 'text', get: function (t) { return t.summary; } },
+        { kind: 'text', get: function (t) { return t.status; } },
+        { kind: 'text', get: selfTestReason },
+        { kind: 'linked', get: function (t) { return t.parent; } },
+        { kind: 'text', get: function (t) { return t.fixVersion; } },
+        { kind: 'text', get: function (t) { return named(t.owner); } },
+        { kind: 'text', get: function (t) { return named(t.tester); } }
+      ],
+      phrases: [
+        { text: 'in review', test: function (t) { return t.status === 'In Review'; } },
+        { text: 'in progress', test: function (t) { return t.status === 'In Progress'; } },
+        { text: 'dev to test', test: function (t) { return selfTestReason(t) === 'Dev to Test'; } },
+        { text: 'qa to test', test: function (t) { return selfTestReason(t) === 'QA to Test'; } },
+        { text: 'same person', test: function (t) { return selfTestReason(t) === 'Same person'; } },
+        { text: 'self-tested', test: function (t) { return selfTestReason(t) !== null; } }
+      ]
+    };
+    var search = null;
+    function setQuery(q) {
+      search = AF.compileSearch(q, SEARCH_SPEC);
+      store.setSearch(search ? q : '', search && search.pred, search ? search.tag : '');
+    }
     function inTimeInStatus(t) {
       return (t.status === 'In Progress' || t.status === 'In Review') &&
         typeof t.statusAging === 'number' && isFinite(t.statusAging) &&
@@ -262,30 +287,13 @@
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tAttention.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
-    // ---- filter bar controls (Fix version, Parent) ----
-    function selectCtl(dim, label, values) {
-      var sel = el('select', {
-        id: 'f-' + dim,
-        onchange: function () {
-          if (sel.value === '') store.set(dim, []);
-          else if (sel.value !== '__multi') store.set(dim, [sel.value]);
-        }
-      }, [el('option', { value: '', text: 'All' })]
-        .concat(values.map(function (v) { return el('option', { value: v, text: v }); }))
-        .concat([el('option', { value: '__multi', text: 'Multiple', disabled: true })]));
-      return { sel: sel, root: el('div', { class: 'ctl' }, [el('label', { for: 'f-' + dim, text: label }), sel]) };
-    }
-    function distinct(fn) { // natural order, so Fix version 4.9 comes before 4.10 (C14); (none) last
-      var seen = {}; tickets.forEach(function (t) { seen[fn(t)] = true; });
-      var keys = Object.keys(seen).filter(function (k) { return k !== NONE; }).sort(AF.naturalCompare);
-      return seen[NONE] ? keys.concat([NONE]) : keys;
-    }
-    var fixCtl = selectCtl('fix', 'Fix version', distinct(store.dims.fix.get));
-    var parentCtl = selectCtl('parent', 'Parent', distinct(store.dims.parent.get));
-    var updateBar = AF.filterBar(barBox, store, [fixCtl.root, parentCtl.root]);
-    function syncCtl(ctl, dim) {
-      var s = store.sel[dim];
-      ctl.sel.value = s.size === 0 ? '' : s.size === 1 ? Array.from(s)[0] : '__multi';
+    // ---- filter bar: the search box (R001-19) ----
+    var searchCtl = AF.searchBox({ placeholder: 'Search by key, title, status, Self-tested, fix version, person...', value: AF.urlParam('q'), onChange: setQuery });
+    var updateBar = AF.filterBar(barBox, store, [searchCtl.root]); // Fix version and Parent dropdowns removed (R001-19): the search covers them
+    function syncSearch() { // the tag ×, Reset all and the clear button all end here
+      if (!store.search.pred) search = null;
+      searchCtl.sync(store.search.q);
+      AF.setUrlParam('q', store.search.pred ? store.search.q.trim() : '');
     }
 
     // ---- renderers ----
@@ -579,7 +587,7 @@
       });
     }
     function sortableDetailTable(rows) {
-      var table = AF.buildTable(detailCols, sortDetailRows(rows), { cls: 'data wider' });
+      var table = AF.buildTable(detailCols, AF.exactFirst(sortDetailRows(rows), search), { cls: 'data wider' }); // a searched key comes first
       Array.prototype.forEach.call(table.querySelectorAll('thead th'), function (th, index) {
         var label = detailCols[index].label;
         if (!detailSortGetters[label]) return;
@@ -628,13 +636,13 @@
       syncLowerKpis();
       renderLower();
       updateBar();
-      syncCtl(fixCtl, 'fix');
-      syncCtl(parentCtl, 'parent');
+      syncSearch();
     }
     store.subscribe(function (reason) {
       if (reason === 'extra') { syncLowerKpis(); renderLower(); updateBar(); } // a KPI filter changes only the lower section
       else render();
     });
+    if (AF.urlParam('q')) setQuery(AF.urlParam('q')); // a link with ?q= restores the search (no subscriber yet)
     render();
     AF.store = store; AF.tickets = tickets; // exposed for console checks
   }

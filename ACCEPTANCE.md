@@ -46,7 +46,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Sprint: KPI strip with eight tiles (work items, story points, done, added mid-sprint, carried over, No tester & not self-tested, Long-running work · 7+ days, avg cycle time); main row with four tiles (burndown, status, type, Needs attention today); lower row with the ticket table and the assignee x tester grid. Backlog: KPI strip with five tiles; main row with five tiles; table below.
 - [ ] At dashboard sizes, the sprint main/lower row heights use a 1.1475:1.2025 ratio, transferring 15% of the former main-row height to the lower row; total board height stays within the viewport.
 - [ ] Long tile bodies (Needs attention today, matrix, detail and backlog tables) scroll inside the tile with a visible scrollbar; headers stay sticky; Total lines stay pinned. The sprint detail table scrolls horizontally when its columns exceed the tile width; Owner, Tester and Status cells wrap at spaces with automatic widths, Dev to Test follows the exact classification, and Last sync update is at least 350 px wide.
-- [ ] Ticket detail has sort buttons beside Ticket, Owner, Tester, Status, Days in status, Story points, Parent and Fix version (no others). A different column sorts ascending; clicking it again reverses direction. Text uses natural alphabetical/numeric order, Story points and Days in status are numeric, missing values stay last, active filters remain applied, and a sprint switch restores tracker order. The Fix version and Parent select options are in natural order (`4.9` before `4.10`), `(none)` last.
+- [ ] Ticket detail has sort buttons beside Ticket, Owner, Tester, Status, Days in status, Story points, Parent and Fix version (no others). A different column sorts ascending; clicking it again reverses direction. Text uses natural alphabetical/numeric order, Story points and Days in status are numeric, missing values stay last, active filters remain applied, and a sprint switch restores tracker order.
 - [ ] Layout also works with no page scroll at 1440 x 900 and 1536 x 864.
 - [ ] Below 1366 wide or 760 high the page falls back to a scrolling layout: no element extends beyond the viewport outside the tile scroll areas, no page-level horizontal scroll, tiles stack (checked at 1280 x 720, 1024 x 768, 800 x 900 and 480 x 900).
 
@@ -89,8 +89,8 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - [ ] Plain-clicking multiple status rows selects each independently without modifier keys; plain-clicking a selected status clears only that status. Combining selected statuses with a tester or assignee applies OR within Status and AND across dimensions;
 - [ ] Clicking a status row and then a matrix cell (assignee and tester group) applies AND across dimensions; results equal the calculation (example: status In Review + a cell gives the In Review tickets with that assignee and tester group).
 - [ ] Clicking a matrix cell sets both assignee and tester; clicking the same cell again clears both.
-- [ ] Fix version and Parent selects filter correctly and show their value; "All" clears; `(none)` selects tickets without a value.
-- [ ] Removing a tag with × removes only that value; **Reset all** clears every filter and selects.
+- [ ] The sprint filter bar has the search box and no dropdown filter (no Fix version, Parent, Status, Type, Assignee or Tester select; the Sprint selector stays). Fix versions and parents are found with the search (§ Search, sprint page).
+- [ ] Removing a tag with × removes only that value; **Reset all** clears every filter and the search.
 - [ ] A selected sprint KPI filter enables **Reset all**; Reset all clears the KPI selection and restores both lower tiles.
 - [ ] A filter combination that matches nothing shows the empty-state line in each tile, KPIs of 0, an empty-state message in the table, and does not break.
 - [ ] Filtered tiles obey the per-view invariant: with an unselected dimension the tile's totals equal the filtered set's totals.
@@ -98,20 +98,15 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 **Cross-filtering — backlog**
 - [ ] Clicking a DoR, Priority, Type or Days-in-status row filters every tile, the KPIs and the table; the clicked tile keeps showing alternatives (own-dimension rule); results equal the calculation.
 - [ ] Multi-select, AND across dimensions, matrix-cell click, tags, and Reset all behave as in the sprint checks.
-- [ ] Search (in the filter bar): `mis`, `miss`, `missi`, `missing` (any case, surrounding spaces) all give DoR = Missing; `wea`, `weak` give Weak; `wel`, `well`, `well-formed` give Well-Formed; `n/a` gives N/A (Epic); `rea`, `ready` give Ready only if the data has it (older snapshots), otherwise zero results; counts equal the data. Under 3 characters, or `missingx`, runs a normal text search. Text search matches ticket, summary, epic, cluster and risk. The readiness hint and a search tag appear while a DoR prefix is active.
-- [ ] Search combines with tile selections by AND; "Showing X of Y tickets" updates; clearing the search restores results.
+- [ ] Search (R001-19, SPEC §7.3) on `backlog.json`: partial key (with the exact key first), a summary word, the whole phrases `weak`, `missing` and `well-formed` (each exactly the tickets with that DoR; a ticket whose title merely contains "missing" is not in the `missing` result, D88), the epic key and an epic title word all equal the independent calculation in every KPI, tile and the table; a word found only in risk, cluster, type, priority or the comment draft finds nothing. Accents and case are ignored (`WÉLL-FÖRMED`); several words are AND; a search combines with a tile filter by AND; Reset all, the tag × and the clear button clear it; "Showing X of Y tickets" updates; the text is kept in the URL as `q` and `?q=` restores it; the placeholder reads "Search by key, title, status, epic...".
 
 **Priority and Type icons (backlog and sprint)**
 - [ ] In Backlog, every Priority tile row and Priority table cell whose value is Highest, High, Medium, Low or Lowest, and every Type tile row and Type table cell whose value is Story, Bug, Sub-Bug, Epic, Task, Sub-task, Initiative or Doc Task, shows exactly one icon of the right kind before the text; the text is unchanged.
 - [ ] Each sprint Tickets by type row shows the same Type icon used in Backlog before the unchanged exact type label when an icon is defined; unknown types and `—` remain readable without an icon.
 - [ ] Values without an icon (unknown names, `—`) show text only; icons are `aria-hidden`, contain no text, and add no network request or element other than inline SVG.
 
-**Epic filter (backlog)**
-- [ ] The filter bar has an Epic button; clicking it opens a panel with one checkbox per distinct epic plus (no epic), sorted by ticket count descending then name, `(no epic)` last, each with its count; counts equal the calculation over the other active filters.
-- [ ] Ticking one epic filters every KPI, tile, the matrix and the table to that epic and adds the tag "Epic: <epic>"; ticking a second adds its tickets (OR within Epic): the numbers equal the independent calculation for the union (example: APP-718 and APP-55 together).
-- [ ] Epic combines with other filters by AND (for example Epic APP-55 + DoR Weak) and with the search.
-- [ ] The panel stays open while ticking; Clear unticks all epics; Reset all and removing a tag untick the matching checkboxes; Escape or a click outside closes it and Escape returns focus to the button; the button shows "Epic (n)" when n epics are ticked and has `aria-expanded` and `aria-controls`.
-- [ ] Checkboxes are real checkboxes, reachable with Tab, with a visible focus outline; opening or closing the panel changes no filter.
+**Epic (backlog)**
+- [ ] The backlog filter bar has the search box and no Epic dropdown (no button, panel or checkboxes); an epic is found by key or title with the search.
 
 **Jira links**
 - [ ] Every Ticket cell in both tables is a link whose text is the key and whose `href` is exactly `https://mysnaplogic.atlassian.net/browse/<KEY>`, with `target="_blank"` and `rel` containing `noopener`.
@@ -125,6 +120,10 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 **Display of empty values (sprint and backlog)**
 - [ ] Empty parent, epic, fix version, risk, cluster, linked work items show `—`; empty points and days show `—` and count as 0 in sums; empty tester and owner show `Unassigned`. No `null`, `undefined` or `NaN` appears in any tile or table.
 
+**Search (sprint page, R001-19, SPEC §6.4)**
+- [ ] On every sprint of the manifest (4697, 12119, 12176, 12191): partial key (exact key first), partial prefix, a summary word, `in review` and `in progress` (exactly those statuses), `done` and `open` (include every ticket in that status), `dev to test`, `qa to test`, `same person` (exactly that Self-tested value), `self-tested` (any of the three), a parent key and title word, a fix version prefix and full value, an assignee name and a tester name each equal the independent calculation (detail rows and order, "n of N work items", tag, `q` and `sprint` in the URL); a word found only in Last sync update, linked work items or type finds nothing.
+- [ ] Whole-phrase rule (`dev to test` returns only Dev to Test tickets; `test to dev` is plain words); accents and case (`ÏN RÉVÏEW` = `in review`); AND of several words; a search combined with a Type tile and a grid cell (every KPI, tile, the burndown and the detail equal the calculation); the clear button; Reset all; `?sprint=<closed id>&q=in review` opens that sprint with the search restored; the placeholder names Self-tested and fix version.
+
 **Edge cases (copies of the app)**
 - [ ] With the fixture as the active sprint snapshot: an unknown status (`Blocked`) appears as **Other**, is counted in totals, can be clicked as a filter, and its original text shows in the table; null testers that are not exact `Dev to Test` or `QA to Test` (for example `Dev to Testing`) fall under the `Unassigned` column, and a Dev to Test ticket with a named tester stays under that tester; null and literal `Unassigned` owners form one `Unassigned` grid row; null points show `—`.
 - [ ] Missing file, invalid JSON, empty snapshot, and opening by `file://` each show the clear messages from `SPEC.md` §4.
@@ -132,7 +131,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 **Interaction quality**
 - [ ] All clickable rows, cells, tags and controls are real buttons, selects or inputs; Tab reaches them; the focus outline is visible; Enter or Space activates; Ctrl, Cmd or Shift + Enter multi-selects; selected state is exposed with `aria-pressed`.
 - [ ] Light mode only; text contrast at least 4.5:1, measured on status, type and backlog rows, the attention reason labels and every heat-grid cell, including dimmed ones (dimming never lowers text opacity), and on the "Jira dashboard · LIVE" button; badges at least 10px; names and numbers are always shown (colour is never the only signal).
-- [ ] A tile body or the Quality Intake ticket list is a focusable, labelled region (`tabindex="0"`, `role="region"`, `aria-label`) exactly when it scrolls; tiles that fit add no tab stop. The Epic button is a disclosure (`aria-expanded`, `aria-controls`, no `aria-haspopup`).
+- [ ] A tile body or the Quality Intake ticket list is a focusable, labelled region (`tabindex="0"`, `role="region"`, `aria-label`) exactly when it scrolls; tiles that fit add no tab stop.
 - [ ] Scroll positions inside a tile are kept when a filter changes.
 
 ## 4. After changes

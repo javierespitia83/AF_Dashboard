@@ -6,15 +6,11 @@
   var barBox = document.getElementById('filterbar');
   var EMPTY = 'No backlog tickets match these filters. Remove a tag or use Reset all.';
   var DASH = '—';
-  var DOR_WORDS = ['missing', 'weak', 'well-formed', 'n/a (epic)', 'ready']; // D51; 'ready' is the older name of Well-Formed
-  var DOR_LABEL = { missing: 'Missing', weak: 'Weak', 'well-formed': 'Well-Formed', 'n/a (epic)': 'N/A (Epic)', ready: 'Ready' };
   var DOR_ORDER = ['Well-Formed', 'Ready', 'Weak', 'Missing', 'N/A (Epic)'];
   var DOR_CLASS = { 'Well-Formed': 'ready', Ready: 'ready', Weak: 'weak', Missing: 'missing' }; // anything else is neutral gray
   function dorClass(v) { return Object.prototype.hasOwnProperty.call(DOR_CLASS, v) ? DOR_CLASS[v] : 'other'; }
   var PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest'];
   var AGE = ['0–30', '31–90', '91–180', '181–365', '366+', 'No value'];
-  var MIN_PREFIX = 3; // DECISIONS D22
-  var NOEPIC = '(no epic)';
 
   function val(v) { return AF.isBlank(v) ? DASH : String(v); }
   function ageOf(t) {
@@ -23,29 +19,24 @@
     return d <= 30 ? AGE[0] : d <= 90 ? AGE[1] : d <= 180 ? AGE[2] : d <= 365 ? AGE[3] : AGE[4];
   }
 
-  // DoR prefix search (DATA_CONTRACT §7): returns 'Missing' | 'Weak' | 'Ready' | null
-  function dorFromQuery(q) {
-    var s = String(q || '').trim().toLowerCase();
-    if (s.length < MIN_PREFIX) return null;
-    for (var i = 0; i < DOR_WORDS.length; i++) {
-      if (DOR_WORDS[i].indexOf(s) === 0) return DOR_LABEL[DOR_WORDS[i]];
-    }
-    return null;
-  }
-  function haystack(t) {
-    return [t.ticket, t.summary, t.epic, t.cluster, t.risk]
-      .filter(function (v) { return !AF.isBlank(v); }).join('\n').toLowerCase();
-  }
-  // Returns { pred, tag } for a raw query, or null for an empty query.
-  function searchFor(q) {
-    var s = String(q || '').trim();
-    if (!s) return null;
-    var dq = dorFromQuery(s);
-    if (dq) return { pred: function (t) { return t.dor === dq; }, tag: 'Search: DoR = ' + dq, dor: dq };
-    var low = s.toLowerCase();
-    return { pred: function (t) { return haystack(t).indexOf(low) !== -1; }, tag: 'Search: “' + s + '”', dor: null };
-  }
-  AF.backlog = { dorFromQuery: dorFromQuery, searchFor: searchFor, ageOf: ageOf };
+  // Search (R001-19, SPEC §7.3): key (partial), summary words, DoR status, epic (key or title); nothing else.
+  // `well-formed`, `weak` and `missing` are whole phrases on the DoR field only (2026-10-31 follow-up).
+  // Replaces the DoR prefix search of D22 / D51.
+  var SEARCH_SPEC = {
+    fields: [
+      { kind: 'key', get: function (t) { return t.ticket; } },
+      { kind: 'text', get: function (t) { return t.summary; } },
+      { kind: 'text', get: function (t) { return t.dor; } },
+      { kind: 'linked', get: function (t) { return t.epic; } }
+    ],
+    phrases: [
+      { text: 'well-formed', test: function (t) { return t.dor === 'Well-Formed'; } },
+      { text: 'weak', test: function (t) { return t.dor === 'Weak'; } },
+      { text: 'missing', test: function (t) { return t.dor === 'Missing'; } }
+    ]
+  };
+  function searchFor(q) { return AF.compileSearch(q, SEARCH_SPEC); }
+  AF.backlog = { searchFor: searchFor, ageOf: ageOf };
 
   AF.loadSnapshot('backlog.json').then(function (data) {
     try { init(data); } catch (err) { AF.showRenderError(app, err); } // a drawing bug is not reported as a load error (C7)
@@ -65,10 +56,9 @@
       dor: { label: 'DoR', get: function (t) { return val(t.dor); } },
       priority: { label: 'Priority', get: function (t) { return val(t.priority); } },
       type: { label: 'Type', get: function (t) { return val(t.type); } },
-      age: { label: 'Age', get: ageOf },
-      epic: { label: 'Epic', get: function (t) { return AF.isBlank(t.epic) ? NOEPIC : String(t.epic); } }
+      age: { label: 'Age', get: ageOf }
     });
-    var K = { dor: store.dims.dor.get, priority: store.dims.priority.get, type: store.dims.type.get, age: store.dims.age.get, epic: store.dims.epic.get };
+    var K = { dor: store.dims.dor.get, priority: store.dims.priority.get, type: store.dims.type.get, age: store.dims.age.get };
 
     // Value lists from the whole data so tile rows stay stable while filtering.
     function ordered(counts, preferred) {
@@ -99,42 +89,14 @@
     app.appendChild(el('div', { class: 'detail' }, [tTable.root]));
 
     // ---- filter bar: search ----
-    var hint = el('p', { class: 'dorhint', 'aria-live': 'polite' });
-    var input = el('input', {
-      id: 'q', type: 'search', placeholder: 'Search, or type well-formed, weak, missing', autocomplete: 'off',
-      oninput: function () { var s = searchFor(input.value); store.setSearch(input.value, s && s.pred, s ? s.tag : ''); }
-    });
-    var searchCtl = el('div', { class: 'ctl' }, [el('label', { for: 'q', text: 'Search' }), input]);
-    // ---- filter bar: Epic multi-select with checkboxes (SPEC 7.4, D48) ----
-    var allEpic = AF.countBy(tickets, K.epic);
-    var epicKeys = Object.keys(allEpic).filter(function (k) { return k !== NOEPIC; })
-      .sort(function (a, b) { return allEpic[b] - allEpic[a] || a.localeCompare(b); }).concat(allEpic[NOEPIC] ? [NOEPIC] : []);
-    // A disclosure button (aria-expanded + aria-controls) for a group of checkboxes; not a menu, so no aria-haspopup (C20).
-    var epicBtn = el('button', { type: 'button', class: 'epicbtn', id: 'epic-btn', 'aria-expanded': 'false', 'aria-controls': 'epic-pop', onclick: function () { setEpicOpen(epicPop.hidden); } });
-    var epicOpts = {};
-    var epicPop = el('div', { class: 'epicpop', id: 'epic-pop', role: 'group', 'aria-label': 'Epics', hidden: true }, [
-      el('div', { class: 'epichead' }, [
-        el('span', { text: 'Tick one or more epics' }),
-        el('button', { type: 'button', class: 'epicclear', text: 'Clear', onclick: function () { store.set('epic', []); } })
-      ]),
-      el('div', { class: 'epiclist' }, epicKeys.map(function (k) {
-        var box = el('input', { type: 'checkbox', value: k, onchange: function () { store.click('epic', k, true); } });
-        var n = el('span', { class: 'n' });
-        epicOpts[k] = { box: box, n: n };
-        return el('label', { class: 'epicopt', title: k }, [box, el('span', { class: 'name', text: k }), n]);
-      }))
-    ]);
-    var epicCtl = el('div', { class: 'ctl epicwrap' }, [epicBtn, epicPop]);
-    function setEpicOpen(open) { epicPop.hidden = !open; epicBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
-    document.addEventListener('click', function (e) { if (!epicPop.hidden && !epicCtl.contains(e.target)) setEpicOpen(false); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !epicPop.hidden) { setEpicOpen(false); epicBtn.focus(); } });
-    function syncEpic() { // updates state only, never rebuilds the panel, so focus and the open state survive a filter change
-      var counts = AF.countBy(store.apply(tickets, 'epic'), K.epic), sel = store.sel.epic;
-      epicKeys.forEach(function (k) { epicOpts[k].box.checked = sel.has(k); epicOpts[k].n.textContent = String(counts[k] || 0); });
-      epicBtn.textContent = 'Epic' + (sel.size ? ' (' + sel.size + ')' : '') + ' \u25be';
+    var search = null;
+    function setQuery(q) {
+      search = searchFor(q);
+      store.setSearch(search ? q : '', search && search.pred, search ? search.tag : '');
     }
-    var updateBar = AF.filterBar(barBox, store, [epicCtl, searchCtl]);
-    barBox.appendChild(hint);
+    var searchBox = AF.searchBox({ placeholder: 'Search by key, title, status, epic...', value: AF.urlParam('q'), onChange: setQuery });
+    var searchCtl = searchBox.root;
+    var updateBar = AF.filterBar(barBox, store, [searchCtl]); // Epic dropdown removed (R001-19): the search finds an epic by key or title
 
     // ---- renderers ----
     function renderKpis(f) {
@@ -211,7 +173,7 @@
       tTable.head.querySelector('.sub').textContent = 'Showing ' + f.length + ' of ' + tickets.length + ' tickets';
       AF.rebuild(tTable, function () {
         if (!f.length) { tTable.body.appendChild(AF.emptyState(EMPTY)); return; }
-        tTable.body.appendChild(AF.buildTable(cols, f, { cls: 'data wider' }));
+        tTable.body.appendChild(AF.buildTable(cols, AF.exactFirst(f, search), { cls: 'data wider' })); // a searched key comes first
       });
     }
 
@@ -225,12 +187,12 @@
       renderMatrix();
       renderTable(f);
       updateBar();
-      syncEpic();
-      if (input.value !== store.search.q) input.value = store.search.q;
-      var s = searchFor(store.search.q);
-      hint.textContent = s && s.dor ? 'Searching by readiness: DoR = ' + s.dor + '.' : '';
+      if (!store.search.pred) search = null; // the tag ×, Reset all and the clear button all end here
+      searchBox.sync(store.search.q);
+      AF.setUrlParam('q', store.search.pred ? store.search.q.trim() : '');
     }
     store.subscribe(render);
+    if (AF.urlParam('q')) setQuery(AF.urlParam('q')); // a link with ?q= restores the search
     render();
     AF.store = store; AF.tickets = tickets; // exposed for console checks
   }

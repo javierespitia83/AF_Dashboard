@@ -59,21 +59,16 @@ rowsOf(${q(ST.type)}).forEach(r => { const label=r.querySelector('.name'), n=T(l
 const at = tile(${q(ST.attention)}); const attention = { sub: T(at.querySelector('.sub')), hdr: [...at.querySelectorAll('thead th')].map(T), rows: [...at.querySelectorAll('tbody tr')].map(tr => ({ key: T(tr.children[0]), status: T(tr.children[1]), days: T(tr.children[2]), reasons: [...tr.children[3].querySelectorAll('.reason')].map(T), links: [...tr.querySelectorAll('a')].map(a => a.getAttribute('href')) })), foot: T(at.querySelector('.tile-foot')), text: T(at), empty: emptyIn(${q(ST.attention)}) };
 const det = tile(${q(ST.detail)}); const keys=[...det.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0]));
 const statusFoot = T(tile(${q(ST.status)}).querySelector('.tile-foot'));
-return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile(${q(ST.type)}).querySelector('.tile-foot')), attention, matrix: matrixOf(${q(ST.matrix)}), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn(${q(ST.detail)}), empties: {status: emptyIn(${q(ST.status)}), type: emptyIn(${q(ST.type)}), attention: attention.empty, matrix: emptyIn(${q(ST.matrix)})}, statusFoot, fixSel: document.getElementById('f-fix').value, parentSel: document.getElementById('f-parent').value });
+return Object.assign(c, { status, statusRaw, statusSel, statusDim, types, typeRaw, typeIcons, typeSel, typeDim, typeFoot:T(tile(${q(ST.type)}).querySelector('.tile-foot')), attention, matrix: matrixOf(${q(ST.matrix)}), detailKeys: keys, detailSub: T(det.querySelector('.sub')), detailEmpty: emptyIn(${q(ST.detail)}), empties: {status: emptyIn(${q(ST.status)}), type: emptyIn(${q(ST.type)}), attention: attention.empty, matrix: emptyIn(${q(ST.matrix)})}, statusFoot });
 `;
 
-const READ_EPIC = `
-const btn = document.getElementById('epic-btn'), pop = document.querySelector('.epicpop');
-return { btn: T(btn), expanded: btn.getAttribute('aria-expanded'), open: !!pop && !pop.hidden && getComputedStyle(pop).display !== 'none', haspopup: btn.getAttribute('aria-haspopup'), controls: btn.getAttribute('aria-controls'), popId: pop && pop.id,
-  opts: [...document.querySelectorAll('.epicopt')].map(l => ({ name: T(l.querySelector('.name')), n: +T(l.querySelector('.n')), checked: l.querySelector('input').checked, type: l.querySelector('input').type })) };
-`;
 
 const READ_BACKLOG = `
 const c = readCommon();
 const dist = t => { const o={}, sel=[], dim=[]; rowsOf(t).forEach(r=>{ const n=T(r.querySelector('.name')); o[n]=+T(r.querySelector('.n')); if(r.classList.contains('is-selected')) sel.push(n); if(r.classList.contains('is-dimmed')) dim.push(n); }); return {o, sel, dim, order:Object.keys(o)}; };
 const tb = tile(${q(BT.table)}); const hdr=[...tb.querySelectorAll('thead th')].map(T);
 const rows=[...tb.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(T));
-return Object.assign(c, { dor: dist(${q(BT.dor)}), priority: dist(${q(BT.priority)}), type: dist(${q(BT.type)}), age: dist(${q(BT.age)}), matrix: matrixOf(${q(BT.matrix)}), hdr, keys: rows.map(r=>r[0]), rows, sub: T(tb.querySelector('.sub')), tableEmpty: emptyIn(${q(BT.table)}), empties:{dor:emptyIn(${q(BT.dor)}),priority:emptyIn(${q(BT.priority)}),type:emptyIn(${q(BT.type)}),age:emptyIn(${q(BT.age)}),matrix:emptyIn(${q(BT.matrix)})}, hint: T(document.querySelector('.dorhint')), q: document.getElementById('q').value });
+return Object.assign(c, { dor: dist(${q(BT.dor)}), priority: dist(${q(BT.priority)}), type: dist(${q(BT.type)}), age: dist(${q(BT.age)}), matrix: matrixOf(${q(BT.matrix)}), hdr, keys: rows.map(r=>r[0]), rows, sub: T(tb.querySelector('.sub')), tableEmpty: emptyIn(${q(BT.table)}), empties:{dor:emptyIn(${q(BT.dor)}),priority:emptyIn(${q(BT.priority)}),type:emptyIn(${q(BT.type)}),age:emptyIn(${q(BT.age)}),matrix:emptyIn(${q(BT.matrix)})}, q: document.getElementById('q').value });
 `;
 
 // Page geometry: scroll size, tile boxes, tile body overflow, elements beyond the viewport.
@@ -82,4 +77,9 @@ const LAYOUT = `const d=document.scrollingElement; const bodies=[...document.que
 // Scroll regions: every scroll box is focusable + labelled exactly when it scrolls (C19).
 const SCROLL_REGIONS = `return [...document.querySelectorAll('.tile-body, .qi-ticket-scroll')].map(b => { const cs=getComputedStyle(b); const can=/auto|scroll/.test(cs.overflowY+' '+cs.overflowX); const scrolls = can && (b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1); return { scrolls, tabindex: b.getAttribute('tabindex'), role: b.getAttribute('role'), label: b.getAttribute('aria-label') }; });`;
 
-module.exports = { H, run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, LAYOUT, SCROLL_REGIONS };
+// Search state (R001-19): input, clear button, URL parameter q, tags, and the rows of a table tile.
+const READ_SEARCH = t => `const i=document.getElementById('q'), c=document.querySelector('.search-clear'), tb=tile(${q(t)});
+return { value: i.value, placeholder: i.placeholder, clearHidden: c ? c.hidden : null, url: new URLSearchParams(location.search).get('q'), sprintParam: new URLSearchParams(location.search).get('sprint'),
+  tags: readCommon().tags, keys: [...tb.querySelectorAll('tbody tr')].map(tr=>T(tr.children[0])), sub: T(tb.querySelector('.sub')), empty: emptyIn(${q(t)}) };`;
+
+module.exports = { H, run, READ_BD, READ_SPRINT, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS };

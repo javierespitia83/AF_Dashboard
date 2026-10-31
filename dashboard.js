@@ -151,6 +151,58 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
+  // ---- Free-text search (pure; R001-19, DATA_CONTRACT §7) -----------------
+  // fold(): lower case, accents removed, spaces collapsed. Words split on spaces and punctuation but keep
+  // `.`, `-` and `/` inside a word, so `4.46.1.0`, `well-formed`, `n/a` and `APP-2970` stay whole.
+  var SEARCH_SPLIT = /[\s,;:()\[\]{}|"'“”‘’!?*]+/;
+  var SEARCH_KEY = /\b[a-z][a-z0-9]+-[0-9]+\b/g;
+  function fold(v) {
+    return String(v === null || v === undefined ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+  function searchWords(v) {
+    return fold(v).split(SEARCH_SPLIT).map(function (w) { return w.replace(/^[.\-\/]+|[.\-\/]+$/g, ''); }).filter(Boolean);
+  }
+  // One word against one field. kind 'key': anywhere in the value (partial key, `2970`, `app-29`);
+  // 'text': the start of a word of the value; 'linked' (parent, epic): inside a Jira key of the value, or 'text'.
+  function fieldMatches(kind, value, word) {
+    if (isBlank(value)) return false;
+    if (kind === 'key') return fold(value).indexOf(word) !== -1;
+    var startsAWord = searchWords(value).some(function (w) { return w.indexOf(word) === 0; });
+    if (kind === 'text' || startsAWord) return startsAWord;
+    return (fold(value).match(SEARCH_KEY) || []).some(function (k) { return k.indexOf(word) !== -1; });
+  }
+  // spec: { fields: [{ kind, get(t) }], phrases: [{ text, test(t) }] }. Known phrases are matched first as whole
+  // phrases against their own field; every other word must match at least one field (AND across words).
+  // Returns null for a blank query, else { q, pred(t), tag, isExact(t) } (isExact: the query names this key).
+  function compileSearch(q, spec) {
+    var rest = ' ' + searchWords(q).join(' ') + ' ', tests = [];
+    (spec.phrases || []).slice().sort(function (a, b) { return b.text.length - a.text.length; }).forEach(function (ph) {
+      var needle = ' ' + ph.text + ' ';
+      while (rest.indexOf(needle) !== -1) { tests.push(ph.test); rest = rest.replace(needle, ' '); }
+    });
+    var words = rest.trim() ? rest.trim().split(' ') : [];
+    if (!tests.length && !words.length) return null;
+    words.forEach(function (word) {
+      tests.push(function (t) { return spec.fields.some(function (f) { return fieldMatches(f.kind, f.get(t), word); }); });
+    });
+    var keyWords = words.filter(function (w) { return /^[a-z][a-z0-9]+-[0-9]+$/.test(w) || /^[0-9]+$/.test(w); });
+    return {
+      q: String(q).trim(),
+      tag: 'Search: “' + String(q).trim() + '”',
+      pred: function (t) { return tests.every(function (test) { return test(t); }); },
+      isExact: function (t) {
+        var k = fold(t.ticket);
+        return keyWords.some(function (w) { return k === w || k.slice(k.lastIndexOf('-') + 1) === w; });
+      }
+    };
+  }
+  // Rows whose key the query names exactly come first; the rest keep their order.
+  function exactFirst(rows, search) {
+    if (!search) return rows;
+    return rows.filter(search.isExact).concat(rows.filter(function (t) { return !search.isExact(t); }));
+  }
+
   // ---- Filter store (pure; DATA_CONTRACT §6) -------------------------------
   // dims: { name: { label, get(ticket) -> string } } or { label, matches(ticket, selectedSet) }.
   // Besides the dimensions and the search, the store has one optional "extra" filter slot:
@@ -728,6 +780,27 @@
     };
   }
 
+  // Search box with a clear button (R001-19). o: { placeholder, value, onChange(q) }. Returns { root, input, sync(q) }.
+  // The query is kept in the page URL as `q` (other parameters such as `sprint` are kept).
+  function setUrlParam(name, value) {
+    var url = new URL(root.location.href);
+    if (isBlank(value)) url.searchParams.delete(name); else url.searchParams.set(name, String(value));
+    root.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  function urlParam(name) { return new URLSearchParams(root.location.search).get(name) || ''; }
+  function searchBox(o) {
+    var input = el('input', {
+      id: 'q', type: 'search', placeholder: o.placeholder, autocomplete: 'off', 'aria-label': 'Search',
+      oninput: function () { changed(); }
+    });
+    var clearBtn = el('button', { type: 'button', class: 'search-clear', 'aria-label': 'Clear search', title: 'Clear search', text: '×',
+      onclick: function () { input.value = ''; changed(); input.focus(); } });
+    function sync(q) { if (input.value !== q) input.value = q; clearBtn.hidden = !input.value; }
+    function changed() { clearBtn.hidden = !input.value; o.onChange(input.value); }
+    sync(o.value || '');
+    return { root: el('div', { class: 'ctl searchctl' }, [el('label', { for: 'q', text: 'Search' }), el('span', { class: 'searchwrap' }, [input, clearBtn])]), input: input, sync: sync };
+  }
+
   // Heat grid inside a tile body. ct from crossTab; o: {corner, rowSel, colSel, unit, onCell(r, c, multi),
   // colTitles (optional: tooltip per column name, default the name)}.
   function heatGrid(t, ct, o) {
@@ -853,11 +926,12 @@
     bucketOf: bucketOf, isBlank: isBlank, pts: pts, fmtNum: fmtNum, show: show, showPoints: showPoints, naturalCompare: naturalCompare,
     personName: personName, sum: sum, statusTotals: statusTotals, aggregateBy: aggregateBy,
     countBy: countBy, crossTab: crossTab, median: median, createStore: createStore,
+    fold: fold, searchWords: searchWords, fieldMatches: fieldMatches, compileSearch: compileSearch, exactFirst: exactFirst,
     config: config, dayNum: dayNum, isoOf: isoOf, avgCycleTime: avgCycleTime, oneDecimal: oneDecimal, midSprintAdded: midSprintAdded,
     burndown: burndown, niceScale: niceScale, drawBurndown: drawBurndown, shortDate: shortDate, longDate: longDate, icon: icon,
     el: el, clear: clear, isMulti: isMulti, tile: tile, kpi: kpi, rebuild: rebuild, rowButton: rowButton, stateClass: stateClass,
     markScrollable: markScrollable, statusDot: statusDot, pair: pair, simpleBar: simpleBar, heatColor: heatColor,
-    buildTable: buildTable, filterBar: filterBar, heatGrid: heatGrid,
+    buildTable: buildTable, filterBar: filterBar, heatGrid: heatGrid, searchBox: searchBox, setUrlParam: setUrlParam, urlParam: urlParam,
     jira: { base: JIRA_BASE, url: jiraUrl, link: jiraLink, linkify: linkify }, jiraDashboardUrl: JIRA_DASHBOARD_URL, ticketCell: ticketCell, linkCell: linkCell,
     loadJson: loadJson, loadSnapshot: loadSnapshot, showError: showError, showRenderError: showRenderError,
     emptyMessage: emptyMessage, emptyState: emptyState, setUpdated: setUpdated

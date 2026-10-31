@@ -206,3 +206,26 @@ test('isDate and isDateTime reject impossible values', () => {
   assert.equal(isDate('2026-02-29'), false); assert.equal(isDate('2028-02-29'), true);
   assert.equal(isDateTime('2026-10-29T10:00:00Z'), true); assert.equal(isDateTime('2026-10-29T10:00:00'), false);
 });
+
+test('compileSearch (R001-19): partial keys, word starts, whole phrases on their own field, accents, AND, exact key first', () => {
+  const spec = {
+    fields: [{ kind: 'key', get: t => t.ticket }, { kind: 'text', get: t => t.summary }, { kind: 'text', get: t => t.status }, { kind: 'linked', get: t => t.parent }, { kind: 'text', get: t => t.fixVersion }],
+    phrases: [{ text: 'in review', test: t => t.status === 'In Review' }]
+  };
+  const rows = [
+    T({ ticket: 'APP-2970', summary: 'Fix the Pipeline. Review notes', status: 'In Progress', parent: 'APP-55 - Café work', fixVersion: '4.46.1.0' }),
+    T({ ticket: 'APP-29', summary: 'Small fix', status: 'In Review', parent: null, fixVersion: null })];
+  const hits = q => rows.filter(AF.compileSearch(q, spec).pred).map(t => t.ticket);
+  assert.equal(AF.compileSearch('   ', spec), null);
+  assert.deepEqual(hits('2970'), ['APP-2970']);
+  assert.deepEqual(hits('app-29'), ['APP-2970', 'APP-29']);
+  assert.deepEqual(hits('pipe'), ['APP-2970']);       // start of a word
+  assert.deepEqual(hits('ipeline'), []);              // not the middle of a word
+  assert.deepEqual(hits('in review'), ['APP-29']);    // whole phrase on the status field only
+  assert.deepEqual(hits('review in'), ['APP-2970', 'APP-29']); // other order: plain words, each in any field
+  assert.deepEqual(hits('ÏN RÉVIEW'), ['APP-29']);
+  assert.deepEqual(hits('cafe 55'), ['APP-2970']);    // parent title word AND parent key part
+  assert.deepEqual(hits('4.46'), ['APP-2970']);
+  assert.deepEqual(hits('fix 4.46'), ['APP-2970']);   // AND
+  assert.deepEqual(AF.exactFirst(rows, AF.compileSearch('APP-29', spec)).map(t => t.ticket), ['APP-29', 'APP-2970']);
+});

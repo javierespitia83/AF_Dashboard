@@ -132,7 +132,7 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 
 "Work items" means number of tickets. Every number on the page is computed over a **filtered set**: the tickets that match the active cross-filters (see `SPEC.md` §5).
 
-**Filter dimension values** (the exact key a click selects):
+**Filter dimension values** (the exact key a click selects). Fix version and Parent (sprint) and Epic (backlog) are no longer dimensions since 2026-10-30 (R001-19, D87): the search (§7) matches them instead.
 
 | Page | Dimension | Value of a ticket |
 |---|---|---|
@@ -140,15 +140,12 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 | Sprint | Type | exact `type` value, or `—` when null |
 | Sprint | Assignee | `owner` (null, blank or `Unassigned` → `Unassigned`) |
 | Sprint | Tester | tester group (R001-17, R001-18): `Self-tested` when `classifications` has the exact `Dev to Test` or `QA to Test` and `tester` is null, blank or `Unassigned`, or when `tester` equals `owner`; `Unassigned` when there is no tester and the ticket is not self-tested; otherwise `tester` (also for a ticket with one of those classifications that another person tests) |
-| Sprint | Fix version | `fixVersion`, or `(none)` when null |
-| Sprint | Parent | `parent` (full string, key plus summary), or `(none)` when null |
 | Backlog | DoR | `dor` as exported, or `—` when null |
 | Backlog | Priority | `priority`, or `—` when null |
 | Backlog | Type | `type`, or `—` when null |
 | Backlog | Age | bucket of `days`: `0–30`, `31–90`, `91–180`, `181–365`, `366+`, or `No value` when null |
-| Backlog | Epic | `epic` (full string, key plus summary), or `(no epic)` when null |
 
-**Combining:** values inside one dimension are OR; different dimensions are AND; the backlog text search (§7) is AND with all of them. A tile for dimension D is computed over the set filtered by every dimension **except D** (a matrix tile except both of its dimensions); KPI tiles, Needs attention today and the ticket table use the set filtered by everything (the KPI filters scope only the lower section).
+**Combining:** values inside one dimension are OR; different dimensions are AND; the text search of either page (§7) is AND with all of them. A tile for dimension D is computed over the set filtered by every dimension **except D** (a matrix tile except both of its dimensions); KPI tiles, Needs attention today and the ticket table use the set filtered by everything (the KPI filters scope only the lower section).
 
 **Sprint Ticket detail sorting:** text columns use natural alphabetical/numeric ordering; Story points and Days in status (`statusAging`) sort numerically. Missing values sort last in ascending order and first in descending order, making unassigned fields such as Fix version easy to bring to the top. Sorting only reorders the visible filtered rows; tracker order is the default.
 
@@ -189,11 +186,13 @@ Bucket order everywhere: To Do/Open, In Progress, In Review, Done, Other. Show t
 
 Priority order for display: `Highest`, `High`, `Medium`, `Low`, `Lowest`, then any other value, then `—`. DoR order: `Well-Formed`, `Ready`, `Weak`, `Missing`, `N/A (Epic)`, then any other value, then `—`. Colours: Well-Formed and Ready green, Weak yellow, Missing red, the rest gray. Needing refinement stays Weak + Missing.
 
-## 7. Searching (backlog)
+## 7. Searching (both pages, R001-19)
 
-- Free text is matched case-insensitively against `ticket`, `summary`, `epic`, `cluster`, `risk`.
-- DoR prefix search: if the trimmed, lower-cased query has at least 3 characters and `"missing"`, `"weak"`, `"well-formed"`, `"n/a (epic)"` or `"ready"` starts with it, filter by `dor` equal to that value and do not text-match (see `DECISIONS.md`, D11 and D22). The words share no 3-character prefix, so a query can match at most one of them. Queries of 1–2 characters, or that are not a prefix of one of the words, are text searches.
-- The search is AND with every other filter.
+- **Normalising.** Query and field values are lower-cased, accents removed (Unicode NFD without combining marks) and spaces collapsed. Words split on spaces and punctuation but keep `.`, `-` and `/` inside a word (`4.46.1.0`, `well-formed`, `n/a`, `APP-2970`).
+- **Whole phrases first.** Sprint: `in review` → `status` = `In Review`; `in progress` → `status` = `In Progress`; `dev to test`, `qa to test`, `same person` → the Self-tested value (§6, self-tested rule); `self-tested` → any of the three. Backlog: `well-formed` → `dor` = `Well-Formed`; `weak` → `dor` = `Weak`; `missing` → `dor` = `Missing` (2026-10-31, D88; a summary containing "missing" or "weak" no longer matches them). Each phrase is matched only against its own field.
+- **Other words**, AND across words, each matching at least one allowed field. Sprint fields: `ticket` (anywhere: partial key), `summary`, `status`, the Self-tested value, `parent` (a word start, or inside a Jira key in it), `fixVersion`, `owner`, `tester` (not `Unassigned`) — all others by the start of a word. Backlog fields: `ticket` (anywhere), `summary`, `dor`, `epic` (a word start, or inside a Jira key in it). No other field is searched (sprint: not `lastSyncUpdate`, `linkedWorkItems`, `type`, `points`, `blocker`; backlog: not `type`, `priority`, `risk`, `needsSplitting`, `cluster`, `quickCheck`).
+- **Order.** When a query word is a full key (`app-2970`) or a key number (`2970`), the ticket with that key comes first in the table; the rest keep their order.
+- The search is AND with every other filter, applies to every tile on its page, and is kept in the URL as `q`. It never changes the data.
 
 ## 7a. Jira links (display only)
 

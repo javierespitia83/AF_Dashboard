@@ -33,7 +33,7 @@ const files = require('./lib/files');
 const { validate, unsupportedKeywords } = require('./lib/schema');
 const M = require('./lib/model');
 const { UI } = require('./lib/ui_text');
-const { run, READ_BD, READ_SPRINT, READ_EPIC, READ_BACKLOG, LAYOUT, SCROLL_REGIONS } = require('./lib/page');
+const { run, READ_BD, READ_SPRINT, READ_BACKLOG, READ_SEARCH, LAYOUT, SCROLL_REGIONS } = require('./lib/page');
 
 const ROOT = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const OWN_SCRATCH = !process.argv[3];
@@ -282,19 +282,17 @@ async function suites(ctx) {
     if (!eq(d.detailKeys, e.detailKeys)) errs.push(['detail keys', d.detailKeys.length, e.detailKeys.length]);
     if (d.detailSub !== `${e.all.length} of ${Srows.length} work items`) errs.push(['detail sub', d.detailSub]);
     if (!e.all.length && !d.detailEmpty) errs.push(['detail empty-state missing']);
-    const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(UI.sprint.tagLabels[dim] + ': ' + v)));
+    const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(UI.sprint.tagLabels[dim] + ': ' + v))); if (e.searchTag) wantTags.push(e.searchTag);
     if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
     if (d.resetDisabled !== !e.active) errs.push(['reset disabled', d.resetDisabled]);
     if (d.noFilterMsg !== !e.active) errs.push(['no-filter message', d.noFilterMsg]);
-    const wantFix = f.fix.size === 0 ? '' : f.fix.size === 1 ? [...f.fix][0] : '__multi', wantPar = f.parent.size === 0 ? '' : f.parent.size === 1 ? [...f.parent][0] : '__multi';
-    if (d.fixSel !== wantFix || d.parentSel !== wantPar) errs.push(['select sync', d.fixSel, d.parentSel]);
     check(label, errs.length === 0, errs.slice(0, 4));
     return { e, d };
   }
 
   // =============== independent checks of one backlog page state ===============
   async function verifyBacklog(page, Brows, f, query, label) {
-    const ps = M.predFor(query); const all = M.applyF(Brows, f, M.BKEY, [], ps.pred); const d = await run(page, READ_BACKLOG); const errs = [];
+    const sm = M.searchModel(query, 'backlog'), ps = { pred: sm ? sm.pred : null, tag: sm ? sm.tag : '' }; const all = M.applyF(Brows, f, M.BKEY, [], ps.pred); const d = await run(page, READ_BACKLOG); const errs = [];
     const active = Object.keys(f).some(k => f[k].size) || !!ps.pred;
     const days = all.map(t => t.days).filter(v => typeof v === 'number'); const med = M.median(days);
     const kv = [String(all.length), String(M.sumP(all)), String(all.filter(t => t.dor === 'Weak' || t.dor === 'Missing').length), String(all.filter(t => t.needsSplitting != null && String(t.needsSplitting).trim() !== '').length), med === null ? '—' : String(med)];
@@ -311,19 +309,12 @@ async function suites(ctx) {
     { const baseRows = M.applyF(Brows, f, M.BKEY, ['dor', 'priority'], ps.pred); const mat = {}; baseRows.forEach(t => { const r = M.BKEY.priority(t), cc = M.BKEY.dor(t); (mat[r] = mat[r] || {})[cc] = ((mat[r] || {})[cc] || 0) + 1; });
       const flat = o => { const out = {}; Object.keys(o).forEach(r => Object.keys(o[r]).forEach(cc => { out[r + '|' + cc] = o[r][cc]; })); return out; }; const a = flat(d.matrix.o), b = flat(mat);
       if (!baseRows.length) { if (!d.empties.matrix) errs.push(['matrix empty-state missing']); } else if (!eq(Object.keys(a).sort(), Object.keys(b).sort()) || Object.keys(b).some(k => a[k] !== b[k])) errs.push(['matrix cells']); }
-    { const E = await run(page, READ_EPIC), baseRows = M.applyF(Brows, f, M.BKEY, ['epic'], ps.pred), cnt = {}; baseRows.forEach(t => { const v = M.BKEY.epic(t); cnt[v] = (cnt[v] || 0) + 1; });
-      const whole = {}; Brows.forEach(t => { const v = M.BKEY.epic(t); whole[v] = (whole[v] || 0) + 1; });
-      const wantOrder = Object.keys(whole).filter(k => k !== UI.backlog.noEpic).sort((a, b) => whole[b] - whole[a] || a.localeCompare(b)).concat(whole[UI.backlog.noEpic] ? [UI.backlog.noEpic] : []);
-      if (!eq(E.opts.map(o => o.name), wantOrder)) errs.push(['epic option order', E.opts.map(o => o.name).slice(0, 5), wantOrder.slice(0, 5)]);
-      E.opts.forEach(o => { if (o.n !== (cnt[o.name] || 0)) errs.push(['epic option count', o.name, o.n, cnt[o.name] || 0]); if (o.checked !== f.epic.has(o.name)) errs.push(['epic checkbox', o.name, o.checked]); if (o.type !== 'checkbox') errs.push(['epic option is not a checkbox', o.name]); });
-      if (E.btn !== UI.backlog.epicButton(f.epic.size)) errs.push(['epic button label', E.btn]); }
-    if (!eq(d.keys, all.map(t => t.ticket))) errs.push(['table keys', d.keys.length, all.length]);
+    if (!eq(d.keys, M.exactFirst(all, sm).map(t => t.ticket))) errs.push(['table keys', d.keys.length, all.length]);
     if (d.sub !== UI.backlog.sub(all.length, Brows.length)) errs.push(['table sub', d.sub]);
     if (!all.length && !d.tableEmpty) errs.push(['table empty-state missing']);
     const wantTags = []; Object.keys(f).forEach(dim => f[dim].forEach(v => wantTags.push(UI.backlog.tagLabels[dim] + ': ' + v))); if (ps.tag) wantTags.push(ps.tag);
     if (!eq([...d.tags].sort(), wantTags.sort())) errs.push(['tags', d.tags, wantTags]);
     if (d.resetDisabled !== !active) errs.push(['reset disabled', d.resetDisabled]);
-    if (d.hint !== (ps.dor ? UI.backlog.dorHint(ps.dor) : '')) errs.push(['hint', d.hint]);
     if (d.q !== query) errs.push(['input value', d.q, query]);
     check(label, errs.length === 0, errs.slice(0, 4));
     return { d, all };
@@ -417,9 +408,7 @@ async function suites(ctx) {
 
   let f = M.newF();
   await verifySprint(p, S, f, 'Sprint: no filters, every tile = independent calculation');
-  { const opts = await run(p, `return {fix:[...document.getElementById('f-fix').options].map(o=>o.value), parent:[...document.getElementById('f-parent').options].map(o=>o.value)}`);
-    const want = vals => { const k = [...new Set(vals.map(v => v == null || String(v).trim() === '' ? '(none)' : String(v)))]; const named = k.filter(x => x !== '(none)').sort(M.natural); return [''].concat(named, k.includes('(none)') ? ['(none)'] : [], ['__multi']); };
-    check('Fix version and Parent options are in natural order (4.9 before 4.10), (none) last', eq(opts.fix, want(S.map(t => t.fixVersion))) && eq(opts.parent, want(S.map(t => t.parent))), opts); }
+  check('Sprint page (R001-19): the filter bar has the search box and no dropdown filters (no Fix version, Parent, Status, Type, Assignee or Tester select); the Sprint selector stays', await run(p, `const bar=document.getElementById('filterbar'); return !!bar.querySelector('input#q') && bar.querySelectorAll('select').length === 0 && !document.getElementById('f-fix') && !document.getElementById('f-parent') && document.querySelectorAll('select').length === 1 && !!document.getElementById('sprint-select')`));
   { const typeName = Object.keys(M.expectSprint(S, f, CTX).types)[0];
     await run(p, `clickRow(${q(ST.type)}, ${q(typeName)})`); f.type = new Set([typeName]);
     await verifySprint(p, S, f, `Click Type "${typeName}": filters the dashboard and preserves the type distribution`);
@@ -546,29 +535,17 @@ async function suites(ctx) {
       check('Contrast: dimmed heat-grid cells (outside the selection) keep their text at full opacity with at least 4.5:1', lowContrast(cellsC).length === 0 && (cellsC.length < 2 || cellsC.some(r => r.dimmed)), lowContrast(cellsC).slice(0, 6)); }
     await run(p, `clickCell(${q(ST.matrix)}, ${q(rA)}, ${q(cT)})`); f.assignee = new Set(); f.tester = new Set();
     await verifySprint(p, S, f, 'Clicking the same matrix cell again clears both'); }
-  // selects
-  const fixes = [...new Set(S.map(t => t.fixVersion).filter(Boolean))].sort(M.natural), pars = [...new Set(S.map(t => t.parent).filter(Boolean))].sort(M.natural);
-  if (fixes.length && pars.length) {
-    await run(p, `setSel('f-fix', ${q(fixes[0])})`); f.fix = new Set([fixes[0]]);
-    await verifySprint(p, S, f, `Fix version select "${fixes[0]}" filters every tile and shows a tag`);
-    await run(p, `setSel('f-parent', ${q(pars[0])})`); f.parent = new Set([pars[0]]);
-    await verifySprint(p, S, f, `Parent select "${pars[0]}" combines with Fix version (AND)`);
-    await run(p, `setSel('f-fix', '')`); f.fix = new Set();
-    await verifySprint(p, S, f, 'Fix version "All" clears that dimension');
-    if (S.some(t => !t.parent)) { await run(p, `setSel('f-parent', '(none)')`); f.parent = new Set(['(none)']); await verifySprint(p, S, f, 'Parent "(none)" selects tickets without a parent'); }
-    await run(p, `clickReset()`); f = M.newF();
-    await verifySprint(p, S, f, 'Reset all also resets the selects');
-  } else skip('Fix version and Parent select checks', 'the active sprint has no fix version or no parent values');
-  // zero results
-  let zero = null;
-  for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const fx of fixes) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.fixVersion === fx)) { zero = [sName, 'f-fix', 'fix', fx]; break; } if (zero) break; }
-  if (!zero) for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue; for (const pr of pars) if (!S.some(t => M.BN[M.bucket(t.status)] === sName && t.parent === pr)) { zero = [sName, 'f-parent', 'parent', pr]; break; } if (zero) break; }
-  if (zero) {
-    await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setSel(${q(zero[1])}, ${q(zero[3])})`); f.status = new Set([zero[0]]); f[zero[2]] = new Set([zero[3]]);
-    const z = await verifySprint(p, S, f, `Zero results (${zero[0]} + ${zero[2]} ${zero[3]}): KPIs 0, empty-state in tiles and table, no errors`);
-    check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.attention === z.d.detailEmpty, z.d.detailEmpty);
-    await run(p, `clickReset()`); f = M.newF();
-  } else check('Zero results case available in data', false, 'no empty combination');
+  // zero results: a status tile and a search that excludes it
+  { let zero = null;
+    for (const sName of M.BN) { if (!S.some(t => M.BN[M.bucket(t.status)] === sName)) continue;
+      const other = S.find(t => M.BN[M.bucket(t.status)] !== sName && /^[A-Z][A-Z0-9]+-\d+$/.test(t.ticket));
+      if (other && !S.filter(M.searchModel(other.ticket, 'sprint').pred).some(t => M.BN[M.bucket(t.status)] === sName)) { zero = [sName, other.ticket]; break; } }
+    if (zero) {
+      await run(p, `clickRow(${q(ST.status)}, ${q(zero[0])})`); await run(p, `setQ(${q(zero[1])})`); f.status = new Set([zero[0]]);
+      const z = await verifySprint(p, S, f, `Zero results (status ${zero[0]} + search "${zero[1]}"): KPIs 0, empty-state in tiles and table, no errors`, Object.assign({}, CTX, { q: zero[1] }));
+      check('Zero results: KPIs show 0 and the empty-state text is the specified sentence', z.d.kpis[0].value === '0' && z.d.detailEmpty === UI.sprint.empty && z.d.empties.attention === z.d.detailEmpty, z.d.detailEmpty);
+      await run(p, `clickReset()`); f = M.newF();
+    } else check('Zero results case available in data', false, 'no empty combination'); }
   // scroll position kept (Ticket detail; filter by the most common type)
   await run(p, `tile(${q(ST.detail)}).querySelector('.tile-body').scrollTop = 150`);
   await run(p, `clickRow(${q(ST.type)}, ${q(typeNames[0])})`); f.type = new Set([typeNames[0]]);
@@ -590,7 +567,7 @@ async function suites(ctx) {
     await verifySprint(p, S, f, 'Keyboard: Space on the same row clears it');
   }
   await run(p, `clickReset()`); f = M.newF();
-  check('Controls are real elements (rows and cells are buttons, selects and inputs)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall')].every(b=>b.tagName==='BUTTON') && document.getElementById('f-fix').tagName==='SELECT'`));
+  check('Controls are real elements (rows, cells, tags, Reset all and the clear button are buttons; the search is an input)', await run(p, `return [...document.querySelectorAll('.rowbtn, .cell, .tag-x, .resetall, .search-clear')].every(b=>b.tagName==='BUTTON') && document.getElementById('q').tagName==='INPUT'`));
   check('Light mode, no external fonts', await run(p, `const m=getComputedStyle(document.body).backgroundColor.match(/\\d+/g).map(Number); return m.every(x=>x>200) && getComputedStyle(document.documentElement).colorScheme!=='dark'`));
   check('Empty values: no null/undefined/NaN text in tiles or tables (excluding ticket prose)', await run(p, `const t=[...document.querySelectorAll('.kpis, .main')].map(n=>n.textContent).join(' ') + [...document.querySelectorAll('.tile-body tbody td:not(.wrap)')].map(n=>n.textContent).join(' '); return !/NaN|undefined|\\bnull\\b/.test(t)`));
   const dt = await run(p, `const hdr=[...tile(${q(ST.detail)}).querySelectorAll('thead th')].map(T); const ix=n=>hdr.indexOf(n); const rows=[...tile(${q(ST.detail)}).querySelectorAll('tbody tr')].map(tr=>({summary:tr.children[ix('Summary')].textContent, situation:tr.children[ix('Last sync update')].textContent, pts:T(tr.children[ix('Story points')]), tester:T(tr.children[ix('Tester')]), selfTested:T(tr.children[ix('Self-tested')]), selfTitle:tr.closest('table').querySelectorAll('thead th')[ix('Self-tested')].getAttribute('title'), days:T(tr.children[ix('Days in status')]), status:T(tr.children[ix('Status')]), parent:T(tr.children[ix('Parent')]), fix:T(tr.children[ix('Fix version')]), hdr})); return rows;`);
@@ -705,21 +682,44 @@ async function suites(ctx) {
     await verifyBacklog(p, B, bf, query, `Matrix cell ${pr} / ${dr} sets priority and DoR`);
     await run(p, `clickCell(${q(BT.matrix)}, ${q(pr)}, ${q(dr)})`); bf.priority = new Set(); bf.dor = new Set();
     await verifyBacklog(p, B, bf, query, 'Same cell again clears both'); }
-  // search
-  for (const s of ['mis', 'miss', 'missi', 'missing', ' MISSING ', 'Wea', 'weak', 'wel', 'well', 'WELL-FORMED', 'n/a', 'rea', 'ready']) { await run(p, `setQ(${q(s)})`); query = s; await verifyBacklog(p, B, bf, query, `Search "${s}" -> DoR prefix filter, hint and tag, all tiles consistent`); }
-  for (const s of ['mi', 'w', 'r', 'missingx', 'asset', B[0] ? B[0].ticket : 'APP-11']) { await run(p, `setQ(${q(s)})`); query = s; await verifyBacklog(p, B, bf, query, `Search "${s}" -> normal text search`); }
-  await run(p, `setQ('weak')`); query = 'weak'; await click(BT.priority, prios[0]); bf.priority = new Set([prios[0]]);
-  await verifyBacklog(p, B, bf, query, `Search "weak" AND Priority ${prios[0]}`);
-  await run(p, `setQ('miss')`); query = 'miss';
-  await verifyBacklog(p, B, bf, query, `Search "miss" AND Priority ${prios[0]} (DoR Missing + ${prios[0]})`);
-  const dorOther = M.mostCommon(B, M.BKEY.dor, ['—', 'Missing'])[0];
-  if (dorOther) {
-    await click(BT.dor, dorOther); bf.dor = new Set([dorOther]);
-    const zr = await verifyBacklog(p, B, bf, query, `Search "miss" AND DoR tile "${dorOther}": zero results, empty-state everywhere, count 0`);
-    check('Zero results: KPIs are 0 and the empty text is the specified sentence', eq(zr.d.kpis.map(k => k.value).slice(0, 2), ['0', '0']) && zr.d.tableEmpty === UI.backlog.empty, zr.d.tableEmpty);
-    await run(p, `clickTagX(${zr.d.tags.indexOf(UI.backlog.dorTag('Missing'))})`); query = '';
-    await verifyBacklog(p, B, bf, query, 'Removing the search tag clears the search and the input box');
-  } else skip('Backlog zero-result search', 'every backlog ticket has DoR Missing');
+  // search (R001-19): every criterion on backlog.json, whole phrase, accents, AND, clear, URL q, a tile filter
+  { const sb = qq => M.searchModel(qq, 'backlog'), cntB = qq => B.filter(sb(qq).pred).length;
+    const ask = async (qq, label) => { await run(p, `setQ(${q(qq)})`); query = qq; const r = await verifyBacklog(p, B, bf, query, label); console.log(`COUNT backlog | ${label} | "${qq}" | ${r.all.length} of ${B.length}`); return r; };
+    const t0 = B.find(t => /^[A-Z][A-Z0-9]+-\d+$/.test(t.ticket)), num = t0.ticket.split('-')[1];
+    { const r = await ask(num, `Backlog search, key (partial number "${num}"): table and every tile = model; the exact key comes first`); check('Backlog search: a key query puts the exact key first', r.d.keys[0] === t0.ticket, r.d.keys.slice(0, 3)); }
+    await ask(t0.ticket.slice(0, -1), 'Backlog search, key (partial prefix)');
+    const word = (B.map(t => t.summary).join(' ').match(/[A-Za-z]{7,}/g) || ['ticket'])[0].toLowerCase();
+    { const r = await ask(word, `Backlog search, summary word "${word}"`); check(`Backlog search: summary word "${word}" finds at least one ticket`, r.all.length > 0, r.all.length); }
+    for (const dw of ['weak', 'missing']) { const L = dw[0].toUpperCase() + dw.slice(1); const r = await ask(dw, `Backlog search, whole phrase "${dw}" (DoR only)`);
+      check(`Backlog search: "${dw}" is a whole phrase on DoR: exactly the ${B.filter(t => t.dor === L).length} ${L} tickets`, eq(r.all.map(t => t.ticket), B.filter(t => t.dor === L).map(t => t.ticket)), r.all.length); }
+    { const titled = B.filter(t => t.dor !== 'Missing' && M.swords(t.summary).some(w => w.startsWith('missing')));
+      if (titled.length) { await run(p, `setQ('missing')`); const keys = (await run(p, READ_SEARCH(BT.table))).keys;
+        check(`Backlog search: a title that merely contains "missing" no longer matches "missing" (${titled.map(t => t.ticket).join(', ')})`, titled.every(t => !keys.includes(t.ticket)), { titled: titled.map(t => t.ticket), n: keys.length }); }
+      else skip('Backlog search: title containing "missing"', 'no backlog title outside DoR Missing contains the word'); }
+    { const r = await ask('well-formed', 'Backlog search, whole phrase "well-formed"'); check(`Backlog search: "well-formed" is a whole phrase on DoR: exactly the ${B.filter(t => t.dor === 'Well-Formed').length} Well-Formed tickets`, eq(r.all.map(t => t.ticket), B.filter(t => t.dor === 'Well-Formed').map(t => t.ticket)), r.all.length); }
+    const te = B.find(t => !M.dv(t.epic).startsWith('—') && /^[A-Z][A-Z0-9]+-\d+/.test(t.epic));
+    if (te) { const ek = te.epic.match(/^[A-Z][A-Z0-9]+-\d+/)[0], ew = (te.epic.replace(ek, '').match(/[A-Za-z]{5,}/) || [null])[0];
+      { const r = await ask(ek, `Backlog search, epic key "${ek}"`); check(`Backlog search: epic key ${ek} finds every ticket of that epic`, B.filter(t => String(t.epic || '').startsWith(ek)).every(t => r.all.includes(t)), r.all.length); }
+      if (ew) await ask(ew.toLowerCase(), `Backlog search, epic title word "${ew.toLowerCase()}"`); }
+    else skip('Backlog search by epic', 'no backlog ticket has an epic');
+    { const pool = []; B.forEach(t => [t.risk, t.cluster, t.type, t.priority, t.quickCheck].forEach(v => (String(v || '').match(/[A-Za-z]{6,}/g) || []).forEach(w => pool.push(w.toLowerCase()))));
+      const excluded = [...new Set(pool)].find(w => cntB(w) === 0);
+      if (excluded) { const r = await ask(excluded, `Backlog search, "${excluded}" appears only in fields the box does not search (risk, cluster, type, priority, comment draft)`); check(`Backlog search: "${excluded}" finds nothing (not a searched field)`, r.all.length === 0, r.all.length); }
+      else skip('Backlog search excluded fields', 'no word found only in excluded fields'); }
+    { const a = await ask('WÉLL-FÖRMED', 'Backlog search, accents and case: "WÉLL-FÖRMED"'); check('Backlog search: accents and case are ignored ("WÉLL-FÖRMED" = "well-formed")', eq(a.all, B.filter(sb('well-formed').pred)), a.all.length); }
+    { const r = await ask(word + ' weak', `Backlog search, AND: "${word} weak"`); check(`Backlog search: several words are AND ("${word} weak" = "${word}" ∩ "weak")`, eq(r.all, B.filter(sb(word).pred).filter(sb('weak').pred)), r.all.length); }
+    { await ask('weak', 'Backlog search "weak" before a tile filter'); const pr = M.mostCommon(B.filter(sb('weak').pred), M.BKEY.priority)[0]; await click(BT.priority, pr); bf.priority = new Set([pr]);
+      const r = await verifyBacklog(p, B, bf, query, `Backlog search "weak" AND Priority tile "${pr}": every KPI, tile and the table = model`); console.log(`COUNT backlog | weak + Priority ${pr} | ${r.all.length}`);
+      await run(p, `clickReset()`); bf = M.newBF(); query = ''; await verifyBacklog(p, B, bf, query, 'Reset all clears the search and the tile filter'); }
+    { const st = await run(p, READ_SEARCH(BT.table)); check('Backlog search: placeholder, empty box, no q in the URL and no clear button after Reset all', st.placeholder === UI.backlog.placeholder && st.value === '' && st.url === null && st.clearHidden === true, st); }
+    { const zr = await ask('zzqxjv', 'Backlog search "zzqxjv": zero results'); check('Zero results: KPIs are 0 and the empty text is the specified sentence', eq(zr.d.kpis.map(k => k.value).slice(0, 2), ['0', '0']) && zr.d.tableEmpty === UI.backlog.empty, zr.d.tableEmpty);
+      await run(p, `clickTagX(${zr.d.tags.indexOf(UI.backlog.textTag('zzqxjv'))})`); query = '';
+      await verifyBacklog(p, B, bf, query, 'Removing the search tag clears the search and the input box'); }
+    { await run(p, `setQ('weak')`); const a = await run(p, READ_SEARCH(BT.table)); await run(p, `clickEl(document.querySelector('.search-clear'))`); const b = await run(p, READ_SEARCH(BT.table));
+      check('Backlog search: typing keeps the text in the URL as q; the clear button empties the box, removes q and the tag, and shows every ticket', a.url === 'weak' && a.clearHidden === false && b.value === '' && b.url === null && b.clearHidden === true && b.tags.length === 0 && b.keys.length === B.length, { a: [a.url, a.clearHidden], b }); query = ''; }
+    { const pq = await open(base + 'backlog.html?q=well-formed'); const r = await run(pq, READ_SEARCH(BT.table));
+      check('Backlog search: a link with ?q=well-formed restores the box, the tag and the results', r.value === 'well-formed' && eq(r.keys, B.filter(sb('well-formed').pred).map(t => t.ticket)) && r.tags.includes(UI.backlog.textTag('well-formed')) && pq.logs.length === 0, { value: r.value, n: r.keys.length });
+      await pq.close(); } }
   await run(p, `clickReset()`); bf = M.newBF(); query = ''; await run(p, `setQ('')`);
   await verifyBacklog(p, B, bf, query, 'Reset all clears everything on the backlog page');
   // Priority and Type icons (SPEC §10b)
@@ -732,52 +732,7 @@ async function suites(ctx) {
     check('Icons: every Priority and Type tile row has the right single icon before its (unchanged) name; unknown values have none; icons are decorative with no text', r.prio.every(x => eq(x.icons, want('priority', PR, x.name)) && x.hidden) && r.type.every(x => eq(x.icons, want('type', TY, x.name)) && x.hidden) && r.prio.some(x => x.icons.length) && r.type.some(x => x.icons.length), { p: r.prio, t: r.type });
     check('Icons: every Priority and Type table cell has the right single icon; the cell text is exactly the value (or a dash)', B.every((t, i) => eq(r.pc[i], t.priority && PR.includes(t.priority) ? ['priority:' + t.priority] : []) && eq(r.tc[i], t.type && TY.includes(t.type) ? ['type:' + t.type] : []) && r.ptxt[i] === (t.priority || '—') && r.ttxt[i] === (t.type || '—')), { pc: r.pc.slice(0, 3), ptxt: r.ptxt.slice(0, 3) });
     check('Icons: no image elements were added (inline SVG only)', r.imgs === 0); }
-  // epic multi-select (SPEC §7.4): the two epics with the most tickets
-  { const cnt = {}; B.forEach(t => { cnt[M.BKEY.epic(t)] = (cnt[M.BKEY.epic(t)] || 0) + 1; });
-    const epics = Object.keys(cnt).filter(k => k !== UI.backlog.noEpic);
-    const ranked = M.mostCommon(B, M.BKEY.epic, [UI.backlog.noEpic]);
-    const [e1, e2] = ranked, short = e => String(e).split(/\s/)[0];
-    const tick = n => run(p, `const l=[...document.querySelectorAll('.epicopt')].find(l => l.querySelector('.name').textContent === ${q(n)}); l.querySelector('input').click();`);
-    check('Epic filter: closed at the start, button says "Epic ▾", a disclosure (aria-expanded + aria-controls, no aria-haspopup), one checkbox per epic plus (no epic)', (r => !r.open && r.expanded === 'false' && r.haspopup === null && r.controls === 'epic-pop' && r.popId === 'epic-pop' && r.btn === UI.backlog.epicButton(0) && r.opts.length === epics.length + (cnt[UI.backlog.noEpic] ? 1 : 0))(await run(p, READ_EPIC)), await run(p, READ_EPIC).then(r => ({ haspopup: r.haspopup, controls: r.controls, n: r.opts.length })));
-    await run(p, `document.getElementById('epic-btn').click()`);
-    check('Epic filter: clicking the button opens the panel (aria-expanded=true)', (r => r.open && r.expanded === 'true')(await run(p, READ_EPIC)));
-    await verifyBacklog(p, B, bf, query, 'Epic panel open: nothing is filtered yet and the option counts equal the data');
-    if (e1 && e2) {
-      await tick(e1); bf.epic = new Set([e1]);
-      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e1)} filters every KPI, tile, the matrix and the table; tag "Epic: ..." appears`);
-      check('Epic filter: the panel stays open while ticking', (r => r.open)(await run(p, READ_EPIC)));
-      await tick(e2); bf.epic.add(e2);
-      await verifyBacklog(p, B, bf, query, `Epic: ticking ${short(e2)} as well shows both epics together (OR): numbers equal the union`);
-      { const d = await run(p, READ_BACKLOG), want = B.filter(t => [e1, e2].includes(M.BKEY.epic(t))).length;
-        check(`Epic: ${short(e1)} + ${short(e2)} together = ${want} tickets (${cnt[e1]} + ${cnt[e2]}); button reads "Epic (2)"`, want === cnt[e1] + cnt[e2] && d.kpis[0].value === String(want) && (await run(p, READ_EPIC)).btn === UI.backlog.epicButton(2), d.kpis[0]); }
-      await run(p, `clickRow(${q(BT.dor)}, ${q(dor1)})`); bf.dor = new Set([dor1]);
-      await verifyBacklog(p, B, bf, query, `Epic combines with a DoR selection by AND (${short(e1)} + ${short(e2)}, DoR ${dor1})`);
-      await run(p, `setQ('weak')`); query = 'weak';
-      await verifyBacklog(p, B, bf, query, 'Epic combines with the search by AND');
-      await run(p, `setQ('')`); query = ''; await run(p, `clickReset()`); bf = M.newBF();
-      check('Epic: Reset all unticks every checkbox and closes nothing it should not', (r => r.opts.every(o => !o.checked) && r.btn === UI.backlog.epicButton(0))(await run(p, READ_EPIC)));
-      await tick(e1); bf.epic = new Set([e1]);
-      if (cnt[UI.backlog.noEpic]) { await tick(UI.backlog.noEpic); bf.epic.add(UI.backlog.noEpic); }
-      await verifyBacklog(p, B, bf, query, 'Epic: "(no epic)" can be ticked together with an epic');
-      const tagIx = (await run(p, `return readCommon().tags`)).findIndex(t => t === 'Epic: ' + e1);
-      await run(p, `clickTagX(${tagIx})`); bf.epic.delete(e1);
-      await verifyBacklog(p, B, bf, query, 'Epic: removing the tag with x unticks that checkbox only');
-      await run(p, `document.querySelector('.epicclear').click()`); bf.epic = new Set();
-      await verifyBacklog(p, B, bf, query, 'Epic: Clear unticks every epic');
-      check('Epic: clicking a tag x (outside the panel) closed the panel, as any click outside does', !(await run(p, READ_EPIC)).open);
-    } else skip('Epic multi-select checks', 'the backlog has fewer than two epics');
-    await run(p, `document.getElementById('epic-btn').click()`);
-    check('Epic: Clear keeps the panel open', (await run(p, `document.querySelector('.epicclear').click(); return !document.querySelector('.epicpop').hidden`)));
-    await run(p, `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))`);
-    { const r = await run(p, READ_EPIC), act = await run(p, `const a = document.activeElement; return a ? a.tagName + '#' + a.id + '.' + a.className : null`);
-      check('Epic: Escape closes the panel and returns focus to the button', !r.open && r.expanded === 'false' && act === 'BUTTON#epic-btn.epicbtn', { r: r.open, ex: r.expanded, act }); }
-    await run(p, `document.getElementById('epic-btn').click()`); await run(p, `document.querySelector('.kpi').click()`);
-    check('Epic: a click outside the panel closes it', (r => !r.open)(await run(p, READ_EPIC)));
-    await run(p, `document.getElementById('epic-btn').click()`);
-    const lay = await run(p, LAYOUT);
-    check('Epic: opening the panel adds no page scroll and keeps the panel inside the viewport', lay.sh <= lay.ih && lay.sw <= lay.iw && await run(p, `const r=document.querySelector('.epicpop').getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.bottom<=innerHeight`), lay);
-    await run(p, `document.getElementById('epic-btn').click()`);
-    await verifyBacklog(p, B, bf, query, 'Epic: opening and closing the panel changed no filter'); }
+  check('Backlog page (R001-19): the filter bar has the search box and no Epic dropdown (no button, panel or checkboxes)', await run(p, `return !!document.querySelector('#filterbar input#q') && !document.getElementById('epic-btn') && !document.querySelector('.epicpop, .epicopt') && document.querySelectorAll('#filterbar select').length === 0`));
   // keyboard
   await run(p, `document.activeElement && document.activeElement.blur()`);
   let bfk = null; for (let i = 0; i < 40 && !bfk; i++) { await p.key('Tab', 'Tab', 9); const r = await run(p, `const a=document.activeElement; return a && a.classList.contains('rowbtn') && tile(${q(BT.dor)}).contains(a) ? {name:T(a.querySelector('.name')), outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); if (r) bfk = r; }
@@ -785,9 +740,6 @@ async function suites(ctx) {
   if (bfk) { await p.key('Enter', 'Enter', 13, '\r'); bf.dor = new Set([bfk.name]);
     await verifyBacklog(p, B, bf, query, 'Keyboard: Enter selects the focused DoR row'); }
   await run(p, `clickReset()`); bf = M.newBF();
-  await run(p, `document.getElementById('q').focus()`); await p.key('Tab', 'Tab', 9, undefined, 8);
-  { const ek = await run(p, `const a=document.activeElement; return a && a.id==='epic-btn' ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`);
-    check('Epic: the button is reachable with Tab (just before the search box) and shows a visible focus outline', ek && ek.outline !== 'none' && parseFloat(ek.w) >= 2, ek); }
   check('Backlog: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   for (const [w, h, mode] of [[1440, 900, 'dash'], [1536, 864, 'dash'], [1280, 720, 'fallback'], [800, 900, 'fallback'], [480, 900, 'fallback']]) {
     await p.resize(w, h); const r = await run(p, LAYOUT);
@@ -820,6 +772,71 @@ async function suites(ctx) {
   } else check('Quality Intake: click-through has a populated source row', false);
   check('Quality Intake: no console errors after interactions', p.logs.length === 0, p.logs);
   await p.close();
+
+  // =============== R001-19 search on the sprint page: every criterion on all four sprints ===============
+  console.log('\n--- R001-19: search on the sprint page (every manifest sprint) ---');
+  for (const entry of MANIFEST.sprints) {
+    const T = J(entry.file).tickets, id = entry.id, pg = await open(base + 'index.html?sprint=' + id);
+    const sm = qq => M.searchModel(qq, 'sprint'), keysOf = rows => rows.map(t => t.ticket);
+    const ask = async (label, qq, extra) => {
+      await run(pg, `setQ(${q(qq)})`); const r = await run(pg, READ_SEARCH(ST.detail)), want = keysOf(M.exactFirst(T.filter(sm(qq).pred), sm(qq)));
+      const extraOk = extra ? extra(r.keys) : true;
+      check(`Sprint ${id} search, ${label} "${qq}": ${want.length} of ${T.length}; detail rows, counter, tag and URL equal the model`, eq(r.keys, want) && (want.length ? r.sub.startsWith(`${want.length} of ${T.length} work items`) : r.empty === UI.sprint.empty) && r.tags.includes(UI.sprint.searchTag(qq)) && r.url === qq.trim() && r.sprintParam === String(id) && extraOk, { got: r.keys.length, want: want.length, sub: r.sub, extraOk });
+      console.log(`COUNT sprint ${id} | ${label} | "${qq}" | ${want.length} of ${T.length}`); return r.keys; };
+    const direct = pred => keysOf(T.filter(pred));
+    const t0 = T.find(t => /^[A-Z][A-Z0-9]+-\d+$/.test(t.ticket));
+    await ask('key, partial number (exact key first)', t0.ticket.split('-')[1], k => k[0] === t0.ticket);
+    await ask('key, partial prefix', t0.ticket.slice(0, -1));
+    { const w = (T.map(t => t.summary).join(' ').match(/[A-Za-z]{7,}/g) || ['ticket'])[0].toLowerCase(); await ask('summary word', w, k => k.length > 0); }
+    await ask('status, whole phrase', 'in review', k => eq(k, direct(t => t.status === 'In Review')));
+    await ask('status, whole phrase', 'in progress', k => eq(k, direct(t => t.status === 'In Progress')));
+    await ask('status word', 'done', k => direct(t => t.status === 'Done').every(x => k.includes(x)));
+    await ask('status word', 'open', k => direct(t => t.status === 'Open').every(x => k.includes(x)));
+    for (const [ph, v] of [['dev to test', 'Dev to Test'], ['qa to test', 'QA to Test'], ['same person', 'Same person']]) await ask('Self-tested, whole phrase', ph, k => eq(k, direct(t => M.selfTestReason(t) === v)));
+    await ask('Self-tested, any of the three', 'self-tested', k => eq(k, direct(t => M.selfTestReason(t) !== '—')));
+    { const tp = T.find(t => /^[A-Z][A-Z0-9]+-\d+/.test(t.parent || ''));
+      if (tp) { const pk = tp.parent.match(/^[A-Z][A-Z0-9]+-\d+/)[0], pw = (tp.parent.replace(pk, '').match(/[A-Za-z]{5,}/) || [null])[0];
+        await ask('parent key', pk, k => direct(t => String(t.parent || '').startsWith(pk)).every(x => k.includes(x)));
+        if (pw) await ask('parent title word', pw.toLowerCase(), k => k.length > 0); }
+      else skip(`Sprint ${id} search by parent`, 'no ticket has a parent'); }
+    { const fv = (T.find(t => t.fixVersion) || {}).fixVersion;
+      if (fv) { const pre = String(fv).split('.').slice(0, 2).join('.');
+        await ask('fix version, prefix', pre, k => direct(t => String(t.fixVersion || '').startsWith(pre)).every(x => k.includes(x)));
+        await ask('fix version, full value', String(fv), k => direct(t => t.fixVersion === fv).every(x => k.includes(x))); }
+      else skip(`Sprint ${id} search by fix version`, 'no ticket has a fix version'); }
+    { const on = (T.find(t => M.grpName(t.owner) !== 'Unassigned') || {}).owner; if (on) await ask('assignee name', on, k => direct(t => t.owner === on).every(x => k.includes(x))); }
+    { const tn = (T.find(t => M.grpName(t.tester) !== 'Unassigned') || {}).tester; if (tn) await ask('tester name', tn, k => direct(t => t.tester === tn).every(x => k.includes(x))); }
+    { const pool = []; T.forEach(t => [t.lastSyncUpdate, t.linkedWorkItems, t.type, t.blocker].forEach(v => (String(v || '').match(/[A-Za-z]{6,}/g) || []).forEach(w => pool.push(w.toLowerCase()))));
+      const ex = [...new Set(pool)].find(w => T.filter(sm(w).pred).length === 0);
+      if (ex) await ask('a word found only in fields the box does not search (Last sync update, linked work items, type)', ex, k => k.length === 0);
+      else skip(`Sprint ${id} search excluded fields`, 'no word found only in excluded fields'); }
+    await run(pg, `clickReset()`);
+    check(`Sprint ${id} search: no console errors`, pg.logs.length === 0, pg.logs);
+    await pg.close();
+  }
+  { // behaviour on the active sprint: phrase rule, accents, AND, clear, URL q, a tile filter, Reset all
+    const T = S, pg = await open(base + 'index.html'), sm = qq => M.searchModel(qq, 'sprint');
+    const askK = async qq => { await run(pg, `setQ(${q(qq)})`); return (await run(pg, READ_SEARCH(ST.detail))).keys; };
+    { const ph = await askK('dev to test'), words = await askK('test to dev');
+      check(`Sprint search, whole phrase: "dev to test" returns only Dev to Test tickets (${ph.length}); the same words in another order are plain words (${words.length})`, ph.every(k => M.selfTestReason(T.find(t => t.ticket === k)) === 'Dev to Test') && eq(words, T.filter(sm('test to dev').pred).map(t => t.ticket)), { ph: ph.length, words: words.length }); }
+    { const a = await askK('ÏN RÉVÏEW'), b = await askK('in review'); check(`Sprint search, accents and case: "ÏN RÉVÏEW" = "in review" (${b.length})`, eq(a, b) && b.length === T.filter(t => t.status === 'In Review').length, { a: a.length, b: b.length }); }
+    { const on = T.find(t => M.grpName(t.owner) !== 'Unassigned').owner.split(' ')[0].toLowerCase(), both = await askK(on + ' in review');
+      check(`Sprint search, AND: "${on} in review" = "${on}" ∩ "in review" (${both.length})`, eq(both, T.filter(sm(on).pred).filter(t => t.status === 'In Review').map(t => t.ticket)), both.length); }
+    { await askK('in review'); const tName = Object.keys(M.group(T.filter(t => t.status === 'In Review'), M.SKEY.type))[0];
+      await run(pg, `clickRow(${q(ST.type)}, ${q(tName)})`); const f = M.newF(); f.type = new Set([tName]);
+      await verifySprint(pg, T, f, `Sprint search "in review" AND Type tile "${tName}": every KPI, tile, the burndown and the detail = model`, Object.assign({}, CTX, { q: 'in review' }));
+      const mm = M.expectSprint(T, f, Object.assign({}, CTX, { q: 'in review' })).matrix, r0 = Object.keys(mm)[0], c0 = Object.keys(mm[r0] || {})[0];
+      if (r0 && c0) { await run(pg, `clickCell(${q(ST.matrix)}, ${q(r0)}, ${q(c0)})`); f.assignee = new Set([r0]); f.tester = new Set([c0]);
+        await verifySprint(pg, T, f, `Sprint search "in review" AND Type "${tName}" AND grid cell "${r0} / ${c0}"`, Object.assign({}, CTX, { q: 'in review' })); }
+      await run(pg, `clickReset()`); const st = await run(pg, READ_SEARCH(ST.detail));
+      check('Sprint search: Reset all clears the box, the tag and q in the URL; the placeholder names Self-tested and fix version', st.value === '' && st.url === null && st.clearHidden === true && st.tags.length === 0 && st.keys.length === T.length && st.placeholder === UI.sprint.placeholder, st); }
+    { await askK('same person'); const a = await run(pg, READ_SEARCH(ST.detail)); await run(pg, `clickEl(document.querySelector('.search-clear'))`); const b = await run(pg, READ_SEARCH(ST.detail));
+      check('Sprint search: the clear button empties the box, removes q and the tag and shows every ticket', a.clearHidden === false && a.url === 'same person' && b.value === '' && b.url === null && b.clearHidden === true && b.tags.length === 0 && b.keys.length === T.length, { a: [a.url, a.clearHidden], b: [b.value, b.url, b.tags] }); }
+    check('Sprint search (active sprint): no console errors', pg.logs.length === 0, pg.logs);
+    await pg.close();
+    if (CLOSED_ENTRY) { const pq = await open(base + 'index.html?sprint=' + CLOSED_ENTRY.id + '&q=in%20review'); const r = await run(pq, READ_SEARCH(ST.detail)), sel = await run(pq, `return document.getElementById('sprint-select').value`);
+      check(`Sprint search: a link with ?sprint=${CLOSED_ENTRY.id}&q=in review opens that sprint with the search restored`, sel === String(CLOSED_ENTRY.id) && r.value === 'in review' && eq(r.keys, CLOSED.tickets.filter(t => t.status === 'In Review').map(t => t.ticket)) && r.sprintParam === String(CLOSED_ENTRY.id) && pq.logs.length === 0, { sel, value: r.value, n: r.keys.length });
+      await pq.close(); } }
 
   // =============== R001-18 expected values, all four sprints ===============
   // Fixed values from the Project Improvements Log, R001-18 (data of 2026-10-30): the old rule (Dev to Test only)
