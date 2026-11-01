@@ -124,7 +124,7 @@ async function main() {
   const SPRJ = J(ACTIVE_FILE); const S = SPRJ.tickets;
   const BJ = J('backlog.json'), B = BJ.tickets;
   const Q = J('quality-intake.json');
-  const CTX = { sprint: SPRJ.sprint, today: SPRJ.refreshedAt, thr: 1 };
+  const CTX = { sprint: SPRJ.sprint, today: SPRJ.refreshedAt, thr: 1, velocity: SPRJ.velocityHistory };
   // The closed sprint used by the closed-view checks: the oldest closed entry in the manifest (frozen data).
   const closedEntries = MANIFEST.sprints.filter(x => x.state === 'closed');
   const CLOSED_ENTRY = closedEntries[closedEntries.length - 1] || null;
@@ -190,11 +190,12 @@ async function suites(ctx) {
     if (!eq(d.kpis.map(k => k.value), e.kpiValues)) errs.push(['kpi', d.kpis.map(k => k.value), e.kpiValues]);
     if (e.active && !/^of \d+/.test(d.kpis[0].hint)) errs.push(['kpi hint filtered', d.kpis[0].hint]);
     if (!e.active && d.kpis[0].hint !== UI.sprint.hints.itemsUnfiltered) errs.push(['kpi hint', d.kpis[0].hint]);
-    if (d.kpis.length !== 8 || !eq(d.kpis.map(k => k.label), UI.sprint.kpis)) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
+    if (d.kpis.length !== 9 || !eq(d.kpis.map(k => k.label), UI.sprint.kpis)) errs.push(['kpi labels', d.kpis.map(k => k.label)]);
     if (d.kpis[6].hint !== e.kpiHints.time) errs.push(['time hint', d.kpis[6].hint, e.kpiHints.time]);
     if (d.kpis[7].hint !== e.kpiHints.cycle) errs.push(['cycle hint', d.kpis[7].hint, e.kpiHints.cycle]);
     if (d.kpis[3].hint !== e.kpiHints.mid) errs.push(['mid hint', d.kpis[3].hint, e.kpiHints.mid]);
     if (d.kpis[4].hint !== e.kpiHints.carried) errs.push(['carried hint', d.kpis[4].hint, e.kpiHints.carried]);
+    if (d.kpis[8].hint !== e.kpiHints.velocity) errs.push(['velocity hint', d.kpis[8].hint, e.kpiHints.velocity]);
     { const bd = await run(page, READ_BD), x = e.bd, BDT = UI.sprint.burndown;
       if (!e.all.length) { if (bd.has || bd.empty !== UI.sprint.empty) errs.push(['burndown empty-state', bd.has, bd.empty]); }
       else if (!bd.has) errs.push(['burndown svg missing', bd.empty]);
@@ -455,12 +456,12 @@ async function suites(ctx) {
   await verifySprint(p, S, f, 'KPI filters clear on second click');
   const L = await run(p, LAYOUT);
   check('Layout 1920x1080: no page scroll (width and height)', L.sh <= L.ih && L.sw <= L.iw, L);
-  check('Layout 1920x1080: 8 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 14 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
+  check('Layout 1920x1080: 9 KPI + 4 main + 2 lower tiles; board fills the width (right edge within 16px), equal gutters', L.tiles.length === 15 && Math.max(...L.tiles.map(t => t.r)) >= L.iw - 16 && Math.min(...L.tiles.map(t => t.l)) <= 16, L.tiles);
   check('Layout 1920x1080: tiles fill the height (bottom of detail tile within 60px of the viewport bottom)', Math.max(...L.tiles.map(t => t.b)) >= L.ih - 60, Math.max(...L.tiles.map(t => t.b)));
-  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(8, 12).map(t => t.h)).size === 1 && new Set(L.tiles.slice(12, 14).map(t => t.h)).size === 1 && L.tiles[12].w + L.tiles[13].w + 10 >= L.iw - 30 && L.tiles[13].w >= 440 && L.tiles[13].w <= 0.32 * L.iw, L.tiles.slice(8));
-  const rowRatio = L.tiles[8].h / L.tiles[12].h;
+  check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(9, 13).map(t => t.h)).size === 1 && new Set(L.tiles.slice(13, 15).map(t => t.h)).size === 1 && L.tiles[13].w + L.tiles[14].w + 10 >= L.iw - 30 && L.tiles[14].w >= 440 && L.tiles[14].w <= 0.32 * L.iw, L.tiles.slice(9));
+  const rowRatio = L.tiles[9].h / L.tiles[13].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Needs attention today; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(8).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[9].w >= 250 && L.tiles[10].w >= 250, L.tiles.slice(8).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Needs attention today; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(9).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[10].w >= 250 && L.tiles[11].w >= 250, L.tiles.slice(9).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
   const st = await run(p, `const out={}; for (const [k,t] of [['attention',${q(ST.attention)}],['detail',${q(ST.detail)}],['matrix',${q(ST.matrix)}]]) { const b=tile(t).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile(${q(ST.attention)}).querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile(${q(ST.attention)}).getBoundingClientRect().bottom+1 && T(ft).startsWith('Missing:'); return out;`);
   check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Missing line pinned under Needs attention today', (!st.attention.scrolls || (st.attention.sb > 0 && st.attention.thSticky === 'sticky' && Math.abs(st.attention.thDiff) <= 2)) && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
@@ -893,7 +894,7 @@ async function suites(ctx) {
   { const BJ2 = JSON.parse(mkSprint(Object.assign({ carriedOver: CARRIED }, SP_OK))), BCTX = { sprint: BJ2.sprint, today: BJ2.refreshedAt, thr: 2 };
     await verifySprint(p, BURN_T, M.newF(), 'Hand-made sprint: every tile and the burndown equal the independent calculation', BCTX);
     const k = await run(p, READ_SPRINT), bd = await run(p, READ_BD);
-    check('Hand-made sprint: KPIs equal the numbers worked out by hand (6 items, 15 points, 87% done, 2 added mid-sprint, 3 carried over, 2 no tester, cycle time 3.3)', eq(k.kpis.map(x => x.value), ['6', '15', '87%', '2', '3', '2', '—', '3.3']) && k.kpis[7].hint === 'days, over 3 Done tickets' && k.kpis[3].hint === '2 points, added after day 2' && k.kpis[4].hint === '20% of tickets, 8 points', k.kpis);
+    check('Hand-made sprint: KPIs equal the numbers worked out by hand (6 items, 15 points, 87% done, 2 added mid-sprint, 3 carried over, 2 no tester, cycle time 3.3)', eq(k.kpis.map(x => x.value), ['6', '15', '87%', '2', '3', '2', '—', '3.3', '—']) && k.kpis[7].hint === 'days, over 3 Done tickets' && k.kpis[3].hint === '2 points, added after day 2' && k.kpis[4].hint === '20% of tickets, 8 points', k.kpis);
     check('Hand-made sprint: scope [13,13,13,13] (APP-903 enters on 9/26, after today), remaining [9,4,1,1] then nothing after today; ideal falls from the starting scope 13 to 0 in steps of 13/6; done per day [4,5,3,0,0,0,0] (the pre-start date counts on day 1)', eq(bd.days.map(d => d.remaining), [9, 4, 1, 1, null, null, null]) && eq(bd.days.map(d => d.scope), [13, 13, 13, 13, 15, 15, 15]) && eq(bd.days.map(d => Math.round(d.ideal * 1000) / 1000), [13, 10.833, 8.667, 6.5, 4.333, 2.167, 0]) && eq(bd.days.map(d => d.done), [4, 5, 3, 0, 0, 0, 0]), bd.days);
     check('Hand-made sprint: markers on 9/25 (1 ticket, 0 points) and 9/26 (1 ticket, 2 points); today is 9/25; subtitle and footnote as specified', eq(bd.added.map(a => [a.date, a.count, a.points]), [['2026-09-25', 1, 0], ['2026-09-26', 1, 2]]) && bd.todayLabel && bd.sub === '1 of 13 points remaining today, ideal 6.5' && bd.foot.includes('1 Done ticket has no done date and is not on the line.'), { added: bd.added, sub: bd.sub, foot: bd.foot });
     // marker click: list of added tickets (SPEC §6.3, D44)
@@ -1069,6 +1070,24 @@ async function suites(ctx) {
     const live = manifestConform(MANIFEST), fixture = manifestConform(J('fixtures/sprints.json'));
     check('sprints.json and the manifest fixture conform to the schema, with exactly one active current id and unique ids', live.length === 0 && fixture.length === 0, { live, fixture }); }
   { const errs = validate(qualitySchema, Q, 'quality-intake'); check('quality-intake.json conforms to schema/quality-intake.schema.json', errs.length === 0, errs.slice(0, 8)); }
+
+  // ---------- Velocity history (D93): the active snapshot's velocityHistory is recomputed here from the frozen snapshots ----------
+  { const vh = SPRJ.velocityHistory;
+    if (!vh) skip('velocityHistory in the active snapshot', 'not present (older export)');
+    else {
+      const rows = vh.sprints, closedRows = rows.filter(x => x.state === 'closed'), act = rows.filter(x => x.state === 'active');
+      check('velocityHistory: ends with exactly one active row, the current sprint of the manifest', act.length === 1 && rows[rows.length - 1].state === 'active' && act[0].id === MANIFEST.current, rows.map(x => [x.id, x.state]));
+      check('velocityHistory: at most 3 closed sprints, all closed in the manifest, ordered by end date', closedRows.length >= 1 && closedRows.length <= 3 && closedRows.every(x => (MANIFEST.sprints.find(s => s.id === x.id) || {}).state === 'closed') && closedRows.every((x, i) => i === 0 || closedRows[i - 1].endDate <= x.endDate), closedRows.map(x => [x.id, x.endDate]));
+      const progress = (tickets, start) => { const done = tickets.filter(t => t.status === 'Done'), pre = done.filter(t => t.doneDate && String(t.doneDate).slice(0, 10) < start), inside = done.filter(t => !pre.includes(t)); const P = a => Math.round(a.reduce((s, t) => s + (t.points || 0), 0) * 100) / 100; return { scopeTickets: tickets.length, scopePoints: P(tickets), doneTickets: inside.length, donePoints: P(inside), doneBeforeStartTickets: pre.length, doneBeforeStartPoints: P(pre) }; };
+      let allMatch = true; const bad = [];
+      for (const x of rows) {
+        const entry = MANIFEST.sprints.find(s => s.id === x.id), tix = x.state === 'active' ? SPRJ.tickets : J(entry.file).tickets, exp = progress(tix, entry.startDate);
+        for (const k of Object.keys(exp)) if (x[k] !== exp[k]) { allMatch = false; bad.push([x.id, k, x[k], exp[k]]); }
+      }
+      check('velocityHistory: every row matches a recomputation from the frozen snapshots (tickets closed inside the sprint, apart from those Done before it started)', allMatch, bad.slice(0, 6));
+      const mean = k => Math.round(closedRows.reduce((s, x) => s + x[k], 0) / closedRows.length * 10) / 10;
+      check('velocityHistory: the averages are the mean of the closed rows', vh.averageDonePoints === mean('donePoints') && vh.averageDoneTickets === mean('doneTickets'), [vh.averageDonePoints, mean('donePoints'), vh.averageDoneTickets, mean('doneTickets')]);
+    } }
 
   // ---------- Portfolio picker: present on every App Foundation page ----------
   const PUI = UI.portfolio;

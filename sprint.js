@@ -250,7 +250,7 @@
     var kItems = AF.kpi('items', 'Work items'), kPoints = AF.kpi('points', 'Story points');
     var kDone = AF.kpi('plain', 'Done'), kNoTester = AF.kpi('plain', LOWER_FILTERS.noTester.label);
     var kCycle = AF.kpi('plain', 'Avg cycle time'), kMid = AF.kpi('plain', LOWER_FILTERS.midSprint.label), kCarried = AF.kpi('plain', LOWER_FILTERS.carriedOver.label);
-    var kTime = AF.kpi('plain', timeLabel);
+    var kTime = AF.kpi('plain', timeLabel), kVel = AF.kpi('plain', 'Velocity · avg last 3 sprints');
     kTime.root.title = 'In Progress or In Review tickets that have stayed in the same status for ' + AF.config.timeInStatusThresholdDays + ' days or more. A neutral follow-up list, not a risk rating. Click to filter the lower section.';
     kCarried.root.title = 'Carried over from the previous sprint. Click to filter the lower section; ticket keys must be present in the sprint snapshot.';
     kMid.root.title = 'Tickets added after the first days of the sprint, based on Added to Sprint dates.';
@@ -283,7 +283,7 @@
       });
     }
 
-    app.appendChild(el('div', { class: 'kpis k8' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kTime.root, kCycle.root]));
+    app.appendChild(el('div', { class: 'kpis k9' }, [kItems.root, kPoints.root, kDone.root, kMid.root, kCarried.root, kNoTester.root, kTime.root, kCycle.root, kVel.root]));
     app.appendChild(el('div', { class: 'main sprint' }, [tBurn.root, tStatus.root, tType.root, tAttention.root]));
     app.appendChild(el('div', { class: 'lower' }, [tDetail.root, tMatrix.root]));
 
@@ -317,6 +317,15 @@
       var ct = AF.avgCycleTime(f);
       kCycle.value.textContent = ct.avg === null ? '—' : AF.oneDecimal(ct.avg);
       kCycle.hint.textContent = ct.n ? 'days, over ' + ct.n + ' Done ticket' + (ct.n === 1 ? '' : 's') : 'no Done tickets with a cycle time';
+      // Velocity (D93): read from velocityHistory in the active snapshot; never changes with the filters. Closed-sprint
+      // snapshots written before D93 have no history, so the tile shows an em dash.
+      var vh = data.velocityHistory, vClosed = vh ? vh.sprints.filter(function (r) { return r.state === 'closed'; }) : [];
+      if (vh && vClosed.length) {
+        var cur = vh.sprints.filter(function (r) { return r.state === 'active'; })[0];
+        kVel.value.textContent = fmt(Math.round(vh.averageDonePoints));
+        kVel.hint.textContent = 'points per sprint: ' + vClosed.map(function (r) { return fmt(r.donePoints); }).join(' · ') + (cur ? ' · now ' + fmt(cur.donePoints) : '');
+        kVel.root.title = vClosed.map(function (r) { return r.name + ': ' + fmt(r.donePoints) + ' of ' + fmt(r.scopePoints) + ' points, ' + r.doneTickets + ' of ' + r.scopeTickets + ' tickets' + (r.doneBeforeStartTickets ? ' (' + r.doneBeforeStartTickets + ' already Done before the sprint)' : ''); }).join('\n') + '\n' + vh.method;
+      } else { kVel.value.textContent = '—'; kVel.hint.textContent = 'Not available for this sprint'; kVel.root.title = ''; }
       var days = AF.config.midSprintThresholdDays, mid = AF.midSprintAdded(f, sprint, days);
       kMid.value.textContent = String(mid.count);
       kMid.hint.textContent = fmt(mid.points) + ' points, added after day ' + days;

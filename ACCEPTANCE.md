@@ -163,3 +163,7 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 ### Privacy
 - [ ] No e-mail addresses, no Jira ticket keys (outside `jql`/`method`/`name` fields), no `displayName` or `emailAddress` fields in any portfolio JSON file
 - [ ] Each team file has `refreshedAt` and `pointsNote`
+
+## Velocity KPI (D93, 2026-11-01)
+- [ ] The Current sprint page has a ninth KPI, "Velocity · avg last 3 sprints", whose value is the rounded `averageDonePoints` and whose hint lists the points of each closed sprint and "now" for the active one; it is `—` ("Not available for this sprint") for snapshots without `velocityHistory`
+- [ ] `velocityHistory` in the active snapshot: the last row is the current sprint (state active), at most 3 closed rows, every row recomputed from the frozen snapshots matches (tickets closed inside the sprint apart from those Done before it started), the averages are the mean of the closed rows

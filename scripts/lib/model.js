@@ -140,16 +140,19 @@ function expectSprint(S, f, ctx) {
   const co = ctx.sprint.carriedOver; let carriedV, carriedH;
   if (!co) { carriedV = '—'; carriedH = UI.sprint.hints.carriedNull; }
   else { const parts = []; if (co.percent != null) parts.push(String(co.percent) + '% of tickets'); if (co.storyPoints != null) parts.push(String(co.storyPoints) + ' points'); carriedV = co.count == null ? '—' : String(co.count); carriedH = parts.length ? parts.join(', ') : UI.sprint.hints.carriedNoFigures; }
+  const vh = ctx.velocity, vClosed = vh ? vh.sprints.filter(r => r.state === 'closed') : [];
+  const velV = vh && vClosed.length ? String(Math.round(vh.averageDonePoints)) : '—';
   const withAging = all.filter(t => (t.status === 'In Progress' || t.status === 'In Review') && typeof t.statusAging === 'number');
   const kh = {
     time: withAging.length ? UI.sprint.hints.timeWithData : UI.sprint.hints.timeNoData,
     cycle: UI.sprint.hints.cycle(cyc.length),
     mid: UI.sprint.hints.mid(bd.mid.points, thr),
-    carried: carriedH
+    carried: carriedH,
+    velocity: vh && vClosed.length ? 'points per sprint: ' + vClosed.map(r => String(r.donePoints)).join(' · ') + (vh.sprints.some(r => r.state === 'active') ? ' · now ' + String(vh.sprints.filter(r => r.state === 'active')[0].donePoints) : '') : 'Not available for this sprint'
   };
-  // order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Long-running work, Avg cycle time
+  // order: Work items, Story points, Done, Added mid-sprint, Carried over, No tester, Long-running work, Avg cycle time, Velocity
   const kp = [String(all.length), String(P), P > 0 ? Math.round(doneP / P * 100) + '%' : '—', String(bd.mid.count), carriedV,
-    String(all.filter(noTester).length), withAging.length ? String(all.filter(longRunning).length) : '—', avg === null ? '—' : f1(avg)];
+    String(all.filter(noTester).length), withAging.length ? String(all.filter(longRunning).length) : '—', avg === null ? '—' : f1(avg), velV];
   const stBase = applyF(S, f, SKEY, ['status'], sp); const stG = group(stBase, SKEY.status);
   const typeBase = applyF(S, f, SKEY, ['type'], sp); const typeG = group(typeBase, SKEY.type);
   const attention = expectAttention(all, S, ctx.sprint);

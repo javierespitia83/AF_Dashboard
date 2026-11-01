@@ -85,6 +85,10 @@ Rules the UI must respect:
 - **`removed` is optional** and is the only source of removals: tickets that left the sprint are not in `tickets`, so without it they cannot be known. Entries without a valid `removedDate` are ignored. Removed entries respond to the sprint filters through the fields they carry (`status`, `owner`, `tester`, `fixVersion`, `parent`; a missing owner or tester counts as `Unassigned`, a missing fix version or parent as `(none)`).
 - The `sprint` object is required in practice: a snapshot without it (or with an id or dates that differ from its manifest entry) is refused with an error, so the sprint-dependent tiles always have sprint dates. The former "no sprint data" and "no sprint dates" tile messages were removed (D77).
 
+### 2b. `velocityHistory` (active sprint snapshot only, D93)
+
+Optional object written by the exporter into the **active** sprint's snapshot from `sprints.json` and the frozen snapshots of the closed sprints; the page reads one file. Fields: `method` (text), `sprints` (the last up to 3 closed sprints by end date, oldest first, then the active sprint last), `averageDonePoints` and `averageDoneTickets` (mean of the closed rows, one decimal; absent when no closed sprint could be read). Each row: `id`, `name`, `startDate`, `endDate`, `state` (`closed` or `active`), `scopeTickets`, `scopePoints`, `doneTickets`, `donePoints` (Done tickets **not** closed before the sprint start; a Done ticket without `doneDate` counts as closed inside), `doneBeforeStartTickets`, `doneBeforeStartPoints`. Points are the final points of each ticket (re-estimates are not reflected). A closed snapshot that cannot be read is skipped with an exporter warning. Frozen snapshots of closed sprints carry no `velocityHistory`.
+
 ## 3. `backlog.json` ticket fields (schema `$defs/backlogTicket`)
 
 | Field | Type | Meaning | Display when null |
