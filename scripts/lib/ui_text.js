@@ -114,7 +114,7 @@ UI.portfolio = {
   unitPatterns: /\(tickets\)|\(points\)|\(people\)|\(%\)|\(days\)|\(story points\)/,
   createdAfterStart: /Created after start \(tickets\)/i,
   pointsCreatedNote: /[Pp]oints created.*not available/,
-  summaryLine: /^Day \d+ of \d+ · .*% of tickets done .* at \d+% of the sprint time · .* tickets with no status change in 7\+ days · backlog .* tickets/,
+  summaryLine: /^Day \d+ of \d+ · \d+% of points done ≈ at \d+% of the sprint time \(\d+ of \d+ tickets closed in the sprint\) · .* tickets with no status change in 7\+ days · backlog .* tickets/,
   questionTitles: ['How much did the team finish?', 'Is the sprint burning down?', 'What is moving or stuck?', 'How healthy is the backlog?']
 };
 

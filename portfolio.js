@@ -323,8 +323,11 @@
       dayN = Math.min(dayTotal, Math.max(1, dayDiff(s, t) + 1));
       elapsedPct = Math.max(0, Math.min(100, Math.round(100 * dayDiff(s, t) / Math.max(1, dayDiff(s, e)))));
     }
-    var donePct = sprint.tickets ? Math.round(100 * sprint.doneTickets / sprint.tickets) : null;
-    var donePtsPct = sprint.points ? Math.round(100 * sprint.donePoints / sprint.points) : null;
+    // Progress counts only what was closed inside the sprint: tickets already Done when the sprint started are listed apart.
+    var preT = sprint.doneBeforeStartTickets || 0, preP = sprint.doneBeforeStartPoints || 0;
+    var doneInT = Math.max(0, sprint.doneTickets - preT), doneInP = Math.max(0, sprint.donePoints - preP);
+    var donePct = sprint.points ? Math.round(100 * doneInP / sprint.points) : null;
+    var doneTicketsPct = sprint.tickets ? Math.round(100 * doneInT / sprint.tickets) : null;
 
     // top: title, summary line, notes, legend, past-end warning
     var top = el('div', { class: 'pf-top' });
@@ -335,7 +338,7 @@
     top.appendChild(titleRow);
     var parts = [];
     if (dayN !== null) parts.push('Day ' + dayN + ' of ' + dayTotal);
-    if (donePct !== null && elapsedPct !== null) parts.push(donePct + '% of tickets done ≈ at ' + elapsedPct + '% of the sprint time');
+    if (donePct !== null && elapsedPct !== null) parts.push(donePct + '% of points done ≈ at ' + elapsedPct + '% of the sprint time (' + num(doneInT) + ' of ' + num(sprint.tickets) + ' tickets closed in the sprint)');
     parts.push(num(sprint.stuckD7) + ' tickets with no status change in 7+ days');
     parts.push('backlog ' + num(data.backlog.total) + ' tickets' + (data.backlog.scopeNote ? ' *' : ''));
     top.appendChild(el('p', { class: 'pf-summary', text: parts.join(' · ') }));
@@ -351,15 +354,14 @@
     // header strip: sprint, time, progress vs time, points, data quality
     var strip = el('section', { class: 'pf-strip', 'aria-label': 'Current sprint' });
     strip.appendChild(kv('Sprint', sprint.name));
-    strip.appendChild(kv('Dates', sprint.startDate + ' – ' + sprint.endDate));
-    strip.appendChild(kv('Day', dayN !== null ? ('Day ' + dayN + ' of ' + dayTotal + ' calendar days') : 'n/a'));
+    strip.appendChild(kv('Dates', sprint.startDate + ' – ' + sprint.endDate + (dayTotal ? ' (' + dayTotal + ' days)' : '')));
     var prog = el('div', { class: 'pf-kv pf-progress' });
-    prog.appendChild(el('div', { class: 'pf-kv-label', text: 'Done (tickets) vs sprint time' }));
-    prog.appendChild(el('div', { class: 'pf-kv-value' }, [document.createTextNode(num(sprint.doneTickets) + ' / ' + num(sprint.tickets) + ' tickets' + (donePct !== null ? ' (' + donePct + '%)' : '')), badge('approx', 'Approximate: status-category change date used as the Done date; scope = current list')]));
+    prog.appendChild(el('div', { class: 'pf-kv-label', text: 'Done (points) vs sprint time' }));
+    prog.appendChild(el('div', { class: 'pf-kv-value' }, [document.createTextNode(num(doneInP) + ' / ' + num(sprint.points) + ' points' + (donePct !== null ? ' (' + donePct + '%)' : '')), badge('approx', 'Approximate: final points; status-category change date used as the Done date; only tickets closed since the sprint start count')]));
     var pr1 = el('div', { class: 'pf-pace' }); pr1.appendChild(el('span', { class: 'pf-pace-cap', text: 'Done' })); pr1.appendChild(bar(donePct !== null ? donePct / 100 : 0)); prog.appendChild(pr1);
     var pr2 = el('div', { class: 'pf-pace' }); pr2.appendChild(el('span', { class: 'pf-pace-cap', text: 'Time' })); pr2.appendChild(bar(elapsedPct !== null ? elapsedPct / 100 : 0, 'pf-fill-time')); pr2.appendChild(el('span', { class: 'pf-pace-num', text: elapsedPct !== null ? elapsedPct + '% elapsed' : 'n/a' })); prog.appendChild(pr2);
+    prog.appendChild(el('div', { class: 'pf-progress-tickets', text: num(doneInT) + ' / ' + num(sprint.tickets) + ' tickets closed in the sprint' + (doneTicketsPct !== null ? ' (' + doneTicketsPct + '%)' : '') + (preT ? ' · ' + num(preT) + ' already Done before it started' : '') }));
     strip.appendChild(prog);
-    strip.appendChild(kv('Points (story points)', num(sprint.donePoints) + ' / ' + num(sprint.points) + (donePtsPct !== null ? ' (' + donePtsPct + '%)' : ''), 'Approximate; final points used', true));
     var dq = el('div', { class: 'pf-dq', 'aria-label': 'Data quality' });
     dq.appendChild(el('div', { class: 'pf-kv-label', text: 'How reliable is the data? (% of tickets filled)' }));
     var chips = el('div', { class: 'pf-chips' });

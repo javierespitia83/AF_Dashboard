@@ -25,7 +25,9 @@
     "createdAfterStart": 2,
     "stuckD7": 9,
     "stuckD14": 2,
-    "pastEndDate": false
+    "pastEndDate": false,
+    "doneBeforeStartTickets": 4,
+    "doneBeforeStartPoints": 0.0
   },
   "velocity": [
     {

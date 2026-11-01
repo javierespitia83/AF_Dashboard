@@ -1248,6 +1248,13 @@ async function suites(ctx) {
     check(`portfolio ${projKey}: summary line has the expected shape`, PUI4.summaryLine.test(summary), summary);
     check(`portfolio ${projKey}: summary line shows the backlog total from the data`, summary.includes('backlog ' + td.backlog.total.toLocaleString('en-US') + ' tickets'), summary);
     check(`portfolio ${projKey}: summary line shows the stuck count from the data`, summary.includes(td.currentSprint.stuckD7.toLocaleString('en-US') + ' tickets with no status change in 7+ days'), summary);
+    // progress: points first, only tickets closed inside the sprint count
+    { const cs = td.currentSprint, preT = cs.doneBeforeStartTickets || 0, preP = cs.doneBeforeStartPoints || 0;
+      const inT = cs.doneTickets - preT, inP = cs.donePoints - preP;
+      const progTxt = await run(pg, `var p = document.querySelector('.pf-progress'); return p ? p.textContent : ''`);
+      check(`portfolio ${projKey}: progress shows points closed in the sprint (not the ones already Done at the start)`, progTxt.includes(inP + ' / ' + cs.points + ' points'), progTxt.slice(0, 160));
+      check(`portfolio ${projKey}: progress shows tickets closed in the sprint and those already Done before it started`, progTxt.includes(inT + ' / ' + cs.tickets + ' tickets closed in the sprint') && (preT === 0 || progTxt.includes(preT + ' already Done before it started')), progTxt.slice(0, 260));
+      check(`portfolio ${projKey}: summary line reports the same progress`, summary.includes(inT + ' of ' + cs.tickets + ' tickets closed in the sprint') && summary.includes(Math.round(100 * inP / cs.points) + '% of points done'), summary); }
     const titles = await run(pg, `return [...document.querySelectorAll('.pf-tile .tile-head h3')].map(h => h.textContent)`);
     check(`portfolio ${projKey}: tile titles are the four questions`, PUI4.questionTitles.every(q => titles.some(t => t.startsWith(q))), titles);
     const barRows = await run(pg, `return document.querySelectorAll('.pf-vel-row').length`);

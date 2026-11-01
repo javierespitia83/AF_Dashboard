@@ -139,6 +139,14 @@
         },
         "pastEndDate": {
           "type": "boolean"
+        },
+        "doneBeforeStartTickets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "doneBeforeStartPoints": {
+          "type": "number",
+          "minimum": 0
         }
       }
     },
