@@ -209,3 +209,36 @@ Priority and Type values carry a small icon in the style of Jira's own, so they 
 The detailed structure (files, the `AF` API, page lifecycle, layout CSS, burndown model and drawing, DOM contract) is in `IMPLEMENTATION.md`; the build order is its Appendix A.
 
 `index.html`, `backlog.html`, `quality-intake.html`, `dashboard.css`, `dashboard.js` (shared helpers, aggregation, filter store, tile builders), `sprint.js`, `backlog.js`, `quality-intake.js`. Keep the filter store and aggregation functions pure (no DOM) so numbers can be checked in the console and in Node (`scripts/unit.test.js`). No `innerHTML`; build DOM from text nodes.
+
+## 8. Portfolio page — `portfolio.html` (D89, 2026-10-31)
+
+`portfolio.html?project=<KEY>` shows a snapshot of one team's sprint and backlog health. Allowed keys: `AC`, `PLATENG`, `APIM`, `PLAT`, validated against `portfolio/projects.json`. An unknown or missing key shows an empty state and never another team's data.
+
+### 8.1 Header Portfolio picker (all pages)
+
+A `<details>`/`<summary>` "Portfolio ▾" button sits next to the Sprint selector in the top bar of every page. It opens a drop-down listing the four teams as links to `portfolio.html?project=<KEY>`. On `portfolio.html` the current team is marked `aria-current`; a separator and "← App Foundation" return to `index.html`. No inline scripts; compatible with the existing Content-Security-Policy.
+
+### 8.2 Tiles (version 1, search only)
+
+All approximate values show `≈` with a tooltip that states the method. Lower-bound values show `≥`.
+
+| Tile | Approx? | Source |
+|---|---|---|
+| Sprint header (name, dates, day N/M, tickets, points, done, past-end-date flag) | ≈ done | Sprint field + statusCategoryChangedDate |
+| Velocity — last 3 closed sprints (tickets, points, completion %) | ≈ | Same method as APP; scope = end-of-sprint list |
+| Burndown — last closed sprint | ≈ | Final points; added dates from `created`; no removals |
+| Data quality — points / tester / fix version / parent fill % | exact | Current sprint issues |
+| Sprint health — stuck 7+/14+ days, carried in, created after start, bugs | stuck=exact, carried/created=≈/≥ | JQL + Sprint field |
+| Backlog health — size, age buckets (90/180/365 days), not updated 1 yr, no points, no parent | exact | Count queries |
+
+Story points shown beside tickets with a neutral note: "Points shown as recorded in Jira; their meaning is not confirmed for this team."
+
+No ranking, no inter-team colours, no names, e-mails, ticket keys or summaries.
+
+### 8.3 Comparison table
+
+When no `?project=` is given, a read hint and a comparison table of all four teams appears. No ranking column.
+
+### 8.4 Refresh
+
+Jira queries are described in `docs/PORTFOLIO_REFRESH.md`. The parser script `scripts/build_portfolio.py` rebuilds the JSON from saved connector results. No direct API call is made from the page.

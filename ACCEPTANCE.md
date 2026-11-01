@@ -139,3 +139,28 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - Run `node scripts/run_acceptance.js` from the `AF_Dashboard` folder and repeat any checks it does not cover. Manually inspect active and closed sprints at desktop and narrow viewport sizes.
 - If the data mapping changed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 - Record any new decision in `DECISIONS.md`.
+
+## Portfolio page (D89, 2026-10-31)
+
+### Header picker
+- [ ] "Portfolio ▾" button present on Current sprint, Backlog, Quality Intake, and portfolio.html pages
+- [ ] Drop-down links point to `portfolio.html?project=<KEY>` for each of the 4 teams
+- [ ] On portfolio.html the current team's link has `aria-current="true"`
+- [ ] On portfolio.html a separator and "← App Foundation" link to `index.html`
+
+### portfolio.html behaviour
+- [ ] `?project=AC` (or any valid key) renders team content without error
+- [ ] `?project=UNKNOWN` shows an unknown-project message and no data from another team
+- [ ] No `?project=` shows the select hint and the comparison table
+- [ ] "Internal — team only" footer is present
+
+### Data conformance
+- [ ] `portfolio/projects.json` conforms to `schema/portfolio-projects.schema.json`
+- [ ] All 4 team files (`AC.json`, `PLATENG.json`, `APIM.json`, `PLAT.json`) exist and conform to `schema/portfolio-team.schema.json`
+- [ ] Each team file's `team` field matches the manifest key
+
+### Privacy
+- [ ] No e-mail addresses in any portfolio JSON file
+- [ ] No Jira ticket keys in any portfolio JSON file (outside `jql`/`method`/`name` fields)
+- [ ] No `displayName` or `emailAddress` fields in any portfolio JSON file
+- [ ] Each team file has `refreshedAt` and `pointsNote`

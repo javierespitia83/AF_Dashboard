@@ -210,3 +210,36 @@ The data files carry no URLs. The UI builds links when it displays a cell, from 
 - Write or modify any file, or send data anywhere.
 - Re-rank the backlog. The sheet order is the ranking.
 - Remap or drop unknown statuses or DoR values.
+
+## 9. Portfolio data files (D89, 2026-10-31)
+
+Two kinds of file; validated by schemas in `schema/`.
+
+### 9.1 `portfolio/projects.json` (manifest)
+
+| Field | Type | Meaning |
+|---|---|---|
+| `refreshedAt` | `YYYY-MM-DD` | Date the data was last refreshed |
+| `exportedAt` | string | ISO 8601 timestamp |
+| `projects` | array | Allowed project entries (allowlist) |
+| `projects[].key` | string | Project key, e.g. `AC` |
+| `projects[].label` | string | Display name |
+| `projects[].currentSprintId` | integer | Active sprint id |
+| `projects[].file` | string | Path `portfolio/<KEY>.json` |
+
+Unknown `?project=` values are validated against this file; they are never used as a raw path.
+
+### 9.2 `portfolio/<KEY>.json` (team snapshot)
+
+Contains **only counts, percentages, sprint ids and dates, sprint names, and day counts**. No person names, e-mails, ticket keys or summaries.
+
+Key fields:
+- `currentSprint`: sprint header metrics (tickets, points, done, fill rates, stuck counts, etc.)
+- `velocity`: array of last 3 closed sprints with scope, done, completion %, carry-over
+- `burndownLastClosed`: `{ sprintId, sprintName, approx, method, days: [[date, remaining], ...] }`
+- `backlog`: total and age-bucket counts with the JQL used
+- `bugsCreated14d`: bugs created in the last 14 days
+- `pointsNote`: neutral note about Story Points meaning
+- Every approximate metric carries `"approx": true` and a `"method"` string
+
+Schemas: `schema/portfolio-projects.schema.json`, `schema/portfolio-team.schema.json`.

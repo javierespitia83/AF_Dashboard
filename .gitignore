@@ -23,3 +23,6 @@ __pycache__/
 
 # Acceptance harness scratch output, if a scratch dir is placed inside the repo
 /.acceptance/
+
+# Staging files used by other automation (not part of the app)
+/_stage/

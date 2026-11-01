@@ -16,17 +16,21 @@ const path = require('path');
 const { freePort, sleep } = require('./cdp');
 
 // The files a browser needs. Everything else in the repository stays off the local servers.
-const APP_FILES = ['index.html', 'backlog.html', 'quality-intake.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js', 'quality-intake.js'];
+const APP_FILES = ['index.html', 'backlog.html', 'quality-intake.html', 'portfolio.html', 'dashboard.css', 'dashboard.js', 'sprint.js', 'backlog.js', 'quality-intake.js', 'portfolio.js'];
 const DATA_FILES = ['sprints.json', 'backlog.json', 'quality-intake.json'];
 const SNAPSHOT_DIR = 'snapshots';
+const PORTFOLIO_DIR = 'portfolio';
 
 // Copies the app and data files of srcRoot into dest (only files that exist).
 function stageRealApp(srcRoot, dest) {
   fs.rmSync(dest, { recursive: true, force: true });
   fs.mkdirSync(path.join(dest, SNAPSHOT_DIR), { recursive: true });
+  fs.mkdirSync(path.join(dest, PORTFOLIO_DIR), { recursive: true });
   APP_FILES.concat(DATA_FILES).forEach(f => { if (fs.existsSync(path.join(srcRoot, f))) fs.copyFileSync(path.join(srcRoot, f), path.join(dest, f)); });
   const snapDir = path.join(srcRoot, SNAPSHOT_DIR);
   if (fs.existsSync(snapDir)) fs.readdirSync(snapDir).filter(f => /^sprint-\d+\.json$/.test(f)).forEach(f => fs.copyFileSync(path.join(snapDir, f), path.join(dest, SNAPSHOT_DIR, f)));
+  const pfDir = path.join(srcRoot, PORTFOLIO_DIR);
+  if (fs.existsSync(pfDir)) fs.readdirSync(pfDir).filter(f => f.endsWith('.json')).forEach(f => fs.copyFileSync(path.join(pfDir, f), path.join(dest, PORTFOLIO_DIR, f)));
   return dest;
 }
 
@@ -62,6 +66,7 @@ function treeFingerprint(root, excludeAbs = []) {
       if (skip.has(abs) || entry.name === '.git') return;
       if (entry.isDirectory()) { walk(abs); return; }
       if (!entry.isFile()) return;
+      if (entry.name === '.DS_Store' || /^Icon\r/.test(entry.name) || entry.name.startsWith('._')) return;
       if (/^\.env/.test(entry.name)) { const st = fs.statSync(abs); out[rel] = 'stat:' + st.size + ':' + st.mtimeMs; return; }
       out[rel] = sha256(abs);
     });

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Portfolio - App Foundation</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <h1 class="visually-hidden">App Foundation · Portfolio</h1>
+    <header class="topbar">
+      <div class="brand">App Foundation</div>
+      <nav class="tabs" aria-label="Pages">
+        <a class="tab" href="index.html">Current sprint</a>
+        <a class="tab" href="backlog.html">Backlog</a>
+        <a class="tab" href="quality-intake.html">Quality Intake</a>
+      </nav>
+      <details class="portfolio-picker" id="portfolio-picker">
+        <summary class="portfolio-picker-btn" aria-haspopup="true">Portfolio &#9660;</summary>
+        <ul class="portfolio-menu" role="menu" id="portfolio-menu">
+          <li role="none"><a role="menuitem" href="portfolio.html?project=AC" id="pm-AC">Agent Creator</a></li>
+          <li role="none"><a role="menuitem" href="portfolio.html?project=PLATENG" id="pm-PLATENG">Platform Engineering</a></li>
+          <li role="none"><a role="menuitem" href="portfolio.html?project=APIM" id="pm-APIM">APIM</a></li>
+          <li role="none"><a role="menuitem" href="portfolio.html?project=PLAT" id="pm-PLAT">Plat Core</a></li>
+          <li role="separator" style="border-top:1px solid #dde3ed;margin:4px 0"></li>
+          <li role="none"><a role="menuitem" href="index.html">&#8592; App Foundation</a></li>
+        </ul>
+      </details>
+      <div class="snapshot-status" role="status" aria-label="Snapshot update status">
+        <span class="snapshot-badge">SNAPSHOT &middot; NOT LIVE</span>
+        <span class="asof" id="asof">Data as of &mdash;</span>
+      </div>
+    </header>
+    <main class="board" id="app"><p class="loading">Loading&hellip;</p></main>
+    <noscript><p>This dashboard needs JavaScript.</p></noscript>
+    <footer class="foot">Internal &mdash; team only. Do not reuse in executive or external documents without review.</footer>
+  </div>
+  <script src="dashboard.js"></script>
+  <script src="portfolio.js"></script>
+</body>
+</html>

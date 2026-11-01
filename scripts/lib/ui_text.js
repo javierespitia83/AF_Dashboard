@@ -97,4 +97,17 @@ const UI = {
   }
 };
 
+// Portfolio picker (present on all App Foundation pages and on portfolio.html)
+UI.portfolio = {
+  btnText: /Portfolio/,
+  menuItems: ['Agent Creator', 'Platform Engineering', 'APIM', 'Plat Core'],
+  menuItemsWithReturn: ['Agent Creator', 'Platform Engineering', 'APIM', 'Plat Core'],
+  backToAppFound: /App Foundation/,
+  projects: ['AC', 'PLATENG', 'APIM', 'PLAT'],
+  projectLabels: { AC: 'Agent Creator', PLATENG: 'Platform Engineering', APIM: 'APIM', PLAT: 'Plat Core' },
+  unknownMsg: /Unknown project/i,
+  selectHint: /Choose a project/,
+  manifestFile: 'portfolio/projects.json'
+};
+
 module.exports = { UI, THR_TIME };

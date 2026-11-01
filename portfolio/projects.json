@@ -1,0 +1,30 @@
+{
+  "refreshedAt": "2026-10-31",
+  "exportedAt": "2026-10-31T12:00:00-05:00",
+  "projects": [
+    {
+      "key": "AC",
+      "label": "Agent Creator",
+      "currentSprintId": 12135,
+      "file": "portfolio/AC.json"
+    },
+    {
+      "key": "PLATENG",
+      "label": "Platform Engineering",
+      "currentSprintId": 12230,
+      "file": "portfolio/PLATENG.json"
+    },
+    {
+      "key": "APIM",
+      "label": "APIM",
+      "currentSprintId": 12109,
+      "file": "portfolio/APIM.json"
+    },
+    {
+      "key": "PLAT",
+      "label": "Plat Core",
+      "currentSprintId": 12189,
+      "file": "portfolio/PLAT.json"
+    }
+  ]
+}
