@@ -107,7 +107,7 @@ function expectBurn(all, ctx, thr, rem = []) {
   return { n, total: mx, ti, inside, days, unplaced, mid: { count: mid.length, points: sumP(mid) }, by, rby, hasRemoved: Array.isArray(sp.removed), name: sp.name, limit: isoN(s + thr) };
 }
 
-// Needs attention today (R001-02) for the filtered set `all`; S is the whole snapshot (blocker status lookup).
+// Watch list (R001-02, renamed R001-20) for the filtered set `all`; S is the whole snapshot (blocker status lookup).
 // Rows: not Done and long-running, carried over, blocked by a ticket not Done in S, or with blocker text.
 function expectAttention(all, S, sprint) {
   const A = UI.sprint.attention.reasons, byKey = new Map(S.map(t => [t.ticket, t]));

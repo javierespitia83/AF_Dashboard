@@ -17,8 +17,8 @@ const UI = {
   },
   jiraBrowse: 'https://mysnaplogic.atlassian.net/browse/',
   sprint: {
-    tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', attention: 'Needs attention today', matrix: 'Assignee x tester', detail: 'Ticket detail' },
-    mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Needs attention today'],
+    tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', attention: 'Watch list', matrix: 'Assignee x tester', detail: 'Ticket detail' },
+    mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Watch list'],
     lowerRow: ['Ticket detail', 'Assignee x tester'],
     kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & not self-tested', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time', 'Velocity · avg last 3 sprints'],
     kpi: { items: 'Work items', mid: 'Added mid-sprint', carried: 'Carried over', noTester: 'No tester & not self-tested', time: 'Long-running work · ' + THR_TIME + '+ days', cycle: 'Avg cycle time' },
@@ -36,9 +36,13 @@ const UI = {
     searchTag: q => 'Search: “' + String(q).trim() + '”',
     placeholder: 'Search by key, title, status, Self-tested, fix version, person...',
     attention: {
+      title: 'Watch list',
+      titleClosed: 'Watch list at sprint close',
       headers: ['Ticket', 'Status', 'Days', 'Reason'],
-      sub: n => `${n} open ticket${n === 1 ? '' : 's'}: long-running, carried over or blocked`,
-      none: 'Nothing needs attention under these filters.',
+      sub: n => `${n} open ticket${n === 1 ? '' : 's'} to keep an eye on: long-running, carried over or blocked`,
+      subClosed: n => `${n} ticket${n === 1 ? ' was' : 's were'} still open and flagged when the sprint closed: long-running, carried over or blocked`,
+      none: 'Nothing on the watch list under these filters.',
+      noneClosed: 'Nothing was flagged at close under these filters.',
       missing: (noTester, noFix, noPoints) => `Missing: ${noTester} no tester (not self-tested) · ${noFix} no fix version · ${noPoints} no story points`,
       reasons: { long: 'Long-running · ' + THR_TIME + '+ days', carried: 'Carried over', blocked: key => 'Blocked by ' + key, blocker: 'Blocker recorded' }
     },

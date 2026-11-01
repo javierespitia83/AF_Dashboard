@@ -258,7 +258,7 @@
     tBurn.body.classList.add('chart');
     var tStatus = AF.tile({ title: 'Tickets by status', sub: 'Click a status to filter' });
     var tType = AF.tile({ title: 'Tickets by type', sub: 'Click a type to filter' });
-    var tAttention = AF.tile({ title: 'Needs attention today', sub: '' });
+    var tAttention = AF.tile({ title: isClosed ? 'Watch list at sprint close' : 'Watch list', sub: '' });
     var tMatrix = AF.tile({ title: 'Assignee x tester', sub: 'Work items per pair. Click a cell to filter both.' });
     var tDetail = AF.tile({ title: 'Ticket detail', sub: '' });
 
@@ -486,7 +486,7 @@
       }), { dim: 'type', header: 'Type', base: base, onClick: function (name, multi) { store.click('type', name, multi); } });
     }
 
-    // Needs attention today (R001-02): tickets not Done that are long-running, carried over or blocked.
+    // Watch list (R001-02, renamed R001-20): tickets not Done that are long-running, carried over or blocked.
     // Rows show key, status, days and reasons only; no names and no blocker text, because the site is public.
     var byKey = Object.create(null);
     tickets.forEach(function (t) { byKey[t.ticket] = t; });
@@ -528,11 +528,13 @@
         var x = typeof a.t.statusAging === 'number' ? a.t.statusAging : -1, y = typeof b.t.statusAging === 'number' ? b.t.statusAging : -1;
         return y - x || AF.naturalCompare(a.t.ticket, b.t.ticket);
       });
-      tAttention.head.querySelector('.sub').textContent = rows.length + ' open ticket' + (rows.length === 1 ? '' : 's') + ': long-running, carried over or blocked';
+      tAttention.head.querySelector('.sub').textContent = isClosed
+        ? rows.length + ' ticket' + (rows.length === 1 ? ' was' : 's were') + ' still open and flagged when the sprint closed: long-running, carried over or blocked'
+        : rows.length + ' open ticket' + (rows.length === 1 ? '' : 's') + ' to keep an eye on: long-running, carried over or blocked';
       AF.rebuild(tAttention, function () {
         if (!f.length) { tAttention.body.appendChild(AF.emptyState(EMPTY)); return; }
         if (rows.length) tAttention.body.appendChild(AF.buildTable(attentionCols, rows, { cls: 'data attention' }));
-        else tAttention.body.appendChild(AF.emptyState('Nothing needs attention under these filters.'));
+        else tAttention.body.appendChild(AF.emptyState(isClosed ? 'Nothing was flagged at close under these filters.' : 'Nothing on the watch list under these filters.'));
         tAttention.foot.appendChild(el('p', { class: 'attention-missing' }, [
           el('strong', { text: 'Missing: ' }),
           f.filter(noTesterAndNotSelfTested).length + ' no tester (not self-tested) · ' +

@@ -75,7 +75,7 @@ const REMOVED = [
   { ticket: 'APP-950', points: 3, addedDate: '2026-09-22', removedDate: '2026-09-24', status: 'In Progress', owner: 'Ann', tester: 'Tim', fixVersion: '4.46', parent: null, summary: 'gone one' },
   { ticket: 'APP-951', points: 2, addedDate: '2026-09-23', removedDate: '2026-09-24', status: 'To Do', owner: 'Bob', tester: null, fixVersion: '4.46', parent: null, summary: 'gone two' }];
 const CARRIED = { count: 3, percent: 20, storyPoints: 8 };
-// Needs attention today and Self-tested (R001-02, R001-17, R001-18); the expected rows and cells are worked out by hand below.
+// Watch list and Self-tested (R001-02, R001-17, R001-18, R001-20); the expected rows and cells are worked out by hand below.
 const ATT_T = [
   TK({ ticket: 'APP-801', status: 'In Review', statusAging: 9, tester: 'Ann' }),
   TK({ ticket: 'APP-802', status: 'In Progress', statusAging: 2, linkedWorkItems: 'APP-803 (is blocked by), APP-804 (is blocked by), APP-809 (relates to)' }),
@@ -254,16 +254,20 @@ async function suites(ctx) {
       names.forEach(n => { const g = d.types[n], x = e.types[n], wantIcon = iconTypes.has(n) ? 'type:' + n : null; if (!g || g[0] !== x.i || g[1] !== x.p || d.typeRaw[n] !== `${x.i} W.I | ${x.p} SP`) errs.push(['type metrics', n, g, x, d.typeRaw[n]]); if (d.typeIcons[n] !== wantIcon) errs.push(['type icon', n, d.typeIcons[n], wantIcon]); });
       if (d.typeFoot.replace(/\s+/g, '') !== `Total${e.typeBase.length}W.I|${M.sumP(e.typeBase)}SP`) errs.push(['type total', d.typeFoot]);
     } else if (!d.empties.type) errs.push(['type empty-state missing']);
-    { const xa = e.attention, ga = d.attention, AT = UI.sprint.attention;
+    { const xa = e.attention, ga = d.attention, AT = UI.sprint.attention, isClosed = !!c.closed;
+      const wantTitle = isClosed ? AT.titleClosed : AT.title;
+      const wantSub = (isClosed ? AT.subClosed : AT.sub)(xa.rows.length);
+      const wantNone = isClosed ? AT.noneClosed : AT.none;
       if (!e.all.length) { if (ga.empty !== UI.sprint.empty) errs.push(['attention empty-state', ga.empty]); }
       else {
         const got = ga.rows.map(r => [r.key, r.status, r.days, r.reasons]), want = xa.rows.map(r => [r.key, r.status, r.days, r.reasons]);
         if (!eq(got, want)) errs.push(['attention rows', got.length, want.length, got.filter((g, i) => !eq(g, want[i])).slice(0, 2), want.filter((w, i) => !eq(w, got[i])).slice(0, 2)]);
-        if (xa.rows.length ? !eq(ga.hdr, AT.headers) : ga.empty !== AT.none) errs.push(['attention headers or none state', ga.hdr, ga.empty]);
+        if (xa.rows.length ? !eq(ga.hdr, AT.headers) : ga.empty !== wantNone) errs.push(['attention headers or none state', ga.hdr, ga.empty]);
         if (ga.foot !== xa.missing) errs.push(['attention missing line', ga.foot, xa.missing]);
         if (!ga.rows.every(r => r.links.length >= 1 && r.links.every(h => h.startsWith(UI.jiraBrowse)))) errs.push(['attention links']);
       }
-      if (ga.sub !== AT.sub(xa.rows.length)) errs.push(['attention subtitle', ga.sub, AT.sub(xa.rows.length)]);
+      if (ga.title !== wantTitle) errs.push(['attention title', ga.title, wantTitle]);
+      if (ga.sub !== wantSub) errs.push(['attention subtitle', ga.sub, wantSub]);
       // R001-02 condition 1 (public site): no person names and no blocker text in the panel
       const names = [...new Set(Srows.flatMap(t => [t.owner, t.tester]).filter(n => n != null && String(n).trim() !== '' && n !== 'Unassigned').map(String))];
       const leaked = names.filter(n => ga.text.includes(n)).concat(Srows.map(t => t.blocker).filter(b => b != null && String(b).trim().length >= 8).map(b => String(b).trim().slice(0, 24)).filter(b => ga.text.includes(b)));
@@ -355,13 +359,15 @@ async function suites(ctx) {
     check('Closed sprint: historical banner and gray view, snapshot date and note, carried over as exported, narratives as exported and no Today marker', closedView.banner.includes(UI.sprint.closed.banner) && closedView.banner.includes(UI.sprint.closed.asOf + asOfLabel(CLOSED).replace(/^Data as of /, '')) && closedView.historical && closedView.note === (CLOSED_ENTRY.note || null) && eq(closedView.carried, wantCarried) && closedView.rowsNullSituation === CLOSED.tickets.every(t => !t.lastSyncUpdate) && closedView.noToday && closedView.days === wantDays && closedView.foot.includes(wantFoot), { closedView, wantCarried, wantDays });
     check('Closed sprint: a null owner displays Unassigned and every null point value displays —', (closedView.unassigned === null || closedView.unassigned.owner === 'Unassigned') && closedView.nullPoints === CLOSED.tickets.filter(t => t.points == null).length, { unassigned: closedView.unassigned, nullPoints: closedView.nullPoints });
     await verifySprint(p, CLOSED.tickets, M.newF(), 'Closed sprint: every tile and the burndown (through sprint end) equal the independent calculation', { sprint: CLOSED.sprint, today: CLOSED.refreshedAt, thr: 1, closed: true });
+    check('Watch list wording (closed sprint): title "Watch list at sprint close" and closed-sprint subtitle', await run(p, `const t=tile(${q(UI.sprint.attention.titleClosed)}); return !!t && T(t.querySelector('h2'))===${q(UI.sprint.attention.titleClosed)} && /^\\d+ tickets? (was|were) still open and flagged when the sprint closed: long-running, carried over or blocked$/.test(T(t.querySelector('.sub')))`));
     await p.screenshot(path.join(SP, 'sprint_closed_1920.png'));
     await p.resize(480, 900);
     { const l = await run(p, LAYOUT), pick = await run(p, `const s=document.getElementById('sprint-select').getBoundingClientRect(); return {select:[s.left,s.right,s.width]}`); await p.screenshot(path.join(SP, 'sprint_closed_480.png')); check('Closed sprint: selector remains visible at narrow width without page-level horizontal overflow', pick.select[2] > 0 && l.sw <= l.iw && l.bad.length === 0, { scrollWidth: l.sw, innerWidth: l.iw, bad: l.bad, picker: pick }); }
     await p.resize(1920, 1080);
     await run(p, `setSel('sprint-select','${MANIFEST.current}')`);
     for (let i = 0; i < 40 && !(await run(p, `!!document.querySelector('.kpis') && document.getElementById('sprint-select').value==='${MANIFEST.current}'`).catch(() => false)); i++) await sleep(100);
-    const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value}`);
+    const returned = await run(p, `return {banner:document.getElementById('sprint-banner').hidden,tags:document.querySelectorAll('.tags .tag').length,selector:document.getElementById('sprint-select').value,watchTitle:tile(${q(ST.attention)})?T(tile(${q(ST.attention)}).querySelector('h2')):null}`);
+    check('Watch list wording switches: returning to the active sprint restores the title "Watch list"', returned.watchTitle === UI.sprint.attention.title, returned.watchTitle);
     check('Sprint selector: switching back reuses cached snapshots and restores the active sprint without a banner or filters', p.reqs.filter(u => u.endsWith('/' + ACTIVE_FILE)).length === 1 && p.reqs.filter(u => u.endsWith('/' + CLOSED_ENTRY.file)).length === 1 && p.reqs.filter(u => u.endsWith('/sprints.json')).length === 1 && returned.banner && returned.tags === 0 && returned.selector === String(MANIFEST.current), { requests: p.reqs, returned });
     // C2: no ResizeObserver is left drawing into a detached chart after sprint switches
     await run(p, `window.__detachedDraws = 0; const orig = AF.drawBurndown; AF.drawBurndown = function (c) { if (!document.contains(c)) window.__detachedDraws++; return orig.apply(this, arguments); }`);
@@ -461,15 +467,15 @@ async function suites(ctx) {
   check('Layout: main-row tiles share one height; lower-row tiles share one height and together span the width; heat grid is about 28% wide', new Set(L.tiles.slice(9, 13).map(t => t.h)).size === 1 && new Set(L.tiles.slice(13, 15).map(t => t.h)).size === 1 && L.tiles[13].w + L.tiles[14].w + 10 >= L.iw - 30 && L.tiles[14].w >= 440 && L.tiles[14].w <= 0.32 * L.iw, L.tiles.slice(9));
   const rowRatio = L.tiles[9].h / L.tiles[13].h;
   check('Layout: 15% of former main-row height transferred to the lower row', Math.abs(rowRatio - 1.1475 / 1.2025) < 0.02, { rowRatio, expected: 1.1475 / 1.2025 });
-  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Needs attention today; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(9).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[10].w >= 250 && L.tiles[11].w >= 250, L.tiles.slice(9).map(t => t.title + ' ' + t.w));
+  check('Layout: main row is Burndown, Tickets by status, Tickets by type, Watch list; lower row is Ticket detail then Assignee x tester', eq(L.tiles.slice(9).map(t => t.title), UI.sprint.mainRow.concat(UI.sprint.lowerRow)) && L.tiles[10].w >= 250 && L.tiles[11].w >= 250, L.tiles.slice(9).map(t => t.title + ' ' + t.w));
   check('Tile bodies scroll inside (overflow auto), assignee list overflows', L.bodies.every(b => b.ov === 'auto' || b.ov === 'hidden') && L.bodies.some(b => b.sh > b.ch), L.bodies);
   const st = await run(p, `const out={}; for (const [k,t] of [['attention',${q(ST.attention)}],['detail',${q(ST.detail)}],['matrix',${q(ST.matrix)}]]) { const b=tile(t).querySelector('.tile-body'); const th=b.querySelector('thead th'); b.scrollTop=120; const br=b.getBoundingClientRect(); out[k]={scrolls:b.scrollHeight>b.clientHeight, sb:b.offsetWidth-b.clientWidth, thSticky: th?getComputedStyle(th).position:null, thDiff: th?Math.round(th.getBoundingClientRect().top-br.top):null}; if(k==='detail'){const owner=b.querySelector('td.owner'), tester=b.querySelector('td.tester'), status=b.querySelector('td.status'), cell=b.querySelector('td.current-situation'); out[k].ownerWrap=owner?getComputedStyle(owner).whiteSpace==='normal':false; out[k].testerWrap=tester?getComputedStyle(tester).whiteSpace==='normal':false; out[k].statusWrap=status?getComputedStyle(status).whiteSpace==='normal':false; out[k].ownerMaxWidth=owner?getComputedStyle(owner).maxWidth:null; out[k].situationWidth=cell?Math.round(cell.getBoundingClientRect().width):0; out[k].horizontal=b.scrollWidth>b.clientWidth; b.scrollLeft=b.scrollWidth; out[k].horizontalWorks=b.scrollLeft>0; b.scrollLeft=0;} b.scrollTop=0;} const ft=tile(${q(ST.attention)}).querySelector('.tile-foot'); out.footVisible = ft.getBoundingClientRect().bottom <= tile(${q(ST.attention)}).getBoundingClientRect().bottom+1 && T(ft).startsWith('Missing:'); return out;`);
-  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Missing line pinned under Needs attention today', (!st.attention.scrolls || (st.attention.sb > 0 && st.attention.thSticky === 'sticky' && Math.abs(st.attention.thDiff) <= 2)) && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
+  check('Sticky headers, visible scrollbars, wrapping Owner/Tester/Status cells, Last sync update at least 350 px wide with horizontal scroll, Missing line pinned under the Watch list', (!st.attention.scrolls || (st.attention.sb > 0 && st.attention.thSticky === 'sticky' && Math.abs(st.attention.thDiff) <= 2)) && st.detail.thSticky === 'sticky' && Math.abs(st.detail.thDiff) <= 2 && st.detail.ownerWrap && st.detail.testerWrap && st.detail.statusWrap && st.detail.ownerMaxWidth === 'none' && st.detail.situationWidth >= 350 && st.detail.horizontal && st.detail.horizontalWorks && st.matrix.thSticky === 'sticky' && Math.abs(st.matrix.thDiff) <= 2 && st.footVisible, st);
   { const ex = M.expectSprint(S, M.newF(), CTX).attention, A = UI.sprint.attention.reasons;
-    check('Needs attention today (real data): rows equal the independent calculation (not Done; long-running, carried over, blocked by a ticket not Done, or blocker recorded), most days first; no names or blocker text (checked in every sprint state)', (await run(p, READ_SPRINT)).attention.rows.length === ex.rows.length, ex.rows.length);
+    check('Watch list (real data): rows equal the independent calculation (not Done; long-running, carried over, blocked by a ticket not Done, or blocker recorded), most days first; no names or blocker text (checked in every sprint state)', (await run(p, READ_SPRINT)).attention.rows.length === ex.rows.length, ex.rows.length);
     const doneBlockers = S.filter(t => M.bucket(t.status) !== 3).flatMap(t => [...String(t.linkedWorkItems || '').matchAll(/\b([A-Z][A-Z0-9]+-[0-9]+) \(is blocked by\)/g)].map(m => [t.ticket, m[1]])).filter(([, k]) => S.some(x => x.ticket === k && M.bucket(x.status) === 3));
-    if (doneBlockers.length) check(`Needs attention today: "is blocked by" links to a Done ticket are ignored (${doneBlockers.map(x => x.join(' by ')).join(', ')})`, doneBlockers.every(([key, b]) => !(ex.rows.find(r => r.key === key) || { reasons: [] }).reasons.includes(A.blocked(b))) && !(await run(p, `return T(tile(${q(ST.attention)}))`)).includes(doneBlockers.map(([, b]) => A.blocked(b))[0]), doneBlockers);
-    else skip('Needs attention today: blocked-by link to a Done ticket (real data)', 'no such link in the active sprint; covered by the hand-made attention data'); }
+    if (doneBlockers.length) check(`Watch list: "is blocked by" links to a Done ticket are ignored (${doneBlockers.map(x => x.join(' by ')).join(', ')})`, doneBlockers.every(([key, b]) => !(ex.rows.find(r => r.key === key) || { reasons: [] }).reasons.includes(A.blocked(b))) && !(await run(p, `return T(tile(${q(ST.attention)}))`)).includes(doneBlockers.map(([, b]) => A.blocked(b))[0]), doneBlockers);
+    else skip('Watch list: blocked-by link to a Done ticket (real data)', 'no such link in the active sprint; covered by the hand-made attention data'); }
 
   const typeGroups = M.group(S, M.SKEY.type);
   const typeNames = Object.keys(typeGroups).sort((a, b) => typeGroups[b].i - typeGroups[a].i || a.localeCompare(b));
@@ -583,7 +589,7 @@ async function suites(ctx) {
   await run(p, `document.activeElement && document.activeElement.blur(); window.scrollTo(0,0)`);
   { let li = null; for (let i = 0; i < 260 && !li; i++) { await p.key('Tab', 'Tab', 9); li = await run(p, `const a=document.activeElement; return a && a.matches && a.matches('a.jira') ? {outline:getComputedStyle(a).outlineStyle, w:getComputedStyle(a).outlineWidth} : null`); }
     check('Jira links: Tab reaches a link and it shows a visible focus outline', li && li.outline !== 'none' && parseFloat(li.w) >= 2, li); }
-  check('Needs attention today wording: title, subtitle, Ticket/Status/Days/Reason headers and the Missing line; Team Contribution is no longer on the sprint page', await run(p, `const t=tile(${q(ST.attention)}); return !!t && /^\\d+ open tickets?: long-running, carried over or blocked$/.test(T(t.querySelector('.sub'))) && (!t.querySelector('thead') || [...t.querySelectorAll('thead th')].map(T).join('|')===${q(UI.sprint.attention.headers.join('|'))}) && /^Missing: \\d+ no tester \\(not self-tested\\) · \\d+ no fix version · \\d+ no story points$/.test(T(t.querySelector('.tile-foot'))) && !tile('Team Contribution')`));
+  check('Watch list wording (active sprint): title "Watch list", subtitle, Ticket/Status/Days/Reason headers and the Missing line; Team Contribution is no longer on the sprint page', await run(p, `const t=tile(${q(ST.attention)}); return !!t && T(t.querySelector('h2'))===${q(UI.sprint.attention.title)} && /^\\d+ open tickets? to keep an eye on: long-running, carried over or blocked$/.test(T(t.querySelector('.sub'))) && (!t.querySelector('thead') || [...t.querySelectorAll('thead th')].map(T).join('|')===${q(UI.sprint.attention.headers.join('|'))}) && /^Missing: \\d+ no tester \\(not self-tested\\) · \\d+ no fix version · \\d+ no story points$/.test(T(t.querySelector('.tile-foot'))) && !tile('Team Contribution') && !tile('Needs attention today')`));
   check('Sprint: no console errors/warnings after all interactions', p.logs.length === 0, p.logs);
   // threshold setting, detail columns
   await run(p, `AF.config.midSprintThresholdDays = 5; AF.store.reset()`);
@@ -858,7 +864,7 @@ async function suites(ctx) {
       const snap = J(entry.file), T = snap.tickets;
       if (x.exportedAt && snap.exportedAt !== x.exportedAt) { skip(`R001-18 sprint ${x.id}: fixed expected values`, `the snapshot is a later export (${snap.exportedAt}) than the one the log values come from (${x.exportedAt})`); continue; }
       const pg = await open(base + 'index.html?sprint=' + x.id);
-      const got = await run(pg, `const m=matrixOf(${q(ST.matrix)}); const det=tile(${q(ST.detail)}), hdr=[...det.querySelectorAll('thead th')].map(T), ix=hdr.indexOf('Self-tested'); const col={}; det.querySelectorAll('tbody tr').forEach(tr=>{const v=T(tr.children[ix]); col[v]=(col[v]||0)+1;}); return { kpi: T(kpi(${q(UI.sprint.kpi.noTester)}).querySelector('.value')), self: m.colTotals['Self-tested']||0, unassigned: m.colTotals['Unassigned']||0, col, attention: T(tile(${q(ST.attention)}).querySelector('.tile-foot')) }`);
+      const got = await run(pg, `const m=matrixOf(${q(ST.matrix)}); const det=tile(${q(ST.detail)}), hdr=[...det.querySelectorAll('thead th')].map(T), ix=hdr.indexOf('Self-tested'); const col={}; det.querySelectorAll('tbody tr').forEach(tr=>{const v=T(tr.children[ix]); col[v]=(col[v]||0)+1;}); return { kpi: T(kpi(${q(UI.sprint.kpi.noTester)}).querySelector('.value')), self: m.colTotals['Self-tested']||0, unassigned: m.colTotals['Unassigned']||0, col, attention: T((tile(${q(ST.attention)})||tile(${q(UI.sprint.attention.titleClosed)})).querySelector('.tile-foot')) }`);
       const oldK = T.filter(oldNoTester).length, oldS = T.filter(t => oldGroup(t) === 'Self-tested').length;
       const dashOther = T.filter(t => M.selfTestReason(t) === '—' && M.grpName(t.tester) !== 'Unassigned').length;
       check(`R001-18 sprint ${x.id}: the snapshot gives the log's old values under the old rule (no tester KPI ${x.kpi[0]}, grid Self-tested ${x.self[0]})`, oldK === x.kpi[0] && oldS === x.self[0], { oldK, oldS });
@@ -976,7 +982,7 @@ async function suites(ctx) {
     check('Removed: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
 
-  console.log('\n--- Needs attention today and Self-tested with hand-made data (copy of the app) ---');
+  console.log('\n--- Watch list and Self-tested with hand-made data (copy of the app) ---');
   p = await open(url.attn + 'index.html');
   { const AJ = JSON.parse(mkSprint(Object.assign({ carriedOver: ATT_CARRIED }, SP_OK), '2026-09-25', ATT_T)), ACTX = { sprint: AJ.sprint, today: AJ.refreshedAt, thr: 1 };
     const A = UI.sprint.attention.reasons;
@@ -995,7 +1001,7 @@ async function suites(ctx) {
     await run(p, `clickReset()`);
     await run(p, `clickRow(${q(ST.status)}, 'Done')`); const fd2 = M.newF(); fd2.status = new Set(['Done']);
     const r2 = await verifySprint(p, ATT_T, fd2, 'Attention data: status Done selected', ACTX);
-    check('Attention (by hand): with only Done tickets the panel says nothing needs attention', r2.d.attention.empty === UI.sprint.attention.none && r2.d.attention.rows.length === 0, r2.d.attention);
+    check('Attention (by hand): with only Done tickets the panel says nothing on the watch list', r2.d.attention.empty === UI.sprint.attention.none && r2.d.attention.rows.length === 0, r2.d.attention);
     await run(p, `clickReset()`);
     check('Attention data: no console errors', p.logs.length === 0, p.logs); }
   await p.close();
