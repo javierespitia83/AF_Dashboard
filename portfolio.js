@@ -57,44 +57,58 @@
   }
 
   // ── burndown mini-chart ───────────────────────────────────────────────────
-  function burndownChart(bdata, h) {
-    // bdata.days: [[date, remaining], ...]
+  function burndownChart(bdata) {
+    // bdata.days: [[date, remaining points], ...]
     var days = bdata.days;
     if (!days || !days.length) return el('p', { class: 'empty', text: 'n/a' });
-    var W = 280, H = h || 120, PAD = 8;
-    var maxR = 0;
-    for (var i = 0; i < days.length; i++) { if (days[i][1] > maxR) maxR = days[i][1]; }
+    var NS = 'http://www.w3.org/2000/svg';
+    var W = 560, H = 236, L = 46, R = 14, T = 24, B = 34;
+    var maxR = 0, i;
+    for (i = 0; i < days.length; i++) { if (days[i][1] > maxR) maxR = days[i][1]; }
     if (!maxR) maxR = 1;
     var n = days.length;
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('class', 'pf-burn');
-    // ideal line (from maxR to 0)
-    var ix1 = PAD, iy1 = PAD + (H - 2 * PAD) * (1 - maxR / maxR);
-    var ix2 = W - PAD, iy2 = H - PAD;
-    var ideal = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    ideal.setAttribute('x1', ix1); ideal.setAttribute('y1', iy1);
-    ideal.setAttribute('x2', ix2); ideal.setAttribute('y2', iy2);
-    ideal.setAttribute('stroke', '#aab'); ideal.setAttribute('stroke-width', '1');
-    ideal.setAttribute('stroke-dasharray', '4 3');
-    svg.appendChild(ideal);
-    // remaining line
-    var pts = days.map(function (d, idx) {
-      var x = PAD + (idx / (n - 1)) * (W - 2 * PAD);
-      var y = PAD + (H - 2 * PAD) * (1 - d[1] / maxR);
-      return x.toFixed(1) + ',' + y.toFixed(1);
-    });
-    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-    poly.setAttribute('points', pts.join(' '));
-    poly.setAttribute('fill', 'none');
-    poly.setAttribute('stroke', '#1f6f64');
-    poly.setAttribute('stroke-width', '2');
-    svg.appendChild(poly);
+    function X(idx) { return L + (n > 1 ? idx / (n - 1) : 0) * (W - L - R); }
+    function Y(v) { return T + (H - T - B) * (1 - v / maxR); }
+    function node(name, attrs, text) {
+      var e = document.createElementNS(NS, name);
+      for (var k in attrs) { if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]); }
+      if (text != null) e.textContent = text;
+      return e;
+    }
+    function shortDate(s) { return s.slice(5).replace('-', '/'); }
+    var svg = node('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'class': 'pf-burn',
+      'aria-label': 'Burndown: story points remaining per day, from ' + days[0][0] + ' to ' + days[n - 1][0] });
+    // horizontal grid and y labels (points remaining)
+    var ticks = [0, Math.round(maxR / 2), maxR];
+    for (i = 0; i < ticks.length; i++) {
+      svg.appendChild(node('line', { x1: L, x2: W - R, y1: Y(ticks[i]), y2: Y(ticks[i]), stroke: '#dde2ea', 'stroke-width': 1 }));
+      svg.appendChild(node('text', { x: L - 6, y: Y(ticks[i]) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#5b6676' }, String(ticks[i])));
+    }
+    svg.appendChild(node('text', { x: 4, y: 12, 'font-size': 11, fill: '#5b6676' }, 'points remaining'));
+    // x labels (dates): first, middle, last
+    var xs = [0, Math.floor((n - 1) / 2), n - 1];
+    for (i = 0; i < xs.length; i++) {
+      if (i > 0 && xs[i] === xs[i - 1]) continue;
+      svg.appendChild(node('text', { x: X(xs[i]), y: H - 12, 'text-anchor': i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'), 'font-size': 11, fill: '#5b6676' }, shortDate(days[xs[i]][0])));
+    }
+    // ideal line: from the first value to 0 at the last day
+    svg.appendChild(node('line', { x1: X(0), y1: Y(days[0][1]), x2: X(n - 1), y2: Y(0), stroke: '#8a94a6', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+    // remaining line and points with tooltips
+    var pts = [];
+    for (i = 0; i < n; i++) { pts.push(X(i).toFixed(1) + ',' + Y(days[i][1]).toFixed(1)); }
+    svg.appendChild(node('polyline', { points: pts.join(' '), fill: 'none', stroke: '#1f6f64', 'stroke-width': 2.5 }));
+    for (i = 0; i < n; i++) {
+      var c = node('circle', { cx: X(i).toFixed(1), cy: Y(days[i][1]).toFixed(1), r: 3.5, fill: '#1f6f64' });
+      c.appendChild(node('title', {}, days[i][0] + ': ' + days[i][1] + ' points remaining'));
+      svg.appendChild(c);
+    }
     var wrap = el('div', { class: 'pf-burn-wrap' });
     wrap.appendChild(svg);
-    var cap = el('p', { class: 'pf-burn-cap', text: bdata.sprintName + ' ≈' });
-    wrap.appendChild(cap);
+    var legend = el('p', { class: 'pf-burn-cap' });
+    legend.appendChild(el('span', { class: 'pf-lg pf-lg-real', text: '━ Points remaining (≈)' }));
+    legend.appendChild(el('span', { class: 'pf-lg pf-lg-ideal', text: '┄ Ideal line' }));
+    legend.appendChild(el('span', { text: bdata.sprintName + ' · ' + shortDate(days[0][0]) + ' to ' + shortDate(days[n - 1][0]) }));
+    wrap.appendChild(legend);
     return wrap;
   }
 
@@ -182,7 +196,7 @@
 
     // burndown tile
     var burnTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Burndown' });
-    burnTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Burndown (last closed sprint) ≈' })]));
+    burnTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Burndown of the last closed sprint (story points remaining) ≈' })]));
     var burnBody = el('div', { class: 'tile-body' });
     if (data.burndownLastClosed && data.burndownLastClosed.days && data.burndownLastClosed.days.length) {
       burnBody.appendChild(burndownChart(data.burndownLastClosed));
