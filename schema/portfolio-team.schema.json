@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portfolio-team.schema.json",
+  "title": "Portfolio team snapshot",
+  "description": "Per-team portfolio snapshot. Contains only counts, percentages, sprint ids and dates, sprint names and day counts. No person names, e-mails, ticket keys or summaries.",
+  "type": "object",
+  "required": ["team", "label", "refreshedAt", "pointsNote", "currentSprint", "velocity", "burndownLastClosed", "backlog", "bugsCreated14d"],
+  "additionalProperties": false,
+  "properties": {
+    "team": { "type": "string", "pattern": "^[A-Z][A-Z0-9]+$" },
+    "label": { "type": "string" },
+    "refreshedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "exportedAt": { "type": "string" },
+    "pointsNote": { "type": "string" },
+    "currentSprint": {
+      "type": "object",
+      "required": ["id", "name", "startDate", "endDate", "state", "tickets", "points", "doneTickets", "donePoints", "ticketsFillPct", "pointsFillPct", "testerFillPct", "fixVersionFillPct", "parentFillPct", "teamSize", "bugsInSprint", "carriedIn", "createdAfterStart", "stuckD7", "stuckD14", "pastEndDate"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "startDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "endDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "state": { "type": "string", "enum": ["active", "closed"] },
+        "tickets": { "type": "integer" },
+        "points": { "type": "number" },
+        "doneTickets": { "type": "integer" },
+        "donePoints": { "type": "number" },
+        "ticketsFillPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "pointsFillPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "testerFillPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "fixVersionFillPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "parentFillPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "teamSize": { "type": "integer" },
+        "bugsInSprint": { "type": "integer" },
+        "carriedIn": { "type": "integer" },
+        "createdAfterStart": { "type": "integer" },
+        "stuckD7": { "type": "integer" },
+        "stuckD14": { "type": "integer" },
+        "pastEndDate": { "type": "boolean" }
+      }
+    },
+    "velocity": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "startDate", "endDate", "completedDate", "closedLateDays", "scopeTickets", "scopePoints", "doneTickets", "donePoints", "completionTicketsPct", "completionPointsPct", "carriedToNext", "createdAfterStart", "approx", "method"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "startDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "endDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "completedDate": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "closedLateDays": { "type": "integer" },
+          "scopeTickets": { "type": "integer" },
+          "scopePoints": { "type": "number" },
+          "doneTickets": { "type": "integer" },
+          "donePoints": { "type": "number" },
+          "completionTicketsPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "completionPointsPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "carriedToNext": { "type": "integer" },
+          "createdAfterStart": { "type": "integer" },
+          "approx": { "type": "boolean" },
+          "method": { "type": "string" }
+        }
+      }
+    },
+    "burndownLastClosed": {
+      "type": "object",
+      "required": ["sprintId", "sprintName", "approx", "method", "days"],
+      "additionalProperties": false,
+      "properties": {
+        "sprintId": { "type": "integer" },
+        "sprintName": { "type": "string" },
+        "approx": { "type": "boolean" },
+        "method": { "type": "string" },
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+              { "type": "number" }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "backlog": {
+      "type": "object",
+      "required": ["total", "created90dPlus", "created180dPlus", "created365dPlus", "noPoints", "noParent", "jql"],
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "integer" },
+        "created90dPlus": { "type": "integer" },
+        "created180dPlus": { "type": "integer" },
+        "created365dPlus": { "type": "integer" },
+        "notUpdated365d": { "type": ["integer", "null"] },
+        "noPoints": { "type": "integer" },
+        "noParent": { "type": "integer" },
+        "jql": { "type": "string" }
+      }
+    },
+    "bugsCreated14d": { "type": "integer" }
+  }
+}

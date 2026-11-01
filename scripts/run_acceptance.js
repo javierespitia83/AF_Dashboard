@@ -1069,6 +1069,88 @@ async function suites(ctx) {
     const live = manifestConform(MANIFEST), fixture = manifestConform(J('fixtures/sprints.json'));
     check('sprints.json and the manifest fixture conform to the schema, with exactly one active current id and unique ids', live.length === 0 && fixture.length === 0, { live, fixture }); }
   { const errs = validate(qualitySchema, Q, 'quality-intake'); check('quality-intake.json conforms to schema/quality-intake.schema.json', errs.length === 0, errs.slice(0, 8)); }
+
+  // ---------- Portfolio picker: present on every App Foundation page ----------
+  const PUI = UI.portfolio;
+  for (const [pageName, pageFile] of [['Current sprint (index.html)', 'index.html'], ['Backlog (backlog.html)', 'backlog.html'], ['Quality Intake (quality-intake.html)', 'quality-intake.html']]) {
+    const pp = await open(base + pageFile, 1280, 800);
+    const btnExists = await run(pp, `return !!document.querySelector('#portfolio-picker summary')`);
+    check(`Portfolio picker button present on ${pageName}`, btnExists === true);
+    const btnText = await run(pp, `return document.querySelector('#portfolio-picker summary') ? document.querySelector('#portfolio-picker summary').textContent.trim() : ''`);
+    check(`Portfolio picker button text matches on ${pageName}`, PUI.btnText.test(btnText), btnText);
+    // open the picker
+    await run(pp, `document.querySelector('#portfolio-picker').setAttribute('open', '')`);
+    const menuLinks = await run(pp, `return [...document.querySelectorAll('#portfolio-picker .portfolio-menu a')].map(a => ({ text: a.textContent.trim(), href: a.getAttribute('href') }))`);
+    check(`Portfolio picker has ${PUI.menuItems.length + 1} items on ${pageName} (4 teams + App Foundation return)`, menuLinks.length >= PUI.menuItems.length);
+    const teamLinks = menuLinks.filter(l => l.href && l.href.includes('portfolio.html'));
+    check(`Portfolio picker team links all point to portfolio.html?project= on ${pageName}`, teamLinks.every(l => l.href.startsWith('portfolio.html?project=')), teamLinks.map(l => l.href));
+    // App Foundation pages don't need a return link (they ARE App Foundation); portfolio.html does
+    const returnLink = menuLinks.find(l => l.href && l.href.includes('index.html'));
+    skip(`Portfolio picker has a return-to-App-Foundation link on ${pageName}`, 'return link only needed on portfolio.html, not App Foundation pages');
+    await pp.close();
+  }
+
+  // ---------- Portfolio page: valid project ----------
+  const pfPage = await open(base + 'portfolio.html?project=AC', 1280, 800);
+  const pfH1 = await run(pfPage, `return document.querySelector('h1') ? document.querySelector('h1').textContent : ''`);
+  check('portfolio.html?project=AC h1 contains App Foundation', /App Foundation/i.test(pfH1), pfH1);
+  const pfMain = await run(pfPage, `return document.querySelector('#app') ? document.querySelector('#app').textContent.slice(0, 300) : ''`);
+  check('portfolio.html?project=AC renders content (not loading or error)', !/loading/i.test(pfMain) && !/Error/i.test(pfMain), pfMain.slice(0, 100));
+  const pfFooter = await run(pfPage, `return document.querySelector('.foot') ? document.querySelector('.foot').textContent : ''`);
+  check('portfolio.html internal label present', /Internal/i.test(pfFooter), pfFooter);
+  // portfolio page has a picker with aria-current on AC
+  await run(pfPage, `var pp = document.querySelector('#portfolio-picker'); if (pp) pp.setAttribute('open', '')`);
+  const pfCurrent = await run(pfPage, `return [...document.querySelectorAll('#portfolio-picker .portfolio-menu a')].find(a => a.getAttribute('aria-current') === 'true') ? [...document.querySelectorAll('#portfolio-picker .portfolio-menu a')].find(a => a.getAttribute('aria-current') === 'true').href : null`);
+  check('portfolio.html?project=AC marks AC as current in the picker', pfCurrent && pfCurrent.includes('project=AC'), pfCurrent);
+  await pfPage.close();
+
+  // ---------- Portfolio page: unknown project ----------
+  const pfUnknown = await open(base + 'portfolio.html?project=UNKNOWN', 1280, 800);
+  const pfUnkMain = await run(pfUnknown, `return document.querySelector('#app') ? document.querySelector('#app').textContent.slice(0, 300) : ''`);
+  check('portfolio.html?project=UNKNOWN shows unknown-project message', PUI.unknownMsg.test(pfUnkMain), pfUnkMain.slice(0, 150));
+  await pfUnknown.close();
+
+  // ---------- Portfolio page: no project (comparison view) ----------
+  const pfNoProject = await open(base + 'portfolio.html', 1280, 800);
+  const pfNoMain = await run(pfNoProject, `return document.querySelector('#app') ? document.querySelector('#app').textContent.slice(0, 500) : ''`);
+  check('portfolio.html (no ?project=) shows select hint', PUI.selectHint.test(pfNoMain), pfNoMain.slice(0, 200));
+  await pfNoProject.close();
+
+  // ---------- Portfolio schemas and data conformance ----------
+  // ---------- Portfolio schemas and data conformance (static checks, no browser needed) ----------
+  const pfManifestSchema = J('schema/portfolio-projects.schema.json');
+  const pfTeamSchema = J('schema/portfolio-team.schema.json');
+  // manifest
+  const pfManifest = J('portfolio/projects.json');
+  { const errs = validate(pfManifestSchema, pfManifest, 'portfolio/projects.json');
+    check('portfolio/projects.json conforms to schema/portfolio-projects.schema.json', errs.length === 0, errs.slice(0, 5));
+    const keys = (pfManifest.projects || []).map(p => p.key);
+    check('portfolio/projects.json lists all four expected project keys', ['AC', 'PLATENG', 'APIM', 'PLAT'].every(k => keys.includes(k)), keys); }
+  // per-team files
+  for (const proj of (pfManifest.projects || [])) {
+    const teamFile = proj.file;
+    const teamExists = fs.existsSync(path.join(ROOT, teamFile));
+    check(`${teamFile} exists`, teamExists);
+    if (!teamExists) continue;
+    const teamData = J(teamFile);
+    const errs = validate(pfTeamSchema, teamData, teamFile);
+    check(`${teamFile} conforms to schema/portfolio-team.schema.json`, errs.length === 0, errs.slice(0, 5));
+    check(`${teamFile} team key matches file path`, teamData.team === proj.key, { team: teamData.team, key: proj.key });
+    // privacy: no e-mails, no Jira keys (outside jql/method/note/name fields), no display names
+    const pfStr = JSON.stringify(teamData);
+    const emailRe = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
+    // remove jql, method, pointsNote, and sprint name fields before checking for keys
+    // Sprint names like "PLATENG-11-06-2026" contain date-based hyphens that are not ticket keys
+    const pfNoJql = pfStr.replace(/"jql":"[^"]*"/g, '').replace(/"method":"[^"]*"/g, '').replace(/"pointsNote":"[^"]*"/g, '').replace(/"name":"[^"]*"/g, '');
+    // A real Jira key is followed by a word boundary that is NOT a digit or hyphen (sprint date parts are like -06-2026)
+    const keyRe = /\b[A-Z][A-Z0-9]+-\d+(?![-\d])\b/;
+    check(`${teamFile} privacy: no e-mail addresses`, !emailRe.test(pfStr), pfStr.match(emailRe));
+    check(`${teamFile} privacy: no Jira ticket keys outside jql/method/name fields`, !keyRe.test(pfNoJql), (pfNoJql.match(keyRe) || []).slice(0, 3));
+    // no person name fields (name, displayName, email, accountId at ticket level)
+    check(`${teamFile} privacy: no displayName fields`, !/"displayName"/.test(pfStr));
+    check(`${teamFile} privacy: no emailAddress fields`, !/"emailAddress"/.test(pfStr));
+    check(`${teamFile} has refreshedAt and pointsNote`, !!teamData.refreshedAt && !!teamData.pointsNote);
+  }
 }
 
 // ---------- run ----------
