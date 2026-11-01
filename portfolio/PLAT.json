@@ -116,5 +116,6 @@
     "noParent": 2361,
     "jql": "project = PLAT AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12189))"
   },
-  "bugsCreated14d": 11
+  "bugsCreated14d": 11,
+  "ticketsCreated14d": 39
 }

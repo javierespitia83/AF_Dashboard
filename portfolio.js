@@ -19,20 +19,6 @@
     return Math.round(100 * n / total) + '%';
   }
 
-  function approxBadge(label) {
-    var span = el('span', { class: 'approx-badge', title: 'Approximate value — method shown in the method tooltip' });
-    span.textContent = '≈'; // ≈
-    var full = el('span', { class: 'approx-label' });
-    full.textContent = label ? label : '≈';
-    return full;
-  }
-
-  function lowerBoundBadge() {
-    var span = el('span', { class: 'approx-badge approx-lower', title: 'Lower bound — sprint CHANGED JQL is not supported; count uses tickets created after sprint start' });
-    span.textContent = '≥'; // ≥
-    return span;
-  }
-
   function kv(label, valueNode, methodText, approx) {
     var cell = el('div', { class: 'pf-kv' });
     cell.appendChild(el('div', { class: 'pf-kv-label', text: label }));
@@ -42,8 +28,11 @@
     } else if (valueNode) {
       val.appendChild(valueNode);
     }
-    if (approx === 'lower') val.appendChild(lowerBoundBadge());
-    else if (approx) {
+    if (approx === 'lower') {
+      var lb = el('abbr', { class: 'approx-badge approx-lower', title: 'Lower bound — sprint CHANGED JQL is not supported; count uses tickets created after sprint start' });
+      lb.textContent = '≥';
+      val.appendChild(lb);
+    } else if (approx) {
       var b = el('abbr', { class: 'approx-badge', title: methodText || 'Approximate' });
       b.textContent = '≈';
       val.appendChild(b);
@@ -58,7 +47,6 @@
 
   // ── burndown mini-chart ───────────────────────────────────────────────────
   function burndownChart(bdata) {
-    // bdata.days: [[date, remaining points], ...]
     var days = bdata.days;
     if (!days || !days.length) return el('p', { class: 'empty', text: 'n/a' });
     var NS = 'http://www.w3.org/2000/svg';
@@ -78,22 +66,18 @@
     function shortDate(s) { return s.slice(5).replace('-', '/'); }
     var svg = node('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'class': 'pf-burn',
       'aria-label': 'Burndown: story points remaining per day, from ' + days[0][0] + ' to ' + days[n - 1][0] });
-    // horizontal grid and y labels (points remaining)
     var ticks = [0, Math.round(maxR / 2), maxR];
     for (i = 0; i < ticks.length; i++) {
       svg.appendChild(node('line', { x1: L, x2: W - R, y1: Y(ticks[i]), y2: Y(ticks[i]), stroke: '#dde2ea', 'stroke-width': 1 }));
       svg.appendChild(node('text', { x: L - 6, y: Y(ticks[i]) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#5b6676' }, String(ticks[i])));
     }
     svg.appendChild(node('text', { x: 4, y: 12, 'font-size': 11, fill: '#5b6676' }, 'points remaining'));
-    // x labels (dates): first, middle, last
     var xs = [0, Math.floor((n - 1) / 2), n - 1];
     for (i = 0; i < xs.length; i++) {
       if (i > 0 && xs[i] === xs[i - 1]) continue;
       svg.appendChild(node('text', { x: X(xs[i]), y: H - 12, 'text-anchor': i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'), 'font-size': 11, fill: '#5b6676' }, shortDate(days[xs[i]][0])));
     }
-    // ideal line: from the first value to 0 at the last day
     svg.appendChild(node('line', { x1: X(0), y1: Y(days[0][1]), x2: X(n - 1), y2: Y(0), stroke: '#8a94a6', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
-    // remaining line and points with tooltips
     var pts = [];
     for (i = 0; i < n; i++) { pts.push(X(i).toFixed(1) + ',' + Y(days[i][1]).toFixed(1)); }
     svg.appendChild(node('polyline', { points: pts.join(' '), fill: 'none', stroke: '#1f6f64', 'stroke-width': 2.5 }));
@@ -112,9 +96,24 @@
     return wrap;
   }
 
+  // ── legend ──────────────────────────────────────────────────────────────
+  function renderLegend() {
+    var det = el('details', { class: 'pf-legend' });
+    var sum = el('summary', { text: 'Legend: symbols and units' });
+    det.appendChild(sum);
+    var body = el('div', { class: 'pf-legend-body' });
+    body.appendChild(el('div', { text: '≈ = approximate value (method shown in tooltip)' }));
+    body.appendChild(el('div', { text: '≥ = lower bound (actual value is equal or higher)' }));
+    body.appendChild(el('div', { text: 'tickets = work items (Jira issues in the sprint or backlog)' }));
+    body.appendChild(el('div', { text: 'points = Story Points as recorded in Jira — meaning not confirmed per team' }));
+    det.appendChild(body);
+    return det;
+  }
+
   // ── render team ──────────────────────────────────────────────────────────
   function renderTeam(data) {
     AF.clear(app);
+    app.classList.add('portfolio-view');
     AF.setUpdated(data.refreshedAt, data.exportedAt);
 
     var sprint = data.currentSprint;
@@ -125,18 +124,25 @@
       dayN = Math.min(dayTotal, Math.max(1, Math.round((t - s) / 864e5) + 1));
     }
 
-    // title bar
+    // title bar + legend
     var titleBar = el('div', { class: 'pf-title-bar' });
     titleBar.appendChild(el('h2', { class: 'pf-team-title', text: data.label }));
     if (data.pointsNote) {
       titleBar.appendChild(el('p', { class: 'pf-points-note', text: 'ℹ️ ' + data.pointsNote }));
     }
     app.appendChild(titleBar);
+    app.appendChild(renderLegend());
 
     // past-end-date warning
     if (sprint.pastEndDate) {
+      var daysOver = '';
+      if (sprint.endDate) {
+        var eEnd = new Date(sprint.endDate + 'T00:00:00');
+        var dOver = Math.round((new Date() - eEnd) / 864e5);
+        if (dOver > 0) daysOver = ' (' + dOver + ' days past the planned end date of ' + sprint.endDate + ')';
+      }
       var warn = el('div', { class: 'pf-warn', role: 'alert' });
-      warn.textContent = '⚠️ Sprint past end date. Sprint may still be active in Jira.';
+      warn.textContent = '⚠️ Sprint past end date' + daysOver + '. The sprint may still be active in Jira but has not been closed.';
       app.appendChild(warn);
     }
 
@@ -146,48 +152,55 @@
     var spBody = el('div', { class: 'tile-body pf-kv-grid' });
     spBody.appendChild(kv('Sprint', sprint.name));
     spBody.appendChild(kv('Dates', sprint.startDate + ' – ' + sprint.endDate));
-    spBody.appendChild(kv('Day', dayN !== null ? (dayN + ' of ' + dayTotal) : 'n/a'));
+    spBody.appendChild(kv('Day', dayN !== null ? ('Day ' + dayN + ' of ' + dayTotal + ' calendar days') : 'n/a'));
     var donePct = sprint.tickets ? Math.round(100 * sprint.doneTickets / sprint.tickets) : null;
     var doneTxt = sprint.doneTickets + ' / ' + sprint.tickets + ' tickets';
-    if (donePct !== null) doneTxt += ' (' + donePct + '%)';
-    spBody.appendChild(kv('Done', doneTxt, 'Approximate: statusCategoryChangedDate used as Done date; scope = current list', true));
-    spBody.appendChild(kv('Points', sprint.points + ' scope ∙ ' + sprint.donePoints + ' done', 'Approximate; final points used'));
+    if (donePct !== null) doneTxt += ' (' + donePct + '% done)';
+    spBody.appendChild(kv('Done (tickets)', doneTxt, 'Approximate: statusCategoryChangedDate used as Done date; scope = current list', true));
+    spBody.appendChild(kv('Points (story points)', sprint.points + ' scope ∙ ' + sprint.donePoints + ' done', 'Approximate; final points used', true));
     spTile.appendChild(spBody);
     app.appendChild(spTile);
 
     // velocity tile
     var velTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Velocity' });
-    velTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Velocity ≈' })]));
+    velTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Velocity ≈ (last 3 closed sprints)' })]));
     var velBody = el('div', { class: 'tile-body' });
     if (data.velocity && data.velocity.length) {
+      var velWrap = el('div', { class: 'pf-vel-wrap' });
       var tbl = el('table', { class: 'data pf-vel-table' });
       var thead = el('thead', null, [el('tr', null, [
         el('th', { scope: 'col', text: 'Sprint' }),
-        el('th', { scope: 'col', text: 'Scope' }),
-        el('th', { scope: 'col', text: 'Done ≈', title: 'Approximate' }),
-        el('th', { scope: 'col', text: 'Points ≈', title: 'Approximate' }),
-        el('th', { scope: 'col', text: 'Carry ≈', title: 'Approximate: tickets in next sprint that were not Done at close' }),
-        el('th', { scope: 'col', text: 'Late?' })
+        el('th', { scope: 'col', text: 'Scope (tickets)' }),
+        el('th', { scope: 'col', text: 'Done (tickets, %) ≈' }),
+        el('th', { scope: 'col', text: 'Scope (points)' }),
+        el('th', { scope: 'col', text: 'Done (points) ≈' }),
+        el('th', { scope: 'col', text: 'Carried to next (tickets) ≈' }),
+        el('th', { scope: 'col', text: 'Created after start (tickets) ≥' }),
+        el('th', { scope: 'col', text: 'Closed late (days)' })
       ])]);
       tbl.appendChild(thead);
       var tbody = el('tbody');
       data.velocity.forEach(function (v) {
         var compPct = v.completionTicketsPct + '%';
-        var late = v.closedLateDays > 0 ? ('+' + v.closedLateDays + ' d') : '—';
+        var late = v.closedLateDays > 0 ? ('+' + v.closedLateDays + ' days after planned end') : '—';
         var lateCell = el('td', { text: late });
         if (v.closedLateDays > 0) lateCell.setAttribute('class', 'pf-late');
+        var createdAfter = v.createdAfterStart != null ? String(v.createdAfterStart) : 'n/a';
         tbody.appendChild(el('tr', null, [
           el('td', { text: v.name }),
-          el('td', { text: v.scopeTickets }),
+          el('td', { text: String(v.scopeTickets) }),
           el('td', { text: v.doneTickets + ' (' + compPct + ')' }),
-          el('td', { text: v.donePoints + ' / ' + v.scopePoints }),
-          el('td', { text: v.carriedToNext }),
+          el('td', { text: String(v.scopePoints) }),
+          el('td', { text: String(v.donePoints) }),
+          el('td', { text: String(v.carriedToNext) }),
+          el('td', { text: createdAfter }),
           lateCell
         ]));
       });
       tbl.appendChild(tbody);
-      velBody.appendChild(tbl);
-      velBody.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list. Completion may differ from Jira’s own report.' }));
+      velWrap.appendChild(tbl);
+      velBody.appendChild(velWrap);
+      velBody.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list (tickets). Completion may differ from Jira’s own report. Points created after start: not available.' }));
     } else {
       velBody.appendChild(el('p', { class: 'empty', text: 'No velocity data available.' }));
     }
@@ -211,41 +224,45 @@
     var dqTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Data quality' });
     dqTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Data quality (current sprint)' })]));
     var dqBody = el('div', { class: 'tile-body pf-kv-grid' });
-    dqBody.appendChild(kv('Points filled', sprint.pointsFillPct + '%'));
-    dqBody.appendChild(kv('Tester filled', sprint.testerFillPct + '%'));
-    dqBody.appendChild(kv('Fix version filled', sprint.fixVersionFillPct + '%'));
-    dqBody.appendChild(kv('Parent filled', sprint.parentFillPct + '%'));
+    dqBody.appendChild(kv('Points filled', sprint.pointsFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Tester filled', sprint.testerFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Fix version filled', sprint.fixVersionFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Parent filled', sprint.parentFillPct + '% of tickets'));
     dqTile.appendChild(dqBody);
     app.appendChild(dqTile);
 
-    // stuck + carry-over + bugs tile
+    // sprint health tile
     var stuckTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Sprint health' });
     stuckTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Sprint health' })]));
     var stuckBody = el('div', { class: 'tile-body pf-kv-grid' });
-    stuckBody.appendChild(kv('Stuck 7+ days', sprint.stuckD7, 'In Progress, NOT status CHANGED AFTER -7d'));
-    stuckBody.appendChild(kv('Stuck 14+ days', sprint.stuckD14, 'In Progress, NOT status CHANGED AFTER -14d'));
-    stuckBody.appendChild(kv('Carried in ≈', sprint.carriedIn, 'Tickets also in previous sprint; approximate', true));
-    stuckBody.appendChild(kv('Created after start ≥', sprint.createdAfterStart, 'Lower bound: tickets created after sprint startDate; sprint CHANGED JQL not supported', 'lower'));
-    stuckBody.appendChild(kv('Bugs in sprint', sprint.bugsInSprint));
-    stuckBody.appendChild(kv('Bugs created (14 d)', shown(data.bugsCreated14d)));
-    stuckBody.appendChild(kv('Team size', sprint.teamSize, 'Distinct assignees in current sprint; no names stored'));
+    stuckBody.appendChild(kv('Stuck 7+ days (tickets)', sprint.stuckD7, 'In Progress, NOT status CHANGED AFTER -7d'));
+    stuckBody.appendChild(kv('Stuck 14+ days (tickets)', sprint.stuckD14, 'In Progress, NOT status CHANGED AFTER -14d'));
+    stuckBody.appendChild(kv('Carried in (tickets)', sprint.carriedIn, 'Tickets also in previous sprint; approximate', true));
+    stuckBody.appendChild(kv('Created after sprint start (tickets)', sprint.createdAfterStart, 'Lower bound: tickets created after sprint startDate; sprint CHANGED JQL not supported', 'lower'));
+    stuckBody.appendChild(kv('Bugs in sprint (tickets)', sprint.bugsInSprint));
+    stuckBody.appendChild(kv('Bugs created, last 14 days (tickets)', shown(data.bugsCreated14d)));
+    stuckBody.appendChild(kv('All tickets created, last 14 days', shown(data.ticketsCreated14d), data.ticketsCreated14d != null ? 'All issue types in the project, created >= -14d' : null));
+    stuckBody.appendChild(kv('Team size (people with tickets)', sprint.teamSize, 'Distinct assignees in current sprint; no names stored'));
     stuckTile.appendChild(stuckBody);
     app.appendChild(stuckTile);
 
     // backlog tile
     var blTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Backlog health' });
-    blTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Backlog health' })]));
+    blTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Backlog health (tickets)' })]));
     var blBody = el('div', { class: 'tile-body pf-kv-grid' });
     var bl = data.backlog;
-    blBody.appendChild(kv('Total backlog', bl.total));
-    blBody.appendChild(kv('> 90 days old', bl.created90dPlus + ' (' + pct(bl.created90dPlus, bl.total) + ')', 'Age by created date; re-opened or moved items may appear older'));
-    blBody.appendChild(kv('> 180 days old', bl.created180dPlus + ' (' + pct(bl.created180dPlus, bl.total) + ')'));
-    blBody.appendChild(kv('> 1 year old', bl.created365dPlus + ' (' + pct(bl.created365dPlus, bl.total) + ')'));
+    blBody.appendChild(kv('Total backlog (tickets)', bl.total));
+    blBody.appendChild(kv('> 90 days old (tickets)', bl.created90dPlus + ' (' + pct(bl.created90dPlus, bl.total) + ')', 'Age by created date; re-opened or moved items may appear older'));
+    blBody.appendChild(kv('> 180 days old (tickets)', bl.created180dPlus + ' (' + pct(bl.created180dPlus, bl.total) + ')'));
+    blBody.appendChild(kv('> 1 year old (tickets)', bl.created365dPlus + ' (' + pct(bl.created365dPlus, bl.total) + ')'));
     if (bl.notUpdated365d !== null && bl.notUpdated365d !== undefined) {
-      blBody.appendChild(kv('Not updated in 1 year', bl.notUpdated365d + ' (' + pct(bl.notUpdated365d, bl.total) + ')'));
+      blBody.appendChild(kv('Not updated in 1 year (tickets)', bl.notUpdated365d + ' (' + pct(bl.notUpdated365d, bl.total) + ')'));
     }
-    blBody.appendChild(kv('No points', bl.noPoints + ' (' + pct(bl.noPoints, bl.total) + ')'));
-    blBody.appendChild(kv('No parent', bl.noParent + ' (' + pct(bl.noParent, bl.total) + ')'));
+    blBody.appendChild(kv('No points (tickets)', bl.noPoints + ' (' + pct(bl.noPoints, bl.total) + ')'));
+    blBody.appendChild(kv('No parent (tickets)', bl.noParent + ' (' + pct(bl.noParent, bl.total) + ')'));
+    if (data.backlog.platNote) {
+      blBody.appendChild(el('p', { class: 'pf-note', text: '* ' + data.backlog.platNote }));
+    }
     blTile.appendChild(blBody);
     app.appendChild(blTile);
   }
@@ -258,47 +275,52 @@
       el('p', { class: 'sub', text: 'No ranking. Teams use different workflows and estimation practices.' })
     ]));
     var compBody = el('div', { class: 'tile-body' });
+    var compWrap = el('div', { class: 'pf-comp-wrap' });
     var tbl = el('table', { class: 'data pf-comp-table' });
     var thead = el('thead', null, [el('tr', null, [
       el('th', { scope: 'col', text: 'Team' }),
       el('th', { scope: 'col', text: 'Sprint state' }),
-      el('th', { scope: 'col', text: 'Done (3 sprints) ≈', title: 'Approximate' }),
-      el('th', { scope: 'col', text: 'Carry-over ≈', title: 'Approximate' }),
-      el('th', { scope: 'col', text: 'Stuck 7+ d' }),
-      el('th', { scope: 'col', text: 'Backlog' }),
-      el('th', { scope: 'col', text: '> 1 yr old' }),
-      el('th', { scope: 'col', text: 'Points filled' })
+      el('th', { scope: 'col', text: 'Done, 3 sprints (tickets, %) ≈' }),
+      el('th', { scope: 'col', text: 'Carry-over (tickets) ≈' }),
+      el('th', { scope: 'col', text: 'Stuck 7+ days (tickets)' }),
+      el('th', { scope: 'col', text: 'Backlog (tickets)' }),
+      el('th', { scope: 'col', text: '> 1 yr old (tickets)' }),
+      el('th', { scope: 'col', text: 'Points filled (%)' })
     ])]);
     tbl.appendChild(thead);
     var tbody = el('tbody');
     allData.forEach(function (d) {
       if (!d) return;
       var sprint = d.currentSprint;
-      var state = sprint.pastEndDate ? 'Past end date' : ('Day ' + (sprint.doneTickets !== null ? sprint.doneTickets : '?') + '/' + sprint.tickets);
       var dayN = null, dayTotal = null;
       if (sprint.startDate && sprint.endDate) {
         var s = new Date(sprint.startDate + 'T00:00:00'), e = new Date(sprint.endDate + 'T00:00:00'), t = new Date();
         dayTotal = Math.round((e - s) / 864e5) + 1;
         dayN = Math.min(dayTotal, Math.max(1, Math.round((t - s) / 864e5) + 1));
-        state = sprint.pastEndDate ? 'Past end date' : ('Day ' + dayN + '/' + dayTotal);
       }
+      var state = sprint.pastEndDate ? 'Past end date' : (dayN !== null ? ('Day ' + dayN + '/' + dayTotal) : 'n/a');
       var comps = (d.velocity || []).map(function (v) { return v.completionTicketsPct + '%'; }).join(' · ');
-      var carries = (d.velocity || []).map(function (v) { return v.carriedToNext; }).join(' · ');
-      var oldest = d.velocity && d.velocity.length ? d.velocity[d.velocity.length - 1].carriedToNext : 'n/a';
+      var carries = (d.velocity || []).map(function (v) { return String(v.carriedToNext); }).join(' · ');
+      var noteMarker = d.backlog.platNote ? ' *' : '';
       tbody.appendChild(el('tr', null, [
         el('td', { text: d.label }),
         el('td', { text: state }),
         el('td', { text: comps || 'n/a' }),
         el('td', { text: carries || 'n/a' }),
         el('td', { text: shown(sprint.stuckD7) }),
-        el('td', { text: shown(d.backlog.total) }),
+        el('td', { text: shown(d.backlog.total) + noteMarker }),
         el('td', { text: shown(d.backlog.created365dPlus) + ' (' + pct(d.backlog.created365dPlus, d.backlog.total) + ')' }),
         el('td', { text: sprint.pointsFillPct + '%' })
       ]));
     });
     tbl.appendChild(tbody);
-    compBody.appendChild(tbl);
-    compBody.appendChild(el('p', { class: 'pf-note', text: '≈ approximate ≥ lower bound' }));
+    compWrap.appendChild(tbl);
+    compBody.appendChild(compWrap);
+    var notes = ['≈ approximate ≥ lower bound'];
+    if (allData.some(function (d) { return d && d.backlog && d.backlog.platNote; })) {
+      notes.push('* PLAT backlog covers the whole project, not only the Plat Core board.');
+    }
+    compBody.appendChild(el('p', { class: 'pf-note', text: notes.join(' ') }));
     compTile.appendChild(compBody);
     return compTile;
   }
@@ -307,30 +329,29 @@
   AF.loadJson(MANIFEST_FILE).then(function (manifest) {
     if (!manifest || !Array.isArray(manifest.projects)) throw new Error('missing projects array in ' + MANIFEST_FILE);
     var key = AF.urlParam('project');
-    // mark current project in dropdown
     if (key) {
       var pmLink = document.getElementById('pm-' + key);
       if (pmLink) pmLink.setAttribute('aria-current', 'true');
     }
-    // no ?project= → load all and show comparison only
     if (!key) {
       var allLoads = manifest.projects.map(function (p) {
         return AF.loadJson(p.file).then(null, function () { return null; });
       });
       return Promise.all(allLoads).then(function (allData) {
         AF.clear(app);
+        app.classList.add('portfolio-view');
         app.appendChild(el('p', { class: 'pf-select-hint', text: 'Choose a project from the Portfolio ▾ menu above, or view the comparison below.' }));
+        app.appendChild(renderLegend());
         app.appendChild(renderComparison(allData));
       });
     }
-    // validate key against manifest
     var entry = manifest.projects.filter(function (p) { return p.key === key; })[0];
     if (!entry) {
       AF.clear(app);
-      AF.emptyMessage(app, 'Unknown project “' + key + '”', 'Choose a project from the Portfolio ▾ menu above.');
+      app.classList.add('portfolio-view');
+      AF.emptyMessage(app, 'Unknown project "' + key + '"', 'Choose a project from the Portfolio ▾ menu above.');
       return;
     }
-    // load team file
     return AF.loadJson(entry.file).then(function (data) {
       if (!data || !data.team) throw new Error('invalid team file');
       try { renderTeam(data); } catch (err) { AF.showRenderError(app, err); }
