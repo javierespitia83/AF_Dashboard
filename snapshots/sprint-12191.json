@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-01",
-  "exportedAt": "2026-11-01T05:25:26-08:00",
+  "exportedAt": "2026-11-01T05:51:02-08:00",
   "source": "03_Tracker/daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -1758,5 +1758,64 @@
       "demoOrSpike": null,
       "discussed": "Yes"
     }
-  ]
+  ],
+  "velocityHistory": {
+    "method": "Story points and tickets closed inside each sprint, from the frozen snapshots of the last closed sprints and the active sprint. A Done ticket whose doneDate is before the sprint start is counted apart (doneBeforeStart*), not as progress. Final points are used; re-estimates are not reflected.",
+    "sprints": [
+      {
+        "id": 4697,
+        "name": "APP Sprint 09-21-2026",
+        "startDate": "2026-09-09",
+        "endDate": "2026-09-21",
+        "state": "closed",
+        "scopeTickets": 73,
+        "scopePoints": 181,
+        "doneTickets": 62,
+        "donePoints": 146,
+        "doneBeforeStartTickets": 0,
+        "doneBeforeStartPoints": 0
+      },
+      {
+        "id": 12119,
+        "name": "APP Sprint 10-09-2026",
+        "startDate": "2026-09-22",
+        "endDate": "2026-10-09",
+        "state": "closed",
+        "scopeTickets": 79,
+        "scopePoints": 206,
+        "doneTickets": 76,
+        "donePoints": 197,
+        "doneBeforeStartTickets": 0,
+        "doneBeforeStartPoints": 0
+      },
+      {
+        "id": 12176,
+        "name": "App Sprint 10-23-2026",
+        "startDate": "2026-10-12",
+        "endDate": "2026-10-23",
+        "state": "closed",
+        "scopeTickets": 56,
+        "scopePoints": 139,
+        "doneTickets": 49,
+        "donePoints": 116,
+        "doneBeforeStartTickets": 2,
+        "doneBeforeStartPoints": 3
+      },
+      {
+        "id": 12191,
+        "name": "App Sprint 11-06-2026",
+        "startDate": "2026-10-26",
+        "endDate": "2026-11-06",
+        "state": "active",
+        "scopeTickets": 78,
+        "scopePoints": 205,
+        "doneTickets": 20,
+        "donePoints": 45,
+        "doneBeforeStartTickets": 3,
+        "doneBeforeStartPoints": 2
+      }
+    ],
+    "averageDonePoints": 153.0,
+    "averageDoneTickets": 62.3
+  }
 }

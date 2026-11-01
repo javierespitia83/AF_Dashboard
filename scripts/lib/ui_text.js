@@ -20,7 +20,7 @@ const UI = {
     tiles: { burndown: 'Burndown', status: 'Tickets by status', type: 'Tickets by type', attention: 'Needs attention today', matrix: 'Assignee x tester', detail: 'Ticket detail' },
     mainRow: ['Burndown', 'Tickets by status', 'Tickets by type', 'Needs attention today'],
     lowerRow: ['Ticket detail', 'Assignee x tester'],
-    kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & not self-tested', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time'],
+    kpis: ['Work items', 'Story points', 'Done', 'Added mid-sprint', 'Carried over', 'No tester & not self-tested', 'Long-running work · ' + THR_TIME + '+ days', 'Avg cycle time', 'Velocity · avg last 3 sprints'],
     kpi: { items: 'Work items', mid: 'Added mid-sprint', carried: 'Carried over', noTester: 'No tester & not self-tested', time: 'Long-running work · ' + THR_TIME + '+ days', cycle: 'Avg cycle time' },
     hints: {
       itemsUnfiltered: 'tickets in the sprint',
