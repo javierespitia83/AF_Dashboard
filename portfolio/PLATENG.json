@@ -113,5 +113,6 @@
     "noParent": 358,
     "jql": "project = PLATENG AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12230))"
   },
-  "bugsCreated14d": 6
+  "bugsCreated14d": 6,
+  "ticketsCreated14d": 48
 }

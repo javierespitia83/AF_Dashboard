@@ -239,6 +239,7 @@ Key fields:
 - `burndownLastClosed`: `{ sprintId, sprintName, approx, method, days: [[date, remaining], ...] }`
 - `backlog`: total and age-bucket counts with the JQL used
 - `bugsCreated14d`: bugs created in the last 14 days
+- `ticketsCreated14d`: all tickets created in the last 14 days (all issue types); integer or null
 - `pointsNote`: neutral note about Story Points meaning
 - Every approximate metric carries `"approx": true` and a `"method"` string
 

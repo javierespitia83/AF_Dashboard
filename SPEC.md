@@ -225,15 +225,19 @@ All approximate values show `≈` with a tooltip that states the method. Lower-b
 | Tile | Approx? | Source |
 |---|---|---|
 | Sprint header (name, dates, day N/M, tickets, points, done, past-end-date flag) | ≈ done | Sprint field + statusCategoryChangedDate |
-| Velocity — last 3 closed sprints (tickets, points, completion %) | ≈ | Same method as APP; scope = end-of-sprint list |
+| Velocity — last 3 closed sprints (tickets, points, completion %, created after start, closed late) | ≈/≥ | Same method as APP; scope = end-of-sprint list |
 | Burndown — last closed sprint | ≈ | Final points; added dates from `created`; no removals |
 | Data quality — points / tester / fix version / parent fill % | exact | Current sprint issues |
-| Sprint health — stuck 7+/14+ days, carried in, created after start, bugs | stuck=exact, carried/created=≈/≥ | JQL + Sprint field |
+| Sprint health — stuck 7+/14+ days, carried in, created after start, bugs, tickets created 14d | stuck=exact, carried/created=≈/≥ | JQL + Sprint field |
 | Backlog health — size, age buckets (90/180/365 days), not updated 1 yr, no points, no parent | exact | Count queries |
 
 Story points shown beside tickets with a neutral note: "Points shown as recorded in Jira; their meaning is not confirmed for this team."
 
 No ranking, no inter-team colours, no names, e-mails, ticket keys or summaries.
+
+### 8.5 Units and legend (N-004, 2026-10-31)
+
+Every column header, KV label and tile heading includes its unit in parentheses: "(tickets)", "(points)", "(people)", "(days)", "(%)". A collapsible `<details>` legend ("Legend: symbols and units") appears near the top of every portfolio view and explains `≈` (approximate), `≥` (lower bound), "tickets" (Jira work items) and "points" (Story Points as recorded in Jira). Created-after-start values from the velocity entries and current sprint are shown; "points created after start: not available" is noted. The `.board.portfolio-view` class prevents the dashboard CSS grid from clipping portfolio tiles.
 
 ### 8.3 Comparison table
 

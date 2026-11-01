@@ -107,7 +107,14 @@ UI.portfolio = {
   projectLabels: { AC: 'Agent Creator', PLATENG: 'Platform Engineering', APIM: 'APIM', PLAT: 'Plat Core' },
   unknownMsg: /Unknown project/i,
   selectHint: /Choose a project/,
-  manifestFile: 'portfolio/projects.json'
+  manifestFile: 'portfolio/projects.json',
+  legendSummary: /Legend.*symbols.*units/i,
+  legendSymbols: ['≈', '≥', 'tickets', 'points'],
+  velocityHeaders: /Scope \(tickets\)|Done \(tickets.*%\)|Done \(points\)|Scope \(points\)|Carried to next \(tickets\)|Created after start \(tickets\)|Closed late \(days\)/,
+  unitPatterns: /\(tickets\)|\(points\)|\(people\)|\(%\)|\(days\)|\(story points\)/,
+  createdAfterStart: /Created after start \(tickets\)/i,
+  pointsCreatedNote: /[Pp]oints created.*not available/,
+  compHeaders: /Done.*tickets.*%|Carry-over \(tickets\)|Stuck.*tickets|Backlog \(tickets\)|> 1 yr.*tickets|Points filled/
 };
 
 module.exports = { UI, THR_TIME };

@@ -1151,6 +1151,91 @@ async function suites(ctx) {
     check(`${teamFile} privacy: no emailAddress fields`, !/"emailAddress"/.test(pfStr));
     check(`${teamFile} has refreshedAt and pointsNote`, !!teamData.refreshedAt && !!teamData.pointsNote);
   }
+
+  // ---------- N-004: clarity of units, created tickets, legend, layout ----------
+  const PUI4 = UI.portfolio;
+  // Load portfolio JSON data to derive expected values
+  const pfTeamData = {};
+  for (const proj of (pfManifest.projects || [])) {
+    const teamFile = proj.file;
+    if (fs.existsSync(path.join(ROOT, teamFile))) pfTeamData[proj.key] = J(teamFile);
+  }
+
+  // Test each team page for velocity rows, units, legend, created-after-start, layout
+  for (const projKey of PUI4.projects) {
+    const td = pfTeamData[projKey];
+    if (!td) continue;
+    const expectedVelRows = (td.velocity || []).length;
+    const pg = await open(base + 'portfolio.html?project=' + projKey, 1280, 800);
+
+    // board has portfolio-view class (prevents CSS grid clipping)
+    const hasViewClass = await run(pg, `return document.querySelector('#app.portfolio-view') !== null`);
+    check(`portfolio ${projKey}: board has portfolio-view class`, hasViewClass === true);
+
+    // Legend present with required symbols
+    const legendText = await run(pg, `var d = document.querySelector('.pf-legend'); return d ? d.textContent : ''`);
+    check(`portfolio ${projKey}: legend element present`, PUI4.legendSummary.test(legendText), legendText.slice(0, 60));
+    for (const sym of PUI4.legendSymbols) {
+      check(`portfolio ${projKey}: legend contains "${sym}"`, legendText.includes(sym));
+    }
+
+    // Velocity table rows match data
+    const velRows = await run(pg, `return document.querySelectorAll('.pf-vel-table tbody tr').length`);
+    check(`portfolio ${projKey}: velocity table has ${expectedVelRows} rows`, velRows === expectedVelRows, velRows);
+
+    // Velocity headers contain unit text
+    const velHeaders = await run(pg, `return [...document.querySelectorAll('.pf-vel-table th')].map(h => h.textContent)`);
+    check(`portfolio ${projKey}: velocity headers contain "(tickets)"`, velHeaders.some(h => /\(tickets\)/.test(h)), velHeaders);
+    check(`portfolio ${projKey}: velocity headers contain "(points)"`, velHeaders.some(h => /\(points\)/.test(h)), velHeaders);
+    check(`portfolio ${projKey}: velocity headers contain "Created after start (tickets)"`, velHeaders.some(h => PUI4.createdAfterStart.test(h)), velHeaders);
+    check(`portfolio ${projKey}: velocity headers contain "(days)"`, velHeaders.some(h => /\(days\)/.test(h)), velHeaders);
+
+    // Created-after-start values rendered in velocity table
+    const velCreated = await run(pg, `return [...document.querySelectorAll('.pf-vel-table tbody tr')].map(tr => tr.cells[6] ? tr.cells[6].textContent.trim() : '')`);
+    const expectedCreated = (td.velocity || []).map(v => v.createdAfterStart != null ? String(v.createdAfterStart) : 'n/a');
+    check(`portfolio ${projKey}: velocity created-after-start values match data`, JSON.stringify(velCreated) === JSON.stringify(expectedCreated), { actual: velCreated, expected: expectedCreated });
+
+    // "Points created: not available" note
+    const velNotes = await run(pg, `return [...document.querySelectorAll('.pf-note')].map(n => n.textContent).join(' ')`);
+    check(`portfolio ${projKey}: "points created not available" note present`, PUI4.pointsCreatedNote.test(velNotes), velNotes.slice(0, 120));
+
+    // Sprint health tile shows units
+    const healthText = await run(pg, `var t = document.querySelector('[aria-label="Sprint health"]'); return t ? t.textContent : ''`);
+    check(`portfolio ${projKey}: sprint health labels include "(tickets)"`, /\(tickets\)/.test(healthText), healthText.slice(0, 200));
+    check(`portfolio ${projKey}: sprint health labels include "(people"`, /\(people/.test(healthText), healthText.slice(0, 200));
+
+    // Created-after-start in sprint health
+    check(`portfolio ${projKey}: sprint health shows "Created after sprint start"`, /Created after sprint start/i.test(healthText));
+
+    // Backlog tile shows units
+    const blText = await run(pg, `var t = document.querySelector('[aria-label="Backlog health"]'); return t ? t.textContent : ''`);
+    check(`portfolio ${projKey}: backlog health labels include "(tickets)"`, /\(tickets\)/.test(blText));
+
+    // Current sprint tile shows units
+    const spText = await run(pg, `var t = document.querySelector('[aria-label="Current sprint"]'); return t ? t.textContent : ''`);
+    check(`portfolio ${projKey}: current sprint tile shows "tickets"`, /tickets/.test(spText));
+    check(`portfolio ${projKey}: current sprint tile shows "points" or "story points"`, /points/.test(spText));
+
+    await pg.close();
+  }
+
+  // Horizontal overflow check at three widths
+  for (const width of [1000, 1300, 1800]) {
+    const pg = await open(base + 'portfolio.html?project=AC', width, 800);
+    const overflow = await run(pg, `var el = document.querySelector('#app'); return el ? el.scrollWidth > el.clientWidth : false`);
+    check(`portfolio AC: no horizontal overflow at ${width}px`, overflow === false, { scrollWidth: await run(pg, `return document.querySelector('#app').scrollWidth`), clientWidth: await run(pg, `return document.querySelector('#app').clientWidth`) });
+    await pg.close();
+  }
+
+  // Comparison view: units in headers
+  const compPg = await open(base + 'portfolio.html', 1280, 800);
+  const compHeaders = await run(compPg, `return [...document.querySelectorAll('.pf-comp-table th')].map(h => h.textContent)`);
+  check('portfolio comparison: table has headers with units', compHeaders.some(h => /\(tickets\)/.test(h)) && compHeaders.some(h => /\(%\)/.test(h)), compHeaders);
+  const compLegendText = await run(compPg, `var d = document.querySelector('.pf-legend'); return d ? d.textContent : ''`);
+  check('portfolio comparison: legend present', PUI4.legendSummary.test(compLegendText));
+  const compViewClass = await run(compPg, `return document.querySelector('#app.portfolio-view') !== null`);
+  check('portfolio comparison: board has portfolio-view class', compViewClass === true);
+  await compPg.close();
 }
 
 // ---------- run ----------

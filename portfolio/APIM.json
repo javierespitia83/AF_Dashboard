@@ -113,5 +113,6 @@
     "noParent": 271,
     "jql": "project = APIM AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12109))"
   },
-  "bugsCreated14d": 2
+  "bugsCreated14d": 2,
+  "ticketsCreated14d": 9
 }

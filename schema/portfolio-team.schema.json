@@ -104,6 +104,7 @@
         "jql": { "type": "string" }
       }
     },
-    "bugsCreated14d": { "type": "integer" }
+    "bugsCreated14d": { "type": "integer" },
+    "ticketsCreated14d": { "type": ["integer", "null"] }
   }
 }
