@@ -377,7 +377,7 @@ table.wider { min-width: 1500px; }
 .lower table.wider { min-width: 1000px; }
 .lower td.wrap { min-width: 160px; }
 .lower td.wrap-text { white-space: normal; overflow-wrap: break-word; }
-/* ---- Needs attention today (sprint main row): key, status, days, reasons; no names ---- */
+/* ---- Watch list (sprint main row): key, status, days, reasons; no names ---- */
 table.attention td.status { white-space: nowrap; }
 table.attention td.reasons { white-space: normal; }
 .reason-list { display: flex; flex-wrap: wrap; gap: 4px; }
