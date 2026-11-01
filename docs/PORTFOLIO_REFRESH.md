@@ -11,7 +11,6 @@ How to refresh the portfolio data files (`portfolio/*.json`) from Jira.
 | `portfolio/projects.json` | Manifest: allowed project keys, labels, current sprint ids, file paths |
 | `portfolio/AC.json` | Agent Creator snapshot |
 | `portfolio/PLATENG.json` | Platform Engineering snapshot |
-| `portfolio/APIM.json` | APIM snapshot |
 | `portfolio/PLAT.json` | Plat Core (PLAT project, board 150) snapshot |
 
 ## Queries and JQL by metric
@@ -24,7 +23,6 @@ All queries use cloudId `34671ece-4d1c-4f7c-b59a-8f1f6aee498f`.
 |---|---|---|
 | AC | 1236 | 12135 |
 | PLATENG | 188 | 12230 |
-| APIM | 161 | 12109 |
 | PLAT | 150 | 12189 |
 
 ### Step 1 – Current sprint issues (run once per refresh for all teams together)
@@ -104,6 +102,12 @@ About 32–38 calls per refresh:
 
 `project = PLAT` covers all of Platform, not just the Plat Core team (board 150). The backlog numbers are for the whole project. When a board filter becomes available, re-query with `project = PLAT AND cf[XXXX] = "Plat Core"` or equivalent.
 
-## Notes on APIM
+## Current-sprint burndown (added 2026-11-01, N-005)
 
-Sprint 12109 is past its `endDate` of 2026-10-23 but still open in Jira. The JSON sets `"pastEndDate": true`. The page warns the user.
+One search per team (3 calls), same fields: `sprint = <current sprint id>`, fields `status`, `customfield_10010`, `customfield_10008`, `statuscategorychangedate`, `created`, `maxResults 100`. Save the three results as `cur_AC.json`, `cur_PLATENG.json` and `cur_PLAT.json` in a scratch folder, then run:
+
+```bash
+python3 scripts/build_portfolio.py --scratch <DIR> --current-burndown-only
+```
+
+It adds `burndownCurrent` to the existing team files (final points, Done date from `statuscategorychangedate`, series from the sprint start to today's Pacific date). APIM was removed from the portfolio on 2026-11-01.

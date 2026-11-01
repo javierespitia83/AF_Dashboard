@@ -15,12 +15,6 @@
       "file": "portfolio/PLATENG.json"
     },
     {
-      "key": "APIM",
-      "label": "APIM",
-      "currentSprintId": 12109,
-      "file": "portfolio/APIM.json"
-    },
-    {
       "key": "PLAT",
       "label": "Plat Core",
       "currentSprintId": 12189,

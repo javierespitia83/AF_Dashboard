@@ -140,27 +140,25 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 - If the data mapping changed, update the exporter, its skill, the schema, the fixture and `DATA_CONTRACT.md` together.
 - Record any new decision in `DECISIONS.md`.
 
-## Portfolio page (D89, 2026-10-31)
+## Portfolio page (D89, v2 D91, 2026-11-01)
 
 ### Header picker
-- [ ] "Portfolio ▾" button present on Current sprint, Backlog, Quality Intake, and portfolio.html pages
-- [ ] Drop-down links point to `portfolio.html?project=<KEY>` for each of the 4 teams
-- [ ] On portfolio.html the current team's link has `aria-current="true"`
-- [ ] On portfolio.html a separator and "← App Foundation" link to `index.html`
+- [ ] "Portfolio ▾" button present on Current sprint, Backlog, Quality Intake and portfolio.html; it lists exactly AC, PLATENG and PLAT (no APIM)
+- [ ] Links point to `portfolio.html?project=<KEY>`; on portfolio.html the current team has `aria-current="true"`; a "← App Foundation" link returns to `index.html`
 
 ### portfolio.html behaviour
-- [ ] `?project=AC` (or any valid key) renders team content without error
-- [ ] `?project=UNKNOWN` shows an unknown-project message and no data from another team
-- [ ] No `?project=` shows the select hint and the comparison table
-- [ ] "Internal — team only" footer is present
+- [ ] `?project=AC|PLATENG|PLAT` renders without error; `?project=UNKNOWN` shows an unknown-project message; no `?project=` lists the three teams as links and has **no comparison table**
+- [ ] One screen: no page scroll and no tile hiding content at 1900x970 and 1440x800; no horizontal overflow at 1000, 1300 and 1800 px
+- [ ] Summary line has the fixed shape and matches the data (backlog total, stuck count)
+- [ ] Tile titles are the four questions; velocity bars equal the velocity entries and show their numbers and closed-late state; the backlog age segments add up to the total
+- [ ] Done-versus-time bars present; snapshot time also in Pacific time; legend present with its symbols
+- [ ] Current-sprint burndown is the main chart (one point per day) and the toggle shows the last closed sprint; PLAT's backlog scope note is visible
+- [ ] Units appear in the labels; "Internal — team only" footer present
 
 ### Data conformance
-- [ ] `portfolio/projects.json` conforms to `schema/portfolio-projects.schema.json`
-- [ ] All 4 team files (`AC.json`, `PLATENG.json`, `APIM.json`, `PLAT.json`) exist and conform to `schema/portfolio-team.schema.json`
-- [ ] Each team file's `team` field matches the manifest key
+- [ ] `portfolio/projects.json` lists exactly AC, PLATENG, PLAT; `portfolio/APIM.json` does not exist
+- [ ] Each team file conforms to `schema/portfolio-team.schema.json` and its `team` matches the manifest key
 
 ### Privacy
-- [ ] No e-mail addresses in any portfolio JSON file
-- [ ] No Jira ticket keys in any portfolio JSON file (outside `jql`/`method`/`name` fields)
-- [ ] No `displayName` or `emailAddress` fields in any portfolio JSON file
+- [ ] No e-mail addresses, no Jira ticket keys (outside `jql`/`method`/`name` fields), no `displayName` or `emailAddress` fields in any portfolio JSON file
 - [ ] Each team file has `refreshedAt` and `pointsNote`
