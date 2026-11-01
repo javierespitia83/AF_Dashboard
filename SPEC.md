@@ -220,9 +220,9 @@ A `<details>`/`<summary>` "Portfolio ▾" button sits next to the Sprint selecto
 
 ### 8.2 Layout (one screen, no scrolling on a normal desktop window)
 
-From 1366 px wide and 760 px high the page fills the window without page scroll (checked at 1900x970 and 1440x800): a title block (team, points note, legend, one-line summary, past-end warning), a **header strip** (sprint, dates, day N of M in calendar days, tickets done with a done-versus-time-elapsed bar, points done, and the four data-quality chips), and **two columns of two tiles**: left = velocity and sprint health; right = burndown and backlog health. Below that size the page scrolls normally; below 1024 px the columns stack. No tile may hide content behind its own scrollbar at the checked sizes.
+From 1366 px wide and 760 px high the page fills the window without page scroll (checked at 1900x970 and 1440x800): a title block (team, points note, legend, one-line summary, past-end warning), a **header strip** (sprint, dates with the sprint length in days, points done with a done-versus-time-elapsed bar and the tickets closed in the sprint beneath, and the four data-quality chips), and **two columns of two tiles**: left = velocity and sprint health; right = burndown and backlog health. Below that size the page scrolls normally; below 1024 px the columns stack. No tile may hide content behind its own scrollbar at the checked sizes.
 
-Summary line (fixed rule, no AI): `Day N of M · P% of tickets done ≈ at E% of the sprint time · K tickets with no status change in 7+ days · backlog B tickets[ *]`. `E` is the share of the sprint time elapsed at the snapshot date (`burndownCurrent.asOf`, else `refreshedAt`), a plain comparison with no judgement colour.
+Summary line (fixed rule, no AI): `Day N of M · P% of points done ≈ at E% of the sprint time (T of N tickets closed in the sprint) · K tickets with no status change in 7+ days · backlog B tickets[ *]`. Progress is measured in **points** and counts only what was closed **inside the sprint** (D92): tickets already Done when the sprint started are listed apart ("N already Done before it started") and do not count as progress. `E` is the share of the sprint time elapsed at the snapshot date (`burndownCurrent.asOf`, else `refreshedAt`), a plain comparison with no judgement colour.
 
 ### 8.3 Tiles
 

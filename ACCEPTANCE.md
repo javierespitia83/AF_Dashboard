@@ -149,7 +149,8 @@ Compute expected values from the JSON, not from this file. Reference numbers fro
 ### portfolio.html behaviour
 - [ ] `?project=AC|PLATENG|PLAT` renders without error; `?project=UNKNOWN` shows an unknown-project message; no `?project=` lists the three teams as links and has **no comparison table**
 - [ ] One screen: no page scroll and no tile hiding content at 1900x970 and 1440x800; no horizontal overflow at 1000, 1300 and 1800 px
-- [ ] Summary line has the fixed shape and matches the data (backlog total, stuck count)
+- [ ] Summary line has the fixed shape and matches the data (backlog total, stuck count, points done and tickets closed inside the sprint)
+- [ ] Progress counts points and only tickets closed inside the sprint; tickets already Done before the sprint start are shown apart
 - [ ] Tile titles are the four questions; velocity bars equal the velocity entries and show their numbers and closed-late state; the backlog age segments add up to the total
 - [ ] Done-versus-time bars present; snapshot time also in Pacific time; legend present with its symbols
 - [ ] Current-sprint burndown is the main chart (one point per day) and the toggle shows the last closed sprint; PLAT's backlog scope note is visible

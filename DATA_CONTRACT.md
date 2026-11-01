@@ -234,7 +234,7 @@ Unknown `?project=` values are validated against this file; they are never used 
 Contains **only counts, percentages, sprint ids and dates, sprint names, and day counts**. No person names, e-mails, ticket keys or summaries.
 
 Key fields:
-- `currentSprint`: sprint header metrics (tickets, points, done, fill rates, stuck counts, etc.)
+- `currentSprint`: sprint header metrics (tickets, points, done, fill rates, stuck counts, etc.). `doneTickets` and `donePoints` include tickets already Done when the sprint started; `doneBeforeStartTickets` and `doneBeforeStartPoints` (D92) say how many of them were Done before the sprint start date (Pacific date of the status-category change), so the page shows progress as `done - doneBeforeStart`
 - `velocity`: array of last 3 closed sprints with scope, done, completion %, carry-over
 - `burndownLastClosed`: `{ sprintId, sprintName, approx, method, days: [[date, remaining], ...] }`
 - `burndownCurrent` (D91): `{ sprintId, sprintName, approx, method, asOf, startDate, endDate, scopePoints, days: [[date, remaining], ...] }`: story points remaining per day from the sprint start to `asOf` (Pacific date, capped at the end date); final points, Done date = status-category change date, additions count from day 1, removals not tracked

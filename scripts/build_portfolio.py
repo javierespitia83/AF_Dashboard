@@ -482,6 +482,11 @@ def merge_current_burndown(scratch: str, output_dir: str, today: datetime.date) 
         issues = [i for i in issues if any(s.get("id") == cur_id for s in get_sprints_for_issue(i))]
         sprint = {"sprintId": cur_id, "name": cs.get("name", ""), "startDate": cs["startDate"], "endDate": cs["endDate"]}
         data["burndownCurrent"] = build_current_burndown(issues, sprint, today)
+        # Tickets already Done before the sprint started (they are in the sprint list but are not progress of this sprint)
+        start = datetime.date.fromisoformat(cs["startDate"][:10])
+        pre = [i for i in issues if done_date(i) is not None and done_date(i) < start]
+        cs["doneBeforeStartTickets"] = len(pre)
+        cs["doneBeforeStartPoints"] = sum(points(i) for i in pre)
         if TEAMS[team_key].get("backlog_scope_note"):
             data["backlog"]["scopeNote"] = TEAMS[team_key]["backlog_scope_note"]
         privacy_check(data)
