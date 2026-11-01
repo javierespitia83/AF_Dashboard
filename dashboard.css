@@ -402,24 +402,29 @@ a.jira:hover { color: var(--teal); text-decoration-color: var(--teal); }
 .loading { color: var(--muted); padding: 20px 4px; }
 
 /* ---- portfolio page ---- */
-.board.portfolio-view { display: flex; flex-direction: column; overflow: auto; padding: 0 16px 16px; max-width: 1200px; margin: 0 auto; }
-.pf-title-bar { padding: 10px 0 4px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.board.portfolio-view { display: flex; flex-direction: column; overflow: auto; padding: 10px 16px 16px; gap: 10px; }
+.pf-title-bar { padding: 2px 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
 .pf-team-title { margin: 0; font-size: 20px; color: var(--navy); }
 .pf-points-note { margin: 0; font-size: 12px; color: var(--muted); }
-.pf-warn { background: #fff8e7; border: 1px solid #f4d03f; border-radius: 5px; padding: 10px 14px; margin: 8px 0 4px; font-size: 13px; line-height: 1.45; }
-.pf-legend { margin: 2px 0 6px; font-size: 12px; color: var(--muted); }
+.pf-warn { background: #fff8e7; border: 1px solid #f4d03f; border-radius: 5px; padding: 10px 14px; font-size: 13px; line-height: 1.45; }
+.pf-legend { font-size: 12px; color: var(--muted); }
 .pf-legend summary { cursor: pointer; font-weight: 600; }
 .pf-legend-body { margin: 4px 0 0 1em; line-height: 1.6; }
-.pf-select-hint { padding: 14px 0; color: var(--muted); }
-.pf-tile { margin: 0 0 14px; }
-.pf-kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px 14px; }
+.pf-select-hint { padding: 6px 0; color: var(--muted); }
+.pf-tile { margin: 0; min-width: 0; }
+.pf-row { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+.pf-row .pf-tile { display: flex; flex-direction: column; }
+.pf-row .tile-body { flex: 1; min-height: 0; }
+.pf-kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; padding: 10px 14px; }
 .pf-kv { background: var(--row-hover); border-radius: 5px; padding: 8px 10px; }
 .pf-kv-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
 .pf-kv-value { font-size: 16px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .pf-kv-method { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .pf-note { font-size: 12px; color: var(--muted); margin: 6px 14px 2px; }
 .pf-vel-table { width: 100%; border-collapse: collapse; }
-.pf-vel-table td, .pf-vel-table th { padding: 5px 8px; white-space: nowrap; }
+.pf-vel-table td, .pf-vel-table th { padding: 5px 8px; }
+.pf-vel-table td { white-space: nowrap; }
+table.data.pf-vel-table thead th { white-space: normal; vertical-align: bottom; line-height: 1.25; }
 .pf-vel-table th { font-size: 12px; }
 .pf-vel-wrap { overflow-x: auto; }
 .pf-late { color: var(--warn); font-weight: 700; }
@@ -434,5 +439,10 @@ a.jira:hover { color: var(--teal); text-decoration-color: var(--teal); }
 .pf-comp-wrap { overflow-x: auto; }
 abbr.approx-badge { text-decoration: none; cursor: help; font-size: 13px; font-weight: 700; color: var(--teal); margin-left: 3px; }
 .approx-lower { color: var(--warn); }
+@media (min-width: 1024px) {
+  .pf-row-top { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); }
+  .pf-row-mid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr); }
+  .pf-row-bot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

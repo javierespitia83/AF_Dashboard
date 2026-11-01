@@ -146,6 +146,8 @@
       app.appendChild(warn);
     }
 
+    // ── build tiles (not yet appended) ──
+
     // current sprint tile
     var spTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Current sprint' });
     spTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Current sprint' })]));
@@ -159,7 +161,16 @@
     spBody.appendChild(kv('Done (tickets)', doneTxt, 'Approximate: statusCategoryChangedDate used as Done date; scope = current list', true));
     spBody.appendChild(kv('Points (story points)', sprint.points + ' scope ∙ ' + sprint.donePoints + ' done', 'Approximate; final points used', true));
     spTile.appendChild(spBody);
-    app.appendChild(spTile);
+
+    // data quality tile
+    var dqTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Data quality' });
+    dqTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Data quality (current sprint)' })]));
+    var dqBody = el('div', { class: 'tile-body pf-kv-grid' });
+    dqBody.appendChild(kv('Points filled', sprint.pointsFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Tester filled', sprint.testerFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Fix version filled', sprint.fixVersionFillPct + '% of tickets'));
+    dqBody.appendChild(kv('Parent filled', sprint.parentFillPct + '% of tickets'));
+    dqTile.appendChild(dqBody);
 
     // velocity tile
     var velTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Velocity' });
@@ -200,12 +211,11 @@
       tbl.appendChild(tbody);
       velWrap.appendChild(tbl);
       velBody.appendChild(velWrap);
-      velBody.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list (tickets). Completion may differ from Jira’s own report. Points created after start: not available.' }));
+      velBody.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list (tickets). Completion may differ from Jira\'s own report. Points created after start: not available.' }));
     } else {
       velBody.appendChild(el('p', { class: 'empty', text: 'No velocity data available.' }));
     }
     velTile.appendChild(velBody);
-    app.appendChild(velTile);
 
     // burndown tile
     var burnTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Burndown' });
@@ -218,18 +228,6 @@
       burnBody.appendChild(el('p', { class: 'empty', text: 'n/a' }));
     }
     burnTile.appendChild(burnBody);
-    app.appendChild(burnTile);
-
-    // data quality tile
-    var dqTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Data quality' });
-    dqTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Data quality (current sprint)' })]));
-    var dqBody = el('div', { class: 'tile-body pf-kv-grid' });
-    dqBody.appendChild(kv('Points filled', sprint.pointsFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Tester filled', sprint.testerFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Fix version filled', sprint.fixVersionFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Parent filled', sprint.parentFillPct + '% of tickets'));
-    dqTile.appendChild(dqBody);
-    app.appendChild(dqTile);
 
     // sprint health tile
     var stuckTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Sprint health' });
@@ -244,7 +242,6 @@
     stuckBody.appendChild(kv('All tickets created, last 14 days', shown(data.ticketsCreated14d), data.ticketsCreated14d != null ? 'All issue types in the project, created >= -14d' : null));
     stuckBody.appendChild(kv('Team size (people with tickets)', sprint.teamSize, 'Distinct assignees in current sprint; no names stored'));
     stuckTile.appendChild(stuckBody);
-    app.appendChild(stuckTile);
 
     // backlog tile
     var blTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Backlog health' });
@@ -264,7 +261,25 @@
       blBody.appendChild(el('p', { class: 'pf-note', text: '* ' + data.backlog.platNote }));
     }
     blTile.appendChild(blBody);
-    app.appendChild(blTile);
+
+    // ── assemble into dashboard rows ──
+    // Row 1: Current Sprint + Data Quality
+    var row1 = el('div', { class: 'pf-row pf-row-top' });
+    row1.appendChild(spTile);
+    row1.appendChild(dqTile);
+    app.appendChild(row1);
+
+    // Row 2: Velocity + Burndown
+    var row2 = el('div', { class: 'pf-row pf-row-mid' });
+    row2.appendChild(velTile);
+    row2.appendChild(burnTile);
+    app.appendChild(row2);
+
+    // Row 3: Sprint Health + Backlog Health
+    var row3 = el('div', { class: 'pf-row pf-row-bot' });
+    row3.appendChild(stuckTile);
+    row3.appendChild(blTile);
+    app.appendChild(row3);
   }
 
   // ── render comparison table ───────────────────────────────────────────────
