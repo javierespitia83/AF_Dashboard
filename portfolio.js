@@ -1,17 +1,22 @@
-/* portfolio.js — multi-team portfolio snapshot page. Version 1 (search only, no changelogs).
+/* portfolio.js — portfolio snapshot page (version 2): one team per screen, no comparison between teams.
  * Reads portfolio/projects.json (manifest), then portfolio/<KEY>.json (team data).
- * ?project=<KEY> selects the team; unknown or missing KEY shows an empty state.
+ * ?project=<KEY> selects the team; no KEY lists the teams; an unknown KEY shows an empty state.
  * No names, e-mails, ticket keys or summaries in any data file.
  */
 (function () {
   'use strict';
   var AF = window.AF, el = AF.el, app = document.getElementById('app');
   var MANIFEST_FILE = 'portfolio/projects.json';
-  var PROJECTS_ALLOWED_PATTERN = /^[A-Z][A-Z0-9]+$/;
+  var NS = 'http://www.w3.org/2000/svg';
 
   // ── helpers ──────────────────────────────────────────────────────────────
   function shown(value) {
     return value === null || value === undefined || value === '' ? 'n/a' : String(value);
+  }
+
+  function num(value) {
+    if (value === null || value === undefined || value === '') return 'n/a';
+    return typeof value === 'number' ? value.toLocaleString('en-US') : String(value);
   }
 
   function pct(n, total) {
@@ -19,70 +24,82 @@
     return Math.round(100 * n / total) + '%';
   }
 
-  function kv(label, valueNode, methodText, approx) {
+  function dayDiff(a, b) { return Math.round((b - a) / 864e5); }
+
+  function parseDay(s) { return new Date(s.slice(0, 10) + 'T00:00:00'); }
+
+  function badge(kind, text) {
+    var b = el('abbr', { class: 'approx-badge' + (kind === 'lower' ? ' approx-lower' : ''), title: text });
+    b.textContent = kind === 'lower' ? '≥' : '≈';
+    return b;
+  }
+
+  /* One label + value cell. approx: true (≈) or 'lower' (≥). tip: tooltip text (method), never printed. */
+  function kv(label, value, tip, approx) {
     var cell = el('div', { class: 'pf-kv' });
     cell.appendChild(el('div', { class: 'pf-kv-label', text: label }));
     var val = el('div', { class: 'pf-kv-value' });
-    if (typeof valueNode === 'string' || typeof valueNode === 'number') {
-      val.textContent = String(valueNode);
-    } else if (valueNode) {
-      val.appendChild(valueNode);
-    }
-    if (approx === 'lower') {
-      var lb = el('abbr', { class: 'approx-badge approx-lower', title: 'Lower bound — sprint CHANGED JQL is not supported; count uses tickets created after sprint start' });
-      lb.textContent = '≥';
-      val.appendChild(lb);
-    } else if (approx) {
-      var b = el('abbr', { class: 'approx-badge', title: methodText || 'Approximate' });
-      b.textContent = '≈';
-      val.appendChild(b);
-    }
+    val.appendChild(document.createTextNode(typeof value === 'number' ? num(value) : String(value)));
+    if (approx) val.appendChild(badge(approx === 'lower' ? 'lower' : 'approx', tip || 'Approximate'));
     cell.appendChild(val);
-    if (methodText) {
-      var note = el('div', { class: 'pf-kv-method', text: methodText });
-      cell.appendChild(note);
-    }
+    if (tip && !approx) cell.setAttribute('title', tip);
     return cell;
   }
 
-  // ── burndown mini-chart ───────────────────────────────────────────────────
+  function node(name, attrs, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) { if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]); }
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function shortDate(s) { return s.slice(5, 10).replace('-', '/'); }
+
+  /* A horizontal bar: filled share of a track. ratio in 0..1. */
+  function bar(ratio, extraClass) {
+    var track = el('div', { class: 'pf-track' });
+    var fill = el('div', { class: 'pf-fill' + (extraClass ? ' ' + extraClass : '') });
+    fill.style.width = Math.max(0, Math.min(1, ratio || 0)) * 100 + '%';
+    track.appendChild(fill);
+    return track;
+  }
+
+  // ── burndown chart ───────────────────────────────────────────────────────
+  // bdata: { days: [[date, remaining], ...], startDate?, endDate?, sprintName }. The x axis spans
+  // startDate..endDate when given (current sprint), else the first..last day of the series.
   function burndownChart(bdata) {
     var days = bdata.days;
     if (!days || !days.length) return el('p', { class: 'empty', text: 'n/a' });
-    var NS = 'http://www.w3.org/2000/svg';
-    var W = 560, H = 236, L = 46, R = 14, T = 24, B = 34;
+    var W = 800, H = 210, L = 44, R = 16, T = 22, B = 26;
+    var start = parseDay(bdata.startDate || days[0][0]);
+    var end = parseDay(bdata.endDate || days[days.length - 1][0]);
+    var span = Math.max(1, dayDiff(start, end));
     var maxR = 0, i;
     for (i = 0; i < days.length; i++) { if (days[i][1] > maxR) maxR = days[i][1]; }
     if (!maxR) maxR = 1;
-    var n = days.length;
-    function X(idx) { return L + (n > 1 ? idx / (n - 1) : 0) * (W - L - R); }
+    function X(date) { return L + (dayDiff(start, parseDay(date)) / span) * (W - L - R); }
     function Y(v) { return T + (H - T - B) * (1 - v / maxR); }
-    function node(name, attrs, text) {
-      var e = document.createElementNS(NS, name);
-      for (var k in attrs) { if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]); }
-      if (text != null) e.textContent = text;
-      return e;
-    }
-    function shortDate(s) { return s.slice(5).replace('-', '/'); }
     var svg = node('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'class': 'pf-burn',
-      'aria-label': 'Burndown: story points remaining per day, from ' + days[0][0] + ' to ' + days[n - 1][0] });
+      'aria-label': 'Burndown: story points remaining per day, from ' + days[0][0] + ' to ' + days[days.length - 1][0] });
     var ticks = [0, Math.round(maxR / 2), maxR];
     for (i = 0; i < ticks.length; i++) {
       svg.appendChild(node('line', { x1: L, x2: W - R, y1: Y(ticks[i]), y2: Y(ticks[i]), stroke: '#dde2ea', 'stroke-width': 1 }));
-      svg.appendChild(node('text', { x: L - 6, y: Y(ticks[i]) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#5b6676' }, String(ticks[i])));
+      svg.appendChild(node('text', { x: L - 6, y: Y(ticks[i]) + 5, 'text-anchor': 'end', 'font-size': 13, fill: '#5b6676' }, String(ticks[i])));
     }
-    svg.appendChild(node('text', { x: 4, y: 12, 'font-size': 11, fill: '#5b6676' }, 'points remaining'));
-    var xs = [0, Math.floor((n - 1) / 2), n - 1];
-    for (i = 0; i < xs.length; i++) {
-      if (i > 0 && xs[i] === xs[i - 1]) continue;
-      svg.appendChild(node('text', { x: X(xs[i]), y: H - 12, 'text-anchor': i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'), 'font-size': 11, fill: '#5b6676' }, shortDate(days[xs[i]][0])));
+    svg.appendChild(node('text', { x: 4, y: 13, 'font-size': 13, fill: '#5b6676' }, 'points remaining'));
+    var mid = new Date(start.getTime() + Math.round(span / 2) * 864e5);
+    var labels = [[start, 'start'], [mid, 'middle'], [end, 'end']];
+    for (i = 0; i < labels.length; i++) {
+      var d = labels[i][0];
+      var iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      svg.appendChild(node('text', { x: X(iso), y: H - 7, 'text-anchor': i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'), 'font-size': 13, fill: '#5b6676' }, shortDate(iso)));
     }
-    svg.appendChild(node('line', { x1: X(0), y1: Y(days[0][1]), x2: X(n - 1), y2: Y(0), stroke: '#8a94a6', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+    svg.appendChild(node('line', { x1: X(days[0][0]), y1: Y(days[0][1]), x2: X(bdata.endDate || days[days.length - 1][0]), y2: Y(0), stroke: '#8a94a6', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
     var pts = [];
-    for (i = 0; i < n; i++) { pts.push(X(i).toFixed(1) + ',' + Y(days[i][1]).toFixed(1)); }
+    for (i = 0; i < days.length; i++) { pts.push(X(days[i][0]).toFixed(1) + ',' + Y(days[i][1]).toFixed(1)); }
     svg.appendChild(node('polyline', { points: pts.join(' '), fill: 'none', stroke: '#1f6f64', 'stroke-width': 2.5 }));
-    for (i = 0; i < n; i++) {
-      var c = node('circle', { cx: X(i).toFixed(1), cy: Y(days[i][1]).toFixed(1), r: 3.5, fill: '#1f6f64' });
+    for (i = 0; i < days.length; i++) {
+      var c = node('circle', { cx: X(days[i][0]).toFixed(1), cy: Y(days[i][1]).toFixed(1), r: 4, fill: '#1f6f64' });
       c.appendChild(node('title', {}, days[i][0] + ': ' + days[i][1] + ' points remaining'));
       svg.appendChild(c);
     }
@@ -91,7 +108,7 @@
     var legend = el('p', { class: 'pf-burn-cap' });
     legend.appendChild(el('span', { class: 'pf-lg pf-lg-real', text: '━ Points remaining (≈)' }));
     legend.appendChild(el('span', { class: 'pf-lg pf-lg-ideal', text: '┄ Ideal line' }));
-    legend.appendChild(el('span', { text: bdata.sprintName + ' · ' + shortDate(days[0][0]) + ' to ' + shortDate(days[n - 1][0]) }));
+    legend.appendChild(el('span', { text: bdata.sprintName + ' · ' + shortDate(bdata.startDate || days[0][0]) + ' to ' + shortDate(bdata.endDate || days[days.length - 1][0]) }));
     wrap.appendChild(legend);
     return wrap;
   }
@@ -99,8 +116,7 @@
   // ── legend ──────────────────────────────────────────────────────────────
   function renderLegend() {
     var det = el('details', { class: 'pf-legend' });
-    var sum = el('summary', { text: 'Legend: symbols and units' });
-    det.appendChild(sum);
+    det.appendChild(el('summary', { text: 'Legend: symbols and units' }));
     var body = el('div', { class: 'pf-legend-body' });
     body.appendChild(el('div', { text: '≈ = approximate value (method shown in tooltip)' }));
     body.appendChild(el('div', { text: '≥ = lower bound (actual value is equal or higher)' }));
@@ -110,234 +126,273 @@
     return det;
   }
 
+  // ── time label: add Pacific time next to the snapshot time ───────────────
+  function addPacificTime(exportedAt) {
+    var asof = document.getElementById('asof');
+    if (!asof || !exportedAt) return;
+    try {
+      var pt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(exportedAt));
+      asof.textContent = asof.textContent + ' (' + pt + ' Pacific)';
+    } catch (e) { /* keep the original label */ }
+  }
+
+  // ── tiles ────────────────────────────────────────────────────────────────
+  function tile(label, title, subtitle) {
+    var t = el('section', { class: 'tile pf-tile', 'aria-label': label });
+    var head = [el('h3', { text: title })];
+    if (subtitle) head.push(el('p', { class: 'sub', text: subtitle }));
+    t.appendChild(el('div', { class: 'tile-head' }, head));
+    return t;
+  }
+
+  function velocityTile(data) {
+    var t = tile('Velocity', 'How much did the team finish? ≈', 'Last 3 closed sprints · done ÷ scope at close');
+    var body = el('div', { class: 'tile-body' });
+    if (!data.velocity || !data.velocity.length) {
+      body.appendChild(el('p', { class: 'empty', text: 'No velocity data available.' }));
+      t.appendChild(body); return t;
+    }
+    var list = el('div', { class: 'pf-vel-bars' });
+    data.velocity.forEach(function (v) {
+      var row = el('div', { class: 'pf-vel-row' });
+      row.appendChild(el('div', { class: 'pf-vel-name', text: v.name }));
+      var tk = el('div', { class: 'pf-vel-metric' });
+      tk.appendChild(el('span', { class: 'pf-vel-cap', text: 'Tickets' }));
+      tk.appendChild(bar(v.scopeTickets ? v.doneTickets / v.scopeTickets : 0));
+      tk.appendChild(el('span', { class: 'pf-vel-num', text: v.doneTickets + ' / ' + v.scopeTickets + ' (' + v.completionTicketsPct + '%)' }));
+      var pt = el('div', { class: 'pf-vel-metric' });
+      pt.appendChild(el('span', { class: 'pf-vel-cap', text: 'Points' }));
+      pt.appendChild(bar(v.scopePoints ? v.donePoints / v.scopePoints : 0, 'pf-fill-pts'));
+      pt.appendChild(el('span', { class: 'pf-vel-num', text: v.donePoints + ' / ' + v.scopePoints + ' (' + v.completionPointsPct + '%)' }));
+      var pair = el('div', { class: 'pf-vel-pair' }); pair.appendChild(tk); pair.appendChild(pt);
+      var meta = el('div', { class: 'pf-vel-meta' });
+      meta.appendChild(el('span', { text: 'Carried to next: ' + shown(v.carriedToNext) + ' tickets' }));
+      meta.appendChild(el('span', { text: 'Created after start: ' + shown(v.createdAfterStart) + ' tickets ≥' }));
+      var late = el('span', { text: v.closedLateDays > 0 ? 'Closed ' + v.closedLateDays + ' days after planned end' : 'Closed on time' });
+      if (v.closedLateDays > 0) late.setAttribute('class', 'pf-late');
+      meta.appendChild(late);
+      row.appendChild(pair); row.appendChild(meta);
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+    body.appendChild(velocityTable(data));
+    t.appendChild(body);
+    return t;
+  }
+
+  function velocityTable(data) {
+    var det = el('details', { class: 'pf-vel-details' });
+    det.appendChild(el('summary', { text: 'Show as a table' }));
+    var wrap = el('div', { class: 'pf-vel-wrap' });
+    var tbl = el('table', { class: 'data pf-vel-table' });
+    tbl.appendChild(el('thead', null, [el('tr', null, [
+      el('th', { scope: 'col', text: 'Sprint' }),
+      el('th', { scope: 'col', text: 'Scope (tickets)' }),
+      el('th', { scope: 'col', text: 'Done (tickets, %) ≈' }),
+      el('th', { scope: 'col', text: 'Scope (points)' }),
+      el('th', { scope: 'col', text: 'Done (points) ≈' }),
+      el('th', { scope: 'col', text: 'Carried to next (tickets) ≈' }),
+      el('th', { scope: 'col', text: 'Created after start (tickets) ≥' }),
+      el('th', { scope: 'col', text: 'Closed late (days)' })
+    ])]));
+    var tbody = el('tbody');
+    data.velocity.forEach(function (v) {
+      var lateCell = el('td', { text: v.closedLateDays > 0 ? ('+' + v.closedLateDays + ' days after planned end') : '—' });
+      if (v.closedLateDays > 0) lateCell.setAttribute('class', 'pf-late');
+      tbody.appendChild(el('tr', null, [
+        el('td', { text: v.name }),
+        el('td', { text: String(v.scopeTickets) }),
+        el('td', { text: v.doneTickets + ' (' + v.completionTicketsPct + '%)' }),
+        el('td', { text: String(v.scopePoints) }),
+        el('td', { text: String(v.donePoints) }),
+        el('td', { text: String(v.carriedToNext) }),
+        el('td', { text: v.createdAfterStart != null ? String(v.createdAfterStart) : 'n/a' }),
+        lateCell
+      ]));
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+    det.appendChild(wrap);
+    det.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list (tickets). Completion may differ from Jira’s own report. Points created after start: not available.' }));
+    return det;
+  }
+
+  function burndownTile(data) {
+    var t = tile('Burndown', 'Is the sprint burning down? ≈', 'Story points remaining per day');
+    var body = el('div', { class: 'tile-body pf-burn-body' });
+    var cur = data.burndownCurrent, last = data.burndownLastClosed;
+    var hasCur = cur && cur.days && cur.days.length, hasLast = last && last.days && last.days.length;
+    var chartBox = el('div', { class: 'pf-burn-box' });
+    function show(which) {
+      AF.clear(chartBox);
+      var d = which === 'last' ? last : cur;
+      if (d && d.days && d.days.length) {
+        chartBox.appendChild(burndownChart(d));
+        chartBox.appendChild(el('p', { class: 'pf-note', text: '≈ ' + d.method }));
+      } else {
+        chartBox.appendChild(el('p', { class: 'empty', text: 'n/a' }));
+      }
+    }
+    var toggle = el('div', { class: 'pf-toggle', role: 'group', 'aria-label': 'Burndown sprint' });
+    var btnCur = el('button', { type: 'button', class: 'pf-toggle-btn is-on', 'aria-pressed': 'true', text: 'Current sprint' });
+    var btnLast = el('button', { type: 'button', class: 'pf-toggle-btn', 'aria-pressed': 'false', text: 'Last closed sprint' });
+    function select(which) {
+      btnCur.className = 'pf-toggle-btn' + (which === 'cur' ? ' is-on' : ''); btnCur.setAttribute('aria-pressed', which === 'cur' ? 'true' : 'false');
+      btnLast.className = 'pf-toggle-btn' + (which === 'last' ? ' is-on' : ''); btnLast.setAttribute('aria-pressed', which === 'last' ? 'true' : 'false');
+      show(which);
+    }
+    btnCur.addEventListener('click', function () { select('cur'); });
+    btnLast.addEventListener('click', function () { select('last'); });
+    toggle.appendChild(btnCur); toggle.appendChild(btnLast);
+    body.appendChild(toggle);
+    body.appendChild(chartBox);
+    select(hasCur ? 'cur' : (hasLast ? 'last' : 'cur'));
+    t.appendChild(body);
+    return t;
+  }
+
+  function healthTile(data) {
+    var sprint = data.currentSprint;
+    var t = tile('Sprint health', 'What is moving or stuck?', 'Current sprint, tickets');
+    var body = el('div', { class: 'tile-body pf-kv-grid' });
+    body.appendChild(kv('No status change in 7+ days (tickets)', sprint.stuckD7, 'In Progress, NOT status CHANGED AFTER -7d'));
+    body.appendChild(kv('No status change in 14+ days (tickets)', sprint.stuckD14, 'In Progress, NOT status CHANGED AFTER -14d'));
+    body.appendChild(kv('Carried in (tickets)', sprint.carriedIn, 'Tickets also in the previous sprint; approximate', true));
+    body.appendChild(kv('Created after sprint start (tickets)', sprint.createdAfterStart, 'Lower bound: tickets created after the sprint start date; sprint CHANGED JQL is not supported', 'lower'));
+    body.appendChild(kv('Bugs in sprint (tickets)', sprint.bugsInSprint));
+    body.appendChild(kv('Bugs created, last 14 days (tickets)', shown(data.bugsCreated14d)));
+    body.appendChild(kv('All tickets created, last 14 days', num(data.ticketsCreated14d), data.ticketsCreated14d != null ? 'All issue types in the project, created in the last 14 days' : null));
+    body.appendChild(kv('Team size (people with tickets)', sprint.teamSize, 'Distinct assignees in the current sprint; no names stored'));
+    t.appendChild(body);
+    return t;
+  }
+
+  function backlogTile(data) {
+    var bl = data.backlog;
+    var t = tile('Backlog health', 'How healthy is the backlog?', 'Tickets outside the current sprint, by age since creation (re-opened or moved tickets may look older)');
+    var body = el('div', { class: 'tile-body' });
+    var total = bl.total || 0;
+    var segs = [
+      { label: 'Up to 90 days', n: Math.max(0, total - bl.created90dPlus), cls: 'pf-seg-1' },
+      { label: '90 to 180 days', n: Math.max(0, bl.created90dPlus - bl.created180dPlus), cls: 'pf-seg-2' },
+      { label: '180 days to 1 year', n: Math.max(0, bl.created180dPlus - bl.created365dPlus), cls: 'pf-seg-3' },
+      { label: 'Over 1 year', n: bl.created365dPlus, cls: 'pf-seg-4' }
+    ];
+    body.appendChild(el('div', { class: 'pf-bl-total', text: 'Total backlog: ' + num(total) + ' tickets' + (bl.scopeNote ? ' *' : '') }));
+    var stack = el('div', { class: 'pf-stack', role: 'img', 'aria-label': 'Backlog by age: ' + segs.map(function (s) { return s.label + ' ' + s.n; }).join(', ') });
+    segs.forEach(function (s) {
+      var seg = el('div', { class: 'pf-seg ' + s.cls, title: s.label + ': ' + s.n + ' tickets' });
+      seg.style.flexGrow = String(s.n);
+      stack.appendChild(seg);
+    });
+    body.appendChild(stack);
+    var keyRow = el('div', { class: 'pf-stack-key' });
+    segs.forEach(function (s) {
+      var k = el('div', { class: 'pf-stack-item' });
+      k.appendChild(el('span', { class: 'pf-swatch ' + s.cls }));
+      k.appendChild(el('span', { text: s.label + ': ' + num(s.n) + ' (' + pct(s.n, total) + ')' }));
+      keyRow.appendChild(k);
+    });
+    body.appendChild(keyRow);
+    var chips = el('div', { class: 'pf-chips pf-bl-chips' });
+    if (bl.notUpdated365d !== null && bl.notUpdated365d !== undefined) {
+      chips.appendChild(el('span', { class: 'pf-chip', text: 'Not updated in 1 year (tickets): ' + num(bl.notUpdated365d) + ' (' + pct(bl.notUpdated365d, total) + ')' }));
+    }
+    chips.appendChild(el('span', { class: 'pf-chip', text: 'No points (tickets): ' + num(bl.noPoints) + ' (' + pct(bl.noPoints, total) + ')' }));
+    chips.appendChild(el('span', { class: 'pf-chip', text: 'No parent (tickets): ' + num(bl.noParent) + ' (' + pct(bl.noParent, total) + ')' }));
+    body.appendChild(chips);
+    if (bl.scopeNote) body.appendChild(el('p', { class: 'pf-note', text: '* ' + bl.scopeNote }));
+    t.appendChild(body);
+    return t;
+  }
+
   // ── render team ──────────────────────────────────────────────────────────
   function renderTeam(data) {
     AF.clear(app);
     app.classList.add('portfolio-view');
     AF.setUpdated(data.refreshedAt, data.exportedAt);
+    addPacificTime(data.exportedAt);
 
     var sprint = data.currentSprint;
-    var dayN = null, dayTotal = null;
-    if (sprint.startDate && sprint.endDate) {
-      var s = new Date(sprint.startDate + 'T00:00:00'), e = new Date(sprint.endDate + 'T00:00:00'), t = new Date();
-      dayTotal = Math.round((e - s) / 864e5) + 1;
-      dayN = Math.min(dayTotal, Math.max(1, Math.round((t - s) / 864e5) + 1));
+    var asOf = (data.burndownCurrent && data.burndownCurrent.asOf) || data.refreshedAt;
+    var dayN = null, dayTotal = null, elapsedPct = null, lengthDays = null;
+    if (sprint.startDate && sprint.endDate && asOf) {
+      var s = parseDay(sprint.startDate), e = parseDay(sprint.endDate), t = parseDay(asOf);
+      lengthDays = dayDiff(s, e) + 1;
+      dayTotal = lengthDays;
+      dayN = Math.min(dayTotal, Math.max(1, dayDiff(s, t) + 1));
+      elapsedPct = Math.max(0, Math.min(100, Math.round(100 * dayDiff(s, t) / Math.max(1, dayDiff(s, e)))));
     }
-
-    // title bar + legend
-    var titleBar = el('div', { class: 'pf-title-bar' });
-    titleBar.appendChild(el('h2', { class: 'pf-team-title', text: data.label }));
-    if (data.pointsNote) {
-      titleBar.appendChild(el('p', { class: 'pf-points-note', text: 'ℹ️ ' + data.pointsNote }));
-    }
-    app.appendChild(titleBar);
-    app.appendChild(renderLegend());
-
-    // past-end-date warning
-    if (sprint.pastEndDate) {
-      var daysOver = '';
-      if (sprint.endDate) {
-        var eEnd = new Date(sprint.endDate + 'T00:00:00');
-        var dOver = Math.round((new Date() - eEnd) / 864e5);
-        if (dOver > 0) daysOver = ' (' + dOver + ' days past the planned end date of ' + sprint.endDate + ')';
-      }
-      var warn = el('div', { class: 'pf-warn', role: 'alert' });
-      warn.textContent = '⚠️ Sprint past end date' + daysOver + '. The sprint may still be active in Jira but has not been closed.';
-      app.appendChild(warn);
-    }
-
-    // ── build tiles (not yet appended) ──
-
-    // current sprint tile
-    var spTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Current sprint' });
-    spTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Current sprint' })]));
-    var spBody = el('div', { class: 'tile-body pf-kv-grid' });
-    spBody.appendChild(kv('Sprint', sprint.name));
-    spBody.appendChild(kv('Dates', sprint.startDate + ' – ' + sprint.endDate));
-    spBody.appendChild(kv('Day', dayN !== null ? ('Day ' + dayN + ' of ' + dayTotal + ' calendar days') : 'n/a'));
     var donePct = sprint.tickets ? Math.round(100 * sprint.doneTickets / sprint.tickets) : null;
-    var doneTxt = sprint.doneTickets + ' / ' + sprint.tickets + ' tickets';
-    if (donePct !== null) doneTxt += ' (' + donePct + '% done)';
-    spBody.appendChild(kv('Done (tickets)', doneTxt, 'Approximate: statusCategoryChangedDate used as Done date; scope = current list', true));
-    spBody.appendChild(kv('Points (story points)', sprint.points + ' scope ∙ ' + sprint.donePoints + ' done', 'Approximate; final points used', true));
-    spTile.appendChild(spBody);
+    var donePtsPct = sprint.points ? Math.round(100 * sprint.donePoints / sprint.points) : null;
 
-    // data quality tile
-    var dqTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Data quality' });
-    dqTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Data quality (current sprint)' })]));
-    var dqBody = el('div', { class: 'tile-body pf-kv-grid' });
-    dqBody.appendChild(kv('Points filled', sprint.pointsFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Tester filled', sprint.testerFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Fix version filled', sprint.fixVersionFillPct + '% of tickets'));
-    dqBody.appendChild(kv('Parent filled', sprint.parentFillPct + '% of tickets'));
-    dqTile.appendChild(dqBody);
-
-    // velocity tile
-    var velTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Velocity' });
-    velTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Velocity ≈ (last 3 closed sprints)' })]));
-    var velBody = el('div', { class: 'tile-body' });
-    if (data.velocity && data.velocity.length) {
-      var velWrap = el('div', { class: 'pf-vel-wrap' });
-      var tbl = el('table', { class: 'data pf-vel-table' });
-      var thead = el('thead', null, [el('tr', null, [
-        el('th', { scope: 'col', text: 'Sprint' }),
-        el('th', { scope: 'col', text: 'Scope (tickets)' }),
-        el('th', { scope: 'col', text: 'Done (tickets, %) ≈' }),
-        el('th', { scope: 'col', text: 'Scope (points)' }),
-        el('th', { scope: 'col', text: 'Done (points) ≈' }),
-        el('th', { scope: 'col', text: 'Carried to next (tickets) ≈' }),
-        el('th', { scope: 'col', text: 'Created after start (tickets) ≥' }),
-        el('th', { scope: 'col', text: 'Closed late (days)' })
-      ])]);
-      tbl.appendChild(thead);
-      var tbody = el('tbody');
-      data.velocity.forEach(function (v) {
-        var compPct = v.completionTicketsPct + '%';
-        var late = v.closedLateDays > 0 ? ('+' + v.closedLateDays + ' days after planned end') : '—';
-        var lateCell = el('td', { text: late });
-        if (v.closedLateDays > 0) lateCell.setAttribute('class', 'pf-late');
-        var createdAfter = v.createdAfterStart != null ? String(v.createdAfterStart) : 'n/a';
-        tbody.appendChild(el('tr', null, [
-          el('td', { text: v.name }),
-          el('td', { text: String(v.scopeTickets) }),
-          el('td', { text: v.doneTickets + ' (' + compPct + ')' }),
-          el('td', { text: String(v.scopePoints) }),
-          el('td', { text: String(v.donePoints) }),
-          el('td', { text: String(v.carriedToNext) }),
-          el('td', { text: createdAfter }),
-          lateCell
-        ]));
-      });
-      tbl.appendChild(tbody);
-      velWrap.appendChild(tbl);
-      velBody.appendChild(velWrap);
-      velBody.appendChild(el('p', { class: 'pf-note', text: 'Scope = end-of-sprint list (tickets). Completion may differ from Jira\'s own report. Points created after start: not available.' }));
-    } else {
-      velBody.appendChild(el('p', { class: 'empty', text: 'No velocity data available.' }));
+    // top: title, summary line, notes, legend, past-end warning
+    var top = el('div', { class: 'pf-top' });
+    var titleRow = el('div', { class: 'pf-title-bar' });
+    titleRow.appendChild(el('h2', { class: 'pf-team-title', text: data.label }));
+    if (data.pointsNote) titleRow.appendChild(el('p', { class: 'pf-points-note', text: 'ℹ️ ' + data.pointsNote }));
+    titleRow.appendChild(renderLegend());
+    top.appendChild(titleRow);
+    var parts = [];
+    if (dayN !== null) parts.push('Day ' + dayN + ' of ' + dayTotal);
+    if (donePct !== null && elapsedPct !== null) parts.push(donePct + '% of tickets done ≈ at ' + elapsedPct + '% of the sprint time');
+    parts.push(num(sprint.stuckD7) + ' tickets with no status change in 7+ days');
+    parts.push('backlog ' + num(data.backlog.total) + ' tickets' + (data.backlog.scopeNote ? ' *' : ''));
+    top.appendChild(el('p', { class: 'pf-summary', text: parts.join(' · ') }));
+    if (sprint.pastEndDate) {
+      var over = '';
+      if (sprint.endDate && asOf) { var dOver = dayDiff(parseDay(sprint.endDate), parseDay(asOf)); if (dOver > 0) over = ' (' + dOver + ' days past the planned end date of ' + sprint.endDate + ')'; }
+      var warn = el('div', { class: 'pf-warn', role: 'alert' });
+      warn.textContent = '⚠️ Sprint past end date' + over + '. The sprint may still be active in Jira but has not been closed.';
+      top.appendChild(warn);
     }
-    velTile.appendChild(velBody);
+    app.appendChild(top);
 
-    // burndown tile
-    var burnTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Burndown' });
-    burnTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Burndown of the last closed sprint (story points remaining) ≈' })]));
-    var burnBody = el('div', { class: 'tile-body' });
-    if (data.burndownLastClosed && data.burndownLastClosed.days && data.burndownLastClosed.days.length) {
-      burnBody.appendChild(burndownChart(data.burndownLastClosed));
-      burnBody.appendChild(el('p', { class: 'pf-note', text: '≈ ' + data.burndownLastClosed.method }));
-    } else {
-      burnBody.appendChild(el('p', { class: 'empty', text: 'n/a' }));
-    }
-    burnTile.appendChild(burnBody);
+    // header strip: sprint, time, progress vs time, points, data quality
+    var strip = el('section', { class: 'pf-strip', 'aria-label': 'Current sprint' });
+    strip.appendChild(kv('Sprint', sprint.name));
+    strip.appendChild(kv('Dates', sprint.startDate + ' – ' + sprint.endDate));
+    strip.appendChild(kv('Day', dayN !== null ? ('Day ' + dayN + ' of ' + dayTotal + ' calendar days') : 'n/a'));
+    var prog = el('div', { class: 'pf-kv pf-progress' });
+    prog.appendChild(el('div', { class: 'pf-kv-label', text: 'Done (tickets) vs sprint time' }));
+    prog.appendChild(el('div', { class: 'pf-kv-value' }, [document.createTextNode(num(sprint.doneTickets) + ' / ' + num(sprint.tickets) + ' tickets' + (donePct !== null ? ' (' + donePct + '%)' : '')), badge('approx', 'Approximate: status-category change date used as the Done date; scope = current list')]));
+    var pr1 = el('div', { class: 'pf-pace' }); pr1.appendChild(el('span', { class: 'pf-pace-cap', text: 'Done' })); pr1.appendChild(bar(donePct !== null ? donePct / 100 : 0)); prog.appendChild(pr1);
+    var pr2 = el('div', { class: 'pf-pace' }); pr2.appendChild(el('span', { class: 'pf-pace-cap', text: 'Time' })); pr2.appendChild(bar(elapsedPct !== null ? elapsedPct / 100 : 0, 'pf-fill-time')); pr2.appendChild(el('span', { class: 'pf-pace-num', text: elapsedPct !== null ? elapsedPct + '% elapsed' : 'n/a' })); prog.appendChild(pr2);
+    strip.appendChild(prog);
+    strip.appendChild(kv('Points (story points)', num(sprint.donePoints) + ' / ' + num(sprint.points) + (donePtsPct !== null ? ' (' + donePtsPct + '%)' : ''), 'Approximate; final points used', true));
+    var dq = el('div', { class: 'pf-dq', 'aria-label': 'Data quality' });
+    dq.appendChild(el('div', { class: 'pf-kv-label', text: 'How reliable is the data? (% of tickets filled)' }));
+    var chips = el('div', { class: 'pf-chips' });
+    [['Points filled', sprint.pointsFillPct], ['Tester filled', sprint.testerFillPct], ['Fix version filled', sprint.fixVersionFillPct], ['Parent filled', sprint.parentFillPct]].forEach(function (c) {
+      chips.appendChild(el('span', { class: 'pf-chip', text: c[0] + ' ' + c[1] + '%' }));
+    });
+    dq.appendChild(chips);
+    strip.appendChild(dq);
+    app.appendChild(strip);
 
-    // sprint health tile
-    var stuckTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Sprint health' });
-    stuckTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Sprint health' })]));
-    var stuckBody = el('div', { class: 'tile-body pf-kv-grid' });
-    stuckBody.appendChild(kv('Stuck 7+ days (tickets)', sprint.stuckD7, 'In Progress, NOT status CHANGED AFTER -7d'));
-    stuckBody.appendChild(kv('Stuck 14+ days (tickets)', sprint.stuckD14, 'In Progress, NOT status CHANGED AFTER -14d'));
-    stuckBody.appendChild(kv('Carried in (tickets)', sprint.carriedIn, 'Tickets also in previous sprint; approximate', true));
-    stuckBody.appendChild(kv('Created after sprint start (tickets)', sprint.createdAfterStart, 'Lower bound: tickets created after sprint startDate; sprint CHANGED JQL not supported', 'lower'));
-    stuckBody.appendChild(kv('Bugs in sprint (tickets)', sprint.bugsInSprint));
-    stuckBody.appendChild(kv('Bugs created, last 14 days (tickets)', shown(data.bugsCreated14d)));
-    stuckBody.appendChild(kv('All tickets created, last 14 days', shown(data.ticketsCreated14d), data.ticketsCreated14d != null ? 'All issue types in the project, created >= -14d' : null));
-    stuckBody.appendChild(kv('Team size (people with tickets)', sprint.teamSize, 'Distinct assignees in current sprint; no names stored'));
-    stuckTile.appendChild(stuckBody);
-
-    // backlog tile
-    var blTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Backlog health' });
-    blTile.appendChild(el('div', { class: 'tile-head' }, [el('h3', { text: 'Backlog health (tickets)' })]));
-    var blBody = el('div', { class: 'tile-body pf-kv-grid' });
-    var bl = data.backlog;
-    blBody.appendChild(kv('Total backlog (tickets)', bl.total));
-    blBody.appendChild(kv('> 90 days old (tickets)', bl.created90dPlus + ' (' + pct(bl.created90dPlus, bl.total) + ')', 'Age by created date; re-opened or moved items may appear older'));
-    blBody.appendChild(kv('> 180 days old (tickets)', bl.created180dPlus + ' (' + pct(bl.created180dPlus, bl.total) + ')'));
-    blBody.appendChild(kv('> 1 year old (tickets)', bl.created365dPlus + ' (' + pct(bl.created365dPlus, bl.total) + ')'));
-    if (bl.notUpdated365d !== null && bl.notUpdated365d !== undefined) {
-      blBody.appendChild(kv('Not updated in 1 year (tickets)', bl.notUpdated365d + ' (' + pct(bl.notUpdated365d, bl.total) + ')'));
-    }
-    blBody.appendChild(kv('No points (tickets)', bl.noPoints + ' (' + pct(bl.noPoints, bl.total) + ')'));
-    blBody.appendChild(kv('No parent (tickets)', bl.noParent + ' (' + pct(bl.noParent, bl.total) + ')'));
-    if (data.backlog.platNote) {
-      blBody.appendChild(el('p', { class: 'pf-note', text: '* ' + data.backlog.platNote }));
-    }
-    blTile.appendChild(blBody);
-
-    // ── assemble into dashboard rows ──
-    // Row 1: Current Sprint + Data Quality
-    var row1 = el('div', { class: 'pf-row pf-row-top' });
-    row1.appendChild(spTile);
-    row1.appendChild(dqTile);
-    app.appendChild(row1);
-
-    // Row 2: Velocity + Burndown
-    var row2 = el('div', { class: 'pf-row pf-row-mid' });
-    row2.appendChild(velTile);
-    row2.appendChild(burnTile);
-    app.appendChild(row2);
-
-    // Row 3: Sprint Health + Backlog Health
-    var row3 = el('div', { class: 'pf-row pf-row-bot' });
-    row3.appendChild(stuckTile);
-    row3.appendChild(blTile);
-    app.appendChild(row3);
+    // main: two columns of two tiles
+    var main = el('div', { class: 'pf-main' });
+    var left = el('div', { class: 'pf-col' }), right = el('div', { class: 'pf-col' });
+    left.appendChild(velocityTile(data)); left.appendChild(healthTile(data));
+    right.appendChild(burndownTile(data)); right.appendChild(backlogTile(data));
+    main.appendChild(left); main.appendChild(right);
+    app.appendChild(main);
   }
 
-  // ── render comparison table ───────────────────────────────────────────────
-  function renderComparison(allData) {
-    var compTile = el('section', { class: 'tile pf-tile', 'aria-label': 'Comparison' });
-    compTile.appendChild(el('div', { class: 'tile-head' }, [
-      el('h3', { text: 'Comparison ≈ ≥' }),
-      el('p', { class: 'sub', text: 'No ranking. Teams use different workflows and estimation practices.' })
-    ]));
-    var compBody = el('div', { class: 'tile-body' });
-    var compWrap = el('div', { class: 'pf-comp-wrap' });
-    var tbl = el('table', { class: 'data pf-comp-table' });
-    var thead = el('thead', null, [el('tr', null, [
-      el('th', { scope: 'col', text: 'Team' }),
-      el('th', { scope: 'col', text: 'Sprint state' }),
-      el('th', { scope: 'col', text: 'Done, 3 sprints (tickets, %) ≈' }),
-      el('th', { scope: 'col', text: 'Carry-over (tickets) ≈' }),
-      el('th', { scope: 'col', text: 'Stuck 7+ days (tickets)' }),
-      el('th', { scope: 'col', text: 'Backlog (tickets)' }),
-      el('th', { scope: 'col', text: '> 1 yr old (tickets)' }),
-      el('th', { scope: 'col', text: 'Points filled (%)' })
-    ])]);
-    tbl.appendChild(thead);
-    var tbody = el('tbody');
-    allData.forEach(function (d) {
-      if (!d) return;
-      var sprint = d.currentSprint;
-      var dayN = null, dayTotal = null;
-      if (sprint.startDate && sprint.endDate) {
-        var s = new Date(sprint.startDate + 'T00:00:00'), e = new Date(sprint.endDate + 'T00:00:00'), t = new Date();
-        dayTotal = Math.round((e - s) / 864e5) + 1;
-        dayN = Math.min(dayTotal, Math.max(1, Math.round((t - s) / 864e5) + 1));
-      }
-      var state = sprint.pastEndDate ? 'Past end date' : (dayN !== null ? ('Day ' + dayN + '/' + dayTotal) : 'n/a');
-      var comps = (d.velocity || []).map(function (v) { return v.completionTicketsPct + '%'; }).join(' · ');
-      var carries = (d.velocity || []).map(function (v) { return String(v.carriedToNext); }).join(' · ');
-      var noteMarker = d.backlog.platNote ? ' *' : '';
-      tbody.appendChild(el('tr', null, [
-        el('td', { text: d.label }),
-        el('td', { text: state }),
-        el('td', { text: comps || 'n/a' }),
-        el('td', { text: carries || 'n/a' }),
-        el('td', { text: shown(sprint.stuckD7) }),
-        el('td', { text: shown(d.backlog.total) + noteMarker }),
-        el('td', { text: shown(d.backlog.created365dPlus) + ' (' + pct(d.backlog.created365dPlus, d.backlog.total) + ')' }),
-        el('td', { text: sprint.pointsFillPct + '%' })
-      ]));
+  // ── team list (no ?project=) ─────────────────────────────────────────────
+  function renderList(manifest) {
+    AF.clear(app);
+    app.classList.add('portfolio-view');
+    var box = el('div', { class: 'pf-top' });
+    box.appendChild(el('h2', { class: 'pf-team-title', text: 'Portfolio' }));
+    box.appendChild(el('p', { class: 'pf-select-hint', text: 'Choose a team from the Portfolio ▾ menu above, or open one here:' }));
+    var ul = el('ul', { class: 'pf-team-list' });
+    manifest.projects.forEach(function (p) {
+      ul.appendChild(el('li', null, [el('a', { href: 'portfolio.html?project=' + encodeURIComponent(p.key), text: p.label })]));
     });
-    tbl.appendChild(tbody);
-    compWrap.appendChild(tbl);
-    compBody.appendChild(compWrap);
-    var notes = ['≈ approximate ≥ lower bound'];
-    if (allData.some(function (d) { return d && d.backlog && d.backlog.platNote; })) {
-      notes.push('* PLAT backlog covers the whole project, not only the Plat Core board.');
-    }
-    compBody.appendChild(el('p', { class: 'pf-note', text: notes.join(' ') }));
-    compTile.appendChild(compBody);
-    return compTile;
+    box.appendChild(ul);
+    box.appendChild(renderLegend());
+    app.appendChild(box);
   }
 
   // ── main ─────────────────────────────────────────────────────────────────
@@ -348,18 +403,7 @@
       var pmLink = document.getElementById('pm-' + key);
       if (pmLink) pmLink.setAttribute('aria-current', 'true');
     }
-    if (!key) {
-      var allLoads = manifest.projects.map(function (p) {
-        return AF.loadJson(p.file).then(null, function () { return null; });
-      });
-      return Promise.all(allLoads).then(function (allData) {
-        AF.clear(app);
-        app.classList.add('portfolio-view');
-        app.appendChild(el('p', { class: 'pf-select-hint', text: 'Choose a project from the Portfolio ▾ menu above, or view the comparison below.' }));
-        app.appendChild(renderLegend());
-        app.appendChild(renderComparison(allData));
-      });
-    }
+    if (!key) { renderList(manifest); return; }
     var entry = manifest.projects.filter(function (p) { return p.key === key; })[0];
     if (!entry) {
       AF.clear(app);

@@ -100,13 +100,13 @@ const UI = {
 // Portfolio picker (present on all App Foundation pages and on portfolio.html)
 UI.portfolio = {
   btnText: /Portfolio/,
-  menuItems: ['Agent Creator', 'Platform Engineering', 'APIM', 'Plat Core'],
-  menuItemsWithReturn: ['Agent Creator', 'Platform Engineering', 'APIM', 'Plat Core'],
+  menuItems: ['Agent Creator', 'Platform Engineering', 'Plat Core'],
+  menuItemsWithReturn: ['Agent Creator', 'Platform Engineering', 'Plat Core'],
   backToAppFound: /App Foundation/,
-  projects: ['AC', 'PLATENG', 'APIM', 'PLAT'],
-  projectLabels: { AC: 'Agent Creator', PLATENG: 'Platform Engineering', APIM: 'APIM', PLAT: 'Plat Core' },
+  projects: ['AC', 'PLATENG', 'PLAT'],
+  projectLabels: { AC: 'Agent Creator', PLATENG: 'Platform Engineering', PLAT: 'Plat Core' },
   unknownMsg: /Unknown project/i,
-  selectHint: /Choose a project/,
+  selectHint: /Choose a team/,
   manifestFile: 'portfolio/projects.json',
   legendSummary: /Legend.*symbols.*units/i,
   legendSymbols: ['≈', '≥', 'tickets', 'points'],
@@ -114,7 +114,8 @@ UI.portfolio = {
   unitPatterns: /\(tickets\)|\(points\)|\(people\)|\(%\)|\(days\)|\(story points\)/,
   createdAfterStart: /Created after start \(tickets\)/i,
   pointsCreatedNote: /[Pp]oints created.*not available/,
-  compHeaders: /Done.*tickets.*%|Carry-over \(tickets\)|Stuck.*tickets|Backlog \(tickets\)|> 1 yr.*tickets|Points filled/
+  summaryLine: /^Day \d+ of \d+ · .*% of tickets done .* at \d+% of the sprint time · .* tickets with no status change in 7\+ days · backlog .* tickets/,
+  questionTitles: ['How much did the team finish?', 'Is the sprint burning down?', 'What is moving or stuck?', 'How healthy is the backlog?']
 };
 
 module.exports = { UI, THR_TIME };

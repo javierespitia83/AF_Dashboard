@@ -1083,6 +1083,7 @@ async function suites(ctx) {
     const menuLinks = await run(pp, `return [...document.querySelectorAll('#portfolio-picker .portfolio-menu a')].map(a => ({ text: a.textContent.trim(), href: a.getAttribute('href') }))`);
     check(`Portfolio picker has ${PUI.menuItems.length + 1} items on ${pageName} (4 teams + App Foundation return)`, menuLinks.length >= PUI.menuItems.length);
     const teamLinks = menuLinks.filter(l => l.href && l.href.includes('portfolio.html'));
+    check(`Portfolio picker lists exactly the three teams and not APIM on ${pageName}`, teamLinks.length === PUI.projects.length && !menuLinks.some(l => /APIM/i.test(l.text) || /APIM/.test(l.href || '')), menuLinks.map(l => l.text));
     check(`Portfolio picker team links all point to portfolio.html?project= on ${pageName}`, teamLinks.every(l => l.href.startsWith('portfolio.html?project=')), teamLinks.map(l => l.href));
     // App Foundation pages don't need a return link (they ARE App Foundation); portfolio.html does
     const returnLink = menuLinks.find(l => l.href && l.href.includes('index.html'));
@@ -1110,10 +1111,13 @@ async function suites(ctx) {
   check('portfolio.html?project=UNKNOWN shows unknown-project message', PUI.unknownMsg.test(pfUnkMain), pfUnkMain.slice(0, 150));
   await pfUnknown.close();
 
-  // ---------- Portfolio page: no project (comparison view) ----------
+  // ---------- Portfolio page: no project (team list, no comparison) ----------
   const pfNoProject = await open(base + 'portfolio.html', 1280, 800);
   const pfNoMain = await run(pfNoProject, `return document.querySelector('#app') ? document.querySelector('#app').textContent.slice(0, 500) : ''`);
   check('portfolio.html (no ?project=) shows select hint', PUI.selectHint.test(pfNoMain), pfNoMain.slice(0, 200));
+  const pfNoLinks = await run(pfNoProject, `return [...document.querySelectorAll('.pf-team-list a')].map(a => a.getAttribute('href'))`);
+  check('portfolio.html (no ?project=) lists the three teams as links', JSON.stringify(pfNoLinks) === JSON.stringify(PUI.projects.map(k => 'portfolio.html?project=' + k)), pfNoLinks);
+  check('portfolio.html (no ?project=) has no comparison table', (await run(pfNoProject, `return document.querySelectorAll('.pf-comp-table').length`)) === 0);
   await pfNoProject.close();
 
   // ---------- Portfolio schemas and data conformance ----------
@@ -1125,7 +1129,8 @@ async function suites(ctx) {
   { const errs = validate(pfManifestSchema, pfManifest, 'portfolio/projects.json');
     check('portfolio/projects.json conforms to schema/portfolio-projects.schema.json', errs.length === 0, errs.slice(0, 5));
     const keys = (pfManifest.projects || []).map(p => p.key);
-    check('portfolio/projects.json lists all four expected project keys', ['AC', 'PLATENG', 'APIM', 'PLAT'].every(k => keys.includes(k)), keys); }
+    check('portfolio/projects.json lists exactly AC, PLATENG and PLAT (APIM removed)', JSON.stringify(keys) === JSON.stringify(['AC', 'PLATENG', 'PLAT']), keys);
+    check('portfolio/APIM.json no longer exists', !fs.existsSync(path.join(ROOT, 'portfolio/APIM.json'))); }
   // per-team files
   for (const proj of (pfManifest.projects || [])) {
     const teamFile = proj.file;
@@ -1227,15 +1232,52 @@ async function suites(ctx) {
     await pg.close();
   }
 
-  // Comparison view: units in headers
-  const compPg = await open(base + 'portfolio.html', 1280, 800);
-  const compHeaders = await run(compPg, `return [...document.querySelectorAll('.pf-comp-table th')].map(h => h.textContent)`);
-  check('portfolio comparison: table has headers with units', compHeaders.some(h => /\(tickets\)/.test(h)) && compHeaders.some(h => /\(%\)/.test(h)), compHeaders);
-  const compLegendText = await run(compPg, `var d = document.querySelector('.pf-legend'); return d ? d.textContent : ''`);
-  check('portfolio comparison: legend present', PUI4.legendSummary.test(compLegendText));
-  const compViewClass = await run(compPg, `return document.querySelector('#app.portfolio-view') !== null`);
-  check('portfolio comparison: board has portfolio-view class', compViewClass === true);
-  await compPg.close();
+  // ---------- N-005: one screen per team, summary line, bars, burndown, readability ----------
+  for (const projKey of PUI4.projects) {
+    const td = pfTeamData[projKey];
+    if (!td) continue;
+    for (const [w, h] of [[1900, 970], [1440, 800]]) {
+      const pg = await open(base + 'portfolio.html?project=' + projKey, w, h);
+      const page = await run(pg, `return { pageScroll: document.documentElement.scrollHeight - innerHeight, appScroll: document.querySelector('#app').scrollHeight - document.querySelector('#app').clientHeight, clipped: [...document.querySelectorAll('.pf-tile .tile-body')].filter(b => b.scrollHeight > b.clientHeight + 2).length }`);
+      check(`portfolio ${projKey}: fits one screen without page scroll at ${w}x${h}`, page.pageScroll <= 0 && page.appScroll <= 1, page);
+      check(`portfolio ${projKey}: no tile content hidden by scrolling or clipping at ${w}x${h}`, page.clipped === 0, page);
+      await pg.close();
+    }
+    const pg = await open(base + 'portfolio.html?project=' + projKey, 1900, 970);
+    const summary = await run(pg, `var s = document.querySelector('.pf-summary'); return s ? s.textContent : ''`);
+    check(`portfolio ${projKey}: summary line has the expected shape`, PUI4.summaryLine.test(summary), summary);
+    check(`portfolio ${projKey}: summary line shows the backlog total from the data`, summary.includes('backlog ' + td.backlog.total.toLocaleString('en-US') + ' tickets'), summary);
+    check(`portfolio ${projKey}: summary line shows the stuck count from the data`, summary.includes(td.currentSprint.stuckD7.toLocaleString('en-US') + ' tickets with no status change in 7+ days'), summary);
+    const titles = await run(pg, `return [...document.querySelectorAll('.pf-tile .tile-head h3')].map(h => h.textContent)`);
+    check(`portfolio ${projKey}: tile titles are the four questions`, PUI4.questionTitles.every(q => titles.some(t => t.startsWith(q))), titles);
+    const barRows = await run(pg, `return document.querySelectorAll('.pf-vel-row').length`);
+    check(`portfolio ${projKey}: velocity bars rows equal the velocity entries`, barRows === (td.velocity || []).length, barRows);
+    const velBarText = await run(pg, `return [...document.querySelectorAll('.pf-vel-num')].map(n => n.textContent)`);
+    const expVelBar = []; (td.velocity || []).forEach(v => { expVelBar.push(v.doneTickets + ' / ' + v.scopeTickets + ' (' + v.completionTicketsPct + '%)'); expVelBar.push(v.donePoints + ' / ' + v.scopePoints + ' (' + v.completionPointsPct + '%)'); });
+    check(`portfolio ${projKey}: velocity bars show the numbers of the data`, JSON.stringify(velBarText) === JSON.stringify(expVelBar), { velBarText, expVelBar });
+    const lateTxt = await run(pg, `return [...document.querySelectorAll('.pf-vel-meta')].map(m => m.textContent).join(' | ')`);
+    check(`portfolio ${projKey}: velocity bars state if a sprint closed late`, (td.velocity || []).every(v => v.closedLateDays > 0 ? lateTxt.includes('Closed ' + v.closedLateDays + ' days after planned end') : lateTxt.includes('Closed on time')), lateTxt);
+    const segs = await run(pg, `return [...document.querySelectorAll('.pf-seg')].map(s => s.getAttribute('title'))`);
+    const segSum = segs.reduce((a, t) => a + Number((t.match(/: (\d+) tickets/) || [0, 0])[1]), 0);
+    check(`portfolio ${projKey}: backlog age segments add up to the backlog total`, segs.length === 4 && segSum === td.backlog.total, { segs, total: td.backlog.total });
+    const pace = await run(pg, `return document.querySelectorAll('.pf-pace .pf-fill').length`);
+    check(`portfolio ${projKey}: progress versus sprint time bars present`, pace === 2, pace);
+    const asof = await run(pg, `return document.getElementById('asof').textContent`);
+    check(`portfolio ${projKey}: snapshot time also shown in Pacific time`, /Pacific/.test(asof), asof);
+    check(`portfolio ${projKey}: no comparison table on the team page`, (await run(pg, `return document.querySelectorAll('.pf-comp-table').length`)) === 0);
+    if (td.burndownCurrent) {
+      const cur = await run(pg, `var p = document.querySelector('.pf-burn polyline'); return { points: p ? p.getAttribute('points').split(' ').length : 0, pressed: document.querySelector('.pf-toggle-btn.is-on') ? document.querySelector('.pf-toggle-btn.is-on').textContent : '' }`);
+      check(`portfolio ${projKey}: current-sprint burndown is the main chart with one point per day`, cur.points === td.burndownCurrent.days.length && /Current sprint/.test(cur.pressed), cur);
+      await run(pg, `document.querySelectorAll('.pf-toggle-btn')[1].click()`);
+      const last = await run(pg, `var p = document.querySelector('.pf-burn polyline'); return p ? p.getAttribute('points').split(' ').length : 0`);
+      check(`portfolio ${projKey}: toggle shows the last closed sprint burndown`, last === td.burndownLastClosed.days.length, last);
+    } else { skip(`portfolio ${projKey}: current-sprint burndown`, 'no burndownCurrent in the data'); }
+    if (td.backlog.scopeNote) {
+      const bl = await run(pg, `return document.querySelector('[aria-label="Backlog health"]').textContent`);
+      check(`portfolio ${projKey}: backlog scope note is visible`, bl.includes(td.backlog.scopeNote) && /\*/.test(summary), bl.slice(0, 120));
+    }
+    await pg.close();
+  }
 }
 
 // ---------- run ----------

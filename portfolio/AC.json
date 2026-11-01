@@ -89,21 +89,66 @@
     "approx": true,
     "method": "Final points used; added dates approximated from created date; removals not tracked",
     "days": [
-      ["2026-10-12", 56],
-      ["2026-10-13", 53],
-      ["2026-10-14", 53],
-      ["2026-10-15", 53],
-      ["2026-10-16", 51],
-      ["2026-10-17", 51],
-      ["2026-10-18", 44],
-      ["2026-10-19", 36],
-      ["2026-10-20", 36],
-      ["2026-10-21", 36],
-      ["2026-10-22", 36],
-      ["2026-10-23", 21],
-      ["2026-10-24", 21],
-      ["2026-10-25", 21],
-      ["2026-10-26", 21]
+      [
+        "2026-10-12",
+        56
+      ],
+      [
+        "2026-10-13",
+        53
+      ],
+      [
+        "2026-10-14",
+        53
+      ],
+      [
+        "2026-10-15",
+        53
+      ],
+      [
+        "2026-10-16",
+        51
+      ],
+      [
+        "2026-10-17",
+        51
+      ],
+      [
+        "2026-10-18",
+        44
+      ],
+      [
+        "2026-10-19",
+        36
+      ],
+      [
+        "2026-10-20",
+        36
+      ],
+      [
+        "2026-10-21",
+        36
+      ],
+      [
+        "2026-10-22",
+        36
+      ],
+      [
+        "2026-10-23",
+        21
+      ],
+      [
+        "2026-10-24",
+        21
+      ],
+      [
+        "2026-10-25",
+        21
+      ],
+      [
+        "2026-10-26",
+        21
+      ]
     ]
   },
   "backlog": {
@@ -117,5 +162,45 @@
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
   "bugsCreated14d": 9,
-  "ticketsCreated14d": 31
+  "ticketsCreated14d": 31,
+  "burndownCurrent": {
+    "sprintId": 12135,
+    "sprintName": "AC 10-26-2026",
+    "approx": true,
+    "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
+    "asOf": "2026-11-01",
+    "startDate": "2026-10-26",
+    "endDate": "2026-11-09",
+    "scopePoints": 79.0,
+    "days": [
+      [
+        "2026-10-26",
+        79.0
+      ],
+      [
+        "2026-10-27",
+        79.0
+      ],
+      [
+        "2026-10-28",
+        78.0
+      ],
+      [
+        "2026-10-29",
+        78.0
+      ],
+      [
+        "2026-10-30",
+        78.0
+      ],
+      [
+        "2026-10-31",
+        78.0
+      ],
+      [
+        "2026-11-01",
+        78.0
+      ]
+    ]
+  }
 }

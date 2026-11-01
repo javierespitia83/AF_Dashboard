@@ -14,7 +14,7 @@ Expected scratch files (--scratch DIR):
 
 Output:
     portfolio/projects.json
-    portfolio/AC.json, PLATENG.json, APIM.json, PLAT.json
+    portfolio/AC.json, PLATENG.json, PLAT.json
 
 Privacy guarantee:
     No person names, e-mails, ticket keys or summaries are written to any output file.
@@ -41,13 +41,9 @@ TEAMS = {
         "current_sprint": 12230,
         "closed_sprints": [12120, 12133, 12177],
     },
-    "APIM": {
-        "label": "APIM",
-        "current_sprint": 12109,
-        "closed_sprints": [10253, 10855, 12102],
-    },
     "PLAT": {
         "label": "Plat Core",
+        "backlog_scope_note": "Whole Platform project, not only the Plat Core board.",
         "current_sprint": 12189,
         "closed_sprints": [12121, 12131, 12179],
     },
@@ -73,7 +69,9 @@ def privacy_check(data: dict, path: str = "") -> None:
         if EMAIL_RE.search(data):
             raise ValueError(f"Privacy: e-mail found at {path}: {data[:60]}")
         # jql field is allowed to contain keys; pointsNote is ok
-        if "jql" not in path and "Note" not in path and "method" not in path:
+        # sprint names such as "PLATENG-11-06-2026" look like keys but are sprint names
+        is_sprint_name = path.endswith(".name") or path.endswith(".sprintName")
+        if "jql" not in path and "Note" not in path and "method" not in path and not is_sprint_name:
             if KEY_RE.search(data):
                 raise ValueError(f"Privacy: Jira key found at {path}: {data[:60]}")
 
@@ -406,6 +404,8 @@ def build_team_json(team_key: str, issues: list, counts: dict, today: str) -> di
             f"AND (sprint is EMPTY OR sprint not in ({cur_id}))"
         ),
     }
+    if cfg.get("backlog_scope_note"):
+        backlog["scopeNote"] = cfg["backlog_scope_note"]
 
     bugs14 = c.get("bugsCreated14d", 0)
 
@@ -423,9 +423,77 @@ def build_team_json(team_key: str, issues: list, counts: dict, today: str) -> di
     }
 
 
+def load_issue_page(path: str) -> list:
+    """Load the issues of one saved connector result (list-wrapped or plain dict)."""
+    with open(path) as fh:
+        raw = json.load(fh)
+    if isinstance(raw, list):
+        raw = json.loads(raw[0]["text"])
+    return raw.get("issues", [])
+
+
+def build_current_burndown(issues: list, sprint: dict, today: datetime.date) -> dict:
+    """Approximate burndown of the CURRENT sprint (story points remaining per day).
+
+    Same rule as the closed-sprint burndown: final points of every issue now listed
+    in the sprint, Done date = statuscategorychangedate (Pacific date) for issues in
+    the Done category. The series runs from the sprint start to min(today, end date).
+    Tickets added mid-sprint count from day 1 and removed tickets are not visible.
+    """
+    start = datetime.date.fromisoformat(sprint["startDate"][:10])
+    end = datetime.date.fromisoformat(sprint["endDate"][:10])
+    last = min(today, end)
+    total_pts = sum(points(iss) for iss in issues)
+    days_out = []
+    d = start
+    while d <= last:
+        done_pts = sum(
+            points(iss) for iss in issues
+            if done_date(iss) is not None and done_date(iss) <= d
+        )
+        days_out.append([d.isoformat(), total_pts - done_pts])
+        d += datetime.timedelta(days=1)
+    return {
+        "sprintId": sprint.get("sprintId"),
+        "sprintName": sprint.get("name", ""),
+        "approx": True,
+        "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
+        "asOf": today.isoformat(),
+        "startDate": start.isoformat(),
+        "endDate": end.isoformat(),
+        "scopePoints": total_pts,
+        "days": days_out,
+    }
+
+
+def merge_current_burndown(scratch: str, output_dir: str, today: datetime.date) -> None:
+    """Add burndownCurrent to portfolio/<KEY>.json from cur_<KEY>.json connector results."""
+    for team_key in TEAMS:
+        src = os.path.join(scratch, f"cur_{team_key}.json")
+        dst = os.path.join(output_dir, f"{team_key}.json")
+        if not os.path.exists(src) or not os.path.exists(dst):
+            print(f"  skip {team_key}: missing {src if not os.path.exists(src) else dst}")
+            continue
+        with open(dst) as fh:
+            data = json.load(fh)
+        cs = data["currentSprint"]
+        issues = load_issue_page(src)
+        cur_id = TEAMS[team_key]["current_sprint"]
+        issues = [i for i in issues if any(s.get("id") == cur_id for s in get_sprints_for_issue(i))]
+        sprint = {"sprintId": cur_id, "name": cs.get("name", ""), "startDate": cs["startDate"], "endDate": cs["endDate"]}
+        data["burndownCurrent"] = build_current_burndown(issues, sprint, today)
+        if TEAMS[team_key].get("backlog_scope_note"):
+            data["backlog"]["scopeNote"] = TEAMS[team_key]["backlog_scope_note"]
+        privacy_check(data)
+        with open(dst, "w") as fh:
+            json.dump(data, fh, indent=2)
+        print(f"  {team_key}: burndownCurrent with {len(data['burndownCurrent']['days'])} days, scope {data['burndownCurrent']['scopePoints']} points")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Rebuild portfolio/*.json from Jira scratch data.")
     parser.add_argument("--scratch", required=True, help="Directory with saved Jira connector results")
+    parser.add_argument("--current-burndown-only", action="store_true", help="Only add burndownCurrent to the existing team files from cur_<KEY>.json in --scratch")
     parser.add_argument("--output-dir", default=None, help="Output dir (default: portfolio/ next to this script's project root)")
     args = parser.parse_args()
 
@@ -441,6 +509,15 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     today = datetime.date.today().isoformat()
+    if args.current_burndown_only:
+        try:
+            from zoneinfo import ZoneInfo
+            today_pt = datetime.datetime.now(ZoneInfo("America/Los_Angeles")).date()
+        except Exception:
+            today_pt = datetime.date.today()
+        print(f"Adding burndownCurrent (Pacific date {today_pt}) ...")
+        merge_current_burndown(scratch, output_dir, today_pt)
+        return
     date_file = os.path.join(scratch, "DATE")
     if os.path.exists(date_file):
         with open(date_file) as fh:

@@ -237,7 +237,8 @@ Key fields:
 - `currentSprint`: sprint header metrics (tickets, points, done, fill rates, stuck counts, etc.)
 - `velocity`: array of last 3 closed sprints with scope, done, completion %, carry-over
 - `burndownLastClosed`: `{ sprintId, sprintName, approx, method, days: [[date, remaining], ...] }`
-- `backlog`: total and age-bucket counts with the JQL used
+- `burndownCurrent` (D91): `{ sprintId, sprintName, approx, method, asOf, startDate, endDate, scopePoints, days: [[date, remaining], ...] }`: story points remaining per day from the sprint start to `asOf` (Pacific date, capped at the end date); final points, Done date = status-category change date, additions count from day 1, removals not tracked
+- `backlog`: total and age-bucket counts with the JQL used; optional `scopeNote` (PLAT: the counts cover the whole Platform project, not only the Plat Core board)
 - `bugsCreated14d`: bugs created in the last 14 days
 - `ticketsCreated14d`: all tickets created in the last 14 days (all issue types); integer or null
 - `pointsNote`: neutral note about Story Points meaning

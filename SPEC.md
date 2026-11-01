@@ -210,39 +210,40 @@ The detailed structure (files, the `AF` API, page lifecycle, layout CSS, burndow
 
 `index.html`, `backlog.html`, `quality-intake.html`, `dashboard.css`, `dashboard.js` (shared helpers, aggregation, filter store, tile builders), `sprint.js`, `backlog.js`, `quality-intake.js`. Keep the filter store and aggregation functions pure (no DOM) so numbers can be checked in the console and in Node (`scripts/unit.test.js`). No `innerHTML`; build DOM from text nodes.
 
-## 8. Portfolio page — `portfolio.html` (D89, 2026-10-31)
+## 8. Portfolio page — `portfolio.html` (D89, 2026-10-31; v2 D91, 2026-11-01)
 
-`portfolio.html?project=<KEY>` shows a snapshot of one team's sprint and backlog health. Allowed keys: `AC`, `PLATENG`, `APIM`, `PLAT`, validated against `portfolio/projects.json`. An unknown or missing key shows an empty state and never another team's data.
+`portfolio.html?project=<KEY>` shows **one team per screen**: AC (Agent Creator), PLATENG (Platform Engineering) and PLAT ("Plat Core"). There is **no comparison between teams** (D91). The key is validated against `portfolio/projects.json`; an unknown key shows an empty state and never another team's data; no key lists the three teams as links.
 
 ### 8.1 Header Portfolio picker (all pages)
 
-A `<details>`/`<summary>` "Portfolio ▾" button sits next to the Sprint selector in the top bar of every page. It opens a drop-down listing the four teams as links to `portfolio.html?project=<KEY>`. On `portfolio.html` the current team is marked `aria-current`; a separator and "← App Foundation" return to `index.html`. No inline scripts; compatible with the existing Content-Security-Policy.
+A `<details>`/`<summary>` "Portfolio ▾" button sits next to the Sprint selector in the top bar of every page. It lists the three teams as links to `portfolio.html?project=<KEY>`. On `portfolio.html` the current team is marked `aria-current`; a separator and "← App Foundation" return to `index.html`. No inline scripts; compatible with the Content-Security-Policy. The "App Foundation" title is not a button.
 
-### 8.2 Tiles (version 1, search only)
+### 8.2 Layout (one screen, no scrolling on a normal desktop window)
 
-All approximate values show `≈` with a tooltip that states the method. Lower-bound values show `≥`.
+From 1366 px wide and 760 px high the page fills the window without page scroll (checked at 1900x970 and 1440x800): a title block (team, points note, legend, one-line summary, past-end warning), a **header strip** (sprint, dates, day N of M in calendar days, tickets done with a done-versus-time-elapsed bar, points done, and the four data-quality chips), and **two columns of two tiles**: left = velocity and sprint health; right = burndown and backlog health. Below that size the page scrolls normally; below 1024 px the columns stack. No tile may hide content behind its own scrollbar at the checked sizes.
+
+Summary line (fixed rule, no AI): `Day N of M · P% of tickets done ≈ at E% of the sprint time · K tickets with no status change in 7+ days · backlog B tickets[ *]`. `E` is the share of the sprint time elapsed at the snapshot date (`burndownCurrent.asOf`, else `refreshedAt`), a plain comparison with no judgement colour.
+
+### 8.3 Tiles
+
+All approximate values show `≈` with a tooltip that states the method; lower bounds show `≥`. Tile titles are questions.
 
 | Tile | Approx? | Source |
 |---|---|---|
-| Sprint header (name, dates, day N/M, tickets, points, done, past-end-date flag) | ≈ done | Sprint field + statusCategoryChangedDate |
-| Velocity — last 3 closed sprints (tickets, points, completion %, created after start, closed late) | ≈/≥ | Same method as APP; scope = end-of-sprint list |
-| Burndown — last closed sprint | ≈ | Final points; added dates from `created`; no removals |
-| Data quality — points / tester / fix version / parent fill % | exact | Current sprint issues |
-| Sprint health — stuck 7+/14+ days, carried in, created after start, bugs, tickets created 14d | stuck=exact, carried/created=≈/≥ | JQL + Sprint field |
-| Backlog health — size, age buckets (90/180/365 days), not updated 1 yr, no points, no parent | exact | Count queries |
+| Header strip: sprint, dates, day, done versus time, points, data-quality chips | ≈ done | Sprint field + status-category change date |
+| "How much did the team finish?" Velocity, last 3 closed sprints: bars of done ÷ scope in tickets and in points, carried to next, created after start (≥), closed on time or N days after the planned end; the numeric table is in a "Show as a table" `<details>` | ≈/≥ | Same method as APP; scope = end-of-sprint list |
+| "Is the sprint burning down?" Burndown of the **current sprint** (main) with a toggle to the last closed sprint | ≈ | Final points; Done date = status-category change date; added dates from `created`; no removals |
+| "What is moving or stuck?" No status change 7+/14+ days, carried in, created after start (≥), bugs in sprint, bugs and all tickets created in 14 days, team size | stuck = exact; carried/created = ≈/≥ | JQL + Sprint field |
+| "How healthy is the backlog?" Total, one stacked bar by age (up to 90 days, 90-180, 180 days-1 year, over 1 year; counts and %), not updated in 1 year, no points, no parent; scope note for PLAT | exact | Count queries |
 
-Story points shown beside tickets with a neutral note: "Points shown as recorded in Jira; their meaning is not confirmed for this team."
+Story points are shown beside tickets with a neutral note: "Points shown as recorded in Jira; their meaning is not confirmed for this team." The PLAT backlog counts the whole Platform project, shown with `*` and a note.
 
-No ranking, no inter-team colours, no names, e-mails, ticket keys or summaries.
+Colour is used only for alerts (a sprint past its end date, a sprint closed late), never to rank teams. No names, e-mails, ticket keys or summaries.
 
-### 8.5 Units and legend (N-004, 2026-10-31)
+### 8.4 Units and legend
 
-Every column header, KV label and tile heading includes its unit in parentheses: "(tickets)", "(points)", "(people)", "(days)", "(%)". A collapsible `<details>` legend ("Legend: symbols and units") appears near the top of every portfolio view and explains `≈` (approximate), `≥` (lower bound), "tickets" (Jira work items) and "points" (Story Points as recorded in Jira). Created-after-start values from the velocity entries and current sprint are shown; "points created after start: not available" is noted. The `.board.portfolio-view` class prevents the dashboard CSS grid from clipping portfolio tiles.
+Every column header, label and tile heading includes its unit: "(tickets)", "(points)", "(people)", "(days)", "(%)". A collapsible legend ("Legend: symbols and units") explains `≈`, `≥`, "tickets" and "points". The snapshot time is also shown in Pacific time.
 
-### 8.3 Comparison table
+### 8.5 Refresh
 
-When no `?project=` is given, a read hint and a comparison table of all four teams appears. No ranking column.
-
-### 8.4 Refresh
-
-Jira queries are described in `docs/PORTFOLIO_REFRESH.md`. The parser script `scripts/build_portfolio.py` rebuilds the JSON from saved connector results. No direct API call is made from the page.
+Jira queries are in `docs/PORTFOLIO_REFRESH.md`. `scripts/build_portfolio.py` rebuilds the JSON from saved connector results (`--current-burndown-only` adds only the current-sprint burndown). The page makes no Jira call.
