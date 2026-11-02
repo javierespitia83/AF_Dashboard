@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-11-02",
-  "exportedAt": "2026-11-02T07:54:46-08:00",
-  "source": "scratch_1102b/out.xlsx · Daily",
+  "exportedAt": "2026-11-02T09:42:36-08:00",
+  "source": "daily_tracker_q3.xlsx · Daily",
   "sprint": {
     "id": 12191,
     "name": "App Sprint 11-06-2026",
@@ -9,7 +9,7 @@
     "endDate": "2026-11-06",
     "carriedOver": {
       "count": 11,
-      "percent": 14.1,
+      "percent": 13.9,
       "storyPoints": 40,
       "ticketKeys": [
         "APP-2978",
@@ -199,7 +199,7 @@
     {
       "ticket": "APP-2978",
       "owner": "Alan Le",
-      "status": "In Review",
+      "status": "Done",
       "type": "Story",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -207,13 +207,13 @@
       "parent": "APP-2980 – 2026 Scheduled Task run-health alerting (missed, failed, or overrun runs)",
       "linkedWorkItems": "APP-3103 (is blocked by)",
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-11-02",
       "addedDate": null,
-      "cycleTime": null,
-      "statusAging": 10,
+      "cycleTime": 7,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "[UI] Add \"missed\" option in the dropdown for task email notification.",
-      "lastSyncUpdate": "In Review. 11/2: testing finished (Anumeha Singh), missed-notification email works; asked Alan Le to merge to develop. Backend APP-3103 is Done.",
+      "lastSyncUpdate": "Done 11/2. UI option \"missed\" in the task email notification dropdown; tested OK and PR merged to develop (Alan Le, Anumeha Singh).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1423,7 +1423,7 @@
       "statusAging": 6,
       "statusAgingApprox": false,
       "summary": "Task creation fails (Git Checkout - Git Pull) when \"mcp_metadata\" is in the SLT file.",
-      "lastSyncUpdate": "In Progress. 10/30 daily: Salim Abdul raised a question on the fix, which Derek Fung answered; outcome to be confirmed by Carlos Espitia.",
+      "lastSyncUpdate": "In Progress. 10/30 daily: Salim Abdul raised a question on the fix, which Derek Fung answered; the outcome is for Derek Fung to confirm.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1467,7 +1467,7 @@
       "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Validating GHEC is throwing error",
-      "lastSyncUpdate": "In Review since 11/2 (Salim Abdul). PR created 11/2.",
+      "lastSyncUpdate": "In Review since 11/2 (Salim Abdul). PR created 11/2; it is a UI fix, so Pavan V can test it on a deployed feature branch.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1757,6 +1757,28 @@
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
+    },
+    {
+      "ticket": "APP-816",
+      "owner": "Vlad Storona",
+      "status": "In Review",
+      "type": "Bug",
+      "tester": "Anumeha Singh",
+      "classifications": null,
+      "points": 3,
+      "parent": null,
+      "linkedWorkItems": "APP-1582 (relates to)",
+      "fixVersion": null,
+      "doneDate": null,
+      "addedDate": "2026-11-02",
+      "cycleTime": null,
+      "statusAging": 0,
+      "statusAgingApprox": false,
+      "summary": "The endpoint /api/1/rest/cc frequently fails with a 500 on elastic",
+      "lastSyncUpdate": "In Review since 11/2 (Vlad Storona). Added to the sprint on 11/2 from the backlog; no Fix Version set yet.",
+      "blocker": null,
+      "demoOrSpike": null,
+      "discussed": "No"
     }
   ],
   "velocityHistory": {
@@ -1807,10 +1829,10 @@
         "startDate": "2026-10-26",
         "endDate": "2026-11-06",
         "state": "active",
-        "scopeTickets": 78,
-        "scopePoints": 205,
-        "doneTickets": 24,
-        "donePoints": 62,
+        "scopeTickets": 79,
+        "scopePoints": 208,
+        "doneTickets": 25,
+        "donePoints": 64,
         "doneBeforeStartTickets": 3,
         "doneBeforeStartPoints": 2
       }
