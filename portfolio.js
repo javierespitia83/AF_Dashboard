@@ -255,8 +255,9 @@
     var sprint = data.currentSprint;
     var t = tile('Sprint health', 'What is moving or stuck?', 'Current sprint, tickets');
     var body = el('div', { class: 'tile-body pf-kv-grid' });
-    body.appendChild(kv('No status change in 7+ days (tickets)', sprint.stuckD7, 'In Progress, NOT status CHANGED AFTER -7d'));
-    body.appendChild(kv('No status change in 14+ days (tickets)', sprint.stuckD14, 'In Progress, NOT status CHANGED AFTER -14d'));
+    var d7 = sprint.stuckD7, d14 = sprint.stuckD14;
+    body.appendChild(kv('No status change, 7 to 13 days (tickets)', (typeof d7 === 'number' && typeof d14 === 'number') ? Math.max(0, d7 - d14) : null, 'In Progress with no status change for 7 to 13 days: the 7+ days count minus the 14+ days count'));
+    body.appendChild(kv('No status change, 14+ days (tickets)', d14, 'In Progress, NOT status CHANGED AFTER -14d'));
     body.appendChild(kv('Carried in (tickets)', sprint.carriedIn, 'Tickets also in the previous sprint; approximate', true));
     body.appendChild(kv('Created after sprint start (tickets)', sprint.createdAfterStart, 'Lower bound: tickets created after the sprint start date; sprint CHANGED JQL is not supported', 'lower'));
     body.appendChild(kv('Bugs in sprint (tickets)', sprint.bugsInSprint));
@@ -365,10 +366,14 @@
     var dq = el('div', { class: 'pf-dq', 'aria-label': 'Data quality' });
     dq.appendChild(el('div', { class: 'pf-kv-label', text: 'How reliable is the data? (% of tickets filled)' }));
     var chips = el('div', { class: 'pf-chips' });
-    [['Points filled', sprint.pointsFillPct], ['Tester filled', sprint.testerFillPct], ['Fix version filled', sprint.fixVersionFillPct], ['Parent filled', sprint.parentFillPct]].forEach(function (c) {
-      chips.appendChild(el('span', { class: 'pf-chip', text: c[0] + ' ' + c[1] + '%' }));
+    var DQ_LOW = 50, lowFields = [];
+    [['Points filled', sprint.pointsFillPct, 'Points'], ['Tester filled', sprint.testerFillPct, 'Tester'], ['Fix version filled', sprint.fixVersionFillPct, 'Fix version'], ['Parent filled', sprint.parentFillPct, 'Parent']].forEach(function (c) {
+      var low = typeof c[1] === 'number' && c[1] < DQ_LOW;
+      if (low) lowFields.push(c[2] + ' ' + c[1] + '%');
+      chips.appendChild(el('span', { class: 'pf-chip' + (low ? ' pf-chip-low' : ''), title: low ? 'Under ' + DQ_LOW + '% of the tickets have this field' : null, text: c[0] + ' ' + c[1] + '%' }));
     });
     dq.appendChild(chips);
+    if (lowFields.length) dq.appendChild(el('p', { class: 'pf-dq-note', title: 'Numbers that depend on these fields are incomplete.', text: 'Low fill (under ' + DQ_LOW + '%): ' + lowFields.join(', ') }));
     strip.appendChild(dq);
     app.appendChild(strip);
 

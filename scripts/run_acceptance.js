@@ -1273,6 +1273,16 @@ async function suites(ctx) {
     check(`portfolio ${projKey}: summary line has the expected shape`, PUI4.summaryLine.test(summary), summary);
     check(`portfolio ${projKey}: summary line shows the backlog total from the data`, summary.includes('backlog ' + td.backlog.total.toLocaleString('en-US') + ' tickets'), summary);
     check(`portfolio ${projKey}: summary line shows the stuck count from the data`, summary.includes(td.currentSprint.stuckD7.toLocaleString('en-US') + ' tickets with no status change in 7+ days'), summary);
+    // D95: stuck work in two tiers; low-fill note for sparse fields
+    { const cs = td.currentSprint;
+      const kvs = await run(pg, `var out = {}; document.querySelectorAll('.pf-tile .pf-kv').forEach(function (k) { var l = k.querySelector('.pf-kv-label'), v = k.querySelector('.pf-kv-value'); if (l && v) out[l.textContent] = v.textContent; }); return out`);
+      const n13 = Math.max(0, cs.stuckD7 - cs.stuckD14);
+      check(`portfolio ${projKey}: stuck work shown in two tiers (7 to 13 days and 14+ days) that add up to the 7+ count`, String(kvs['No status change, 7 to 13 days (tickets)']).trim().startsWith(String(n13)) && String(kvs['No status change, 14+ days (tickets)']).trim().startsWith(String(cs.stuckD14)) && n13 + cs.stuckD14 === cs.stuckD7, { kvs, n13, stuckD7: cs.stuckD7, stuckD14: cs.stuckD14 });
+      check(`portfolio ${projKey}: the old single "7+ days" stuck tile is gone (the 7+ total stays in the summary line)`, !('No status change in 7+ days (tickets)' in kvs), Object.keys(kvs));
+      const low = [['Points', cs.pointsFillPct], ['Tester', cs.testerFillPct], ['Fix version', cs.fixVersionFillPct], ['Parent', cs.parentFillPct]].filter(f => f[1] < 50).map(f => f[0] + ' ' + f[1] + '%');
+      const note = await run(pg, `var n = document.querySelector('.pf-dq-note'); return n ? n.textContent : null`);
+      const lowChips = await run(pg, `return document.querySelectorAll('.pf-chip-low').length`);
+      check(`portfolio ${projKey}: low-fill note appears only when a field is under 50% filled and lists exactly those fields`, low.length === 0 ? (note === null && lowChips === 0) : (note === 'Low fill (under 50%): ' + low.join(', ') && lowChips === low.length), { note, low, lowChips }); }
     // progress: points first, only tickets closed inside the sprint count
     { const cs = td.currentSprint, preT = cs.doneBeforeStartTickets || 0, preP = cs.doneBeforeStartPoints || 0;
       const inT = cs.doneTickets - preT, inP = cs.donePoints - preP;
