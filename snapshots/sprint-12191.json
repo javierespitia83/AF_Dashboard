@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-11-02",
-  "exportedAt": "2026-11-02T05:35:22-08:00",
-  "source": "scratch_1102/out3.xlsx · Daily",
+  "exportedAt": "2026-11-02T07:54:46-08:00",
+  "source": "scratch_1102b/out.xlsx · Daily",
   "sprint": {
     "id": 12191,
     "name": "App Sprint 11-06-2026",
@@ -1387,7 +1387,7 @@
     {
       "ticket": "APP-1607",
       "owner": "Salim Abdul",
-      "status": "In Review",
+      "status": "Done",
       "type": "Story",
       "tester": "Salim Abdul",
       "classifications": "Dev to Test",
@@ -1395,13 +1395,13 @@
       "parent": "APP-1484 – Support all Git integrations linking to any folder within the repository instead of the root by default",
       "linkedWorkItems": "DOC-3780 (relates to)",
       "fixVersion": "4.46.1.0",
-      "doneDate": null,
+      "doneDate": "2026-11-02",
       "addedDate": null,
-      "cycleTime": null,
-      "statusAging": 13,
+      "cycleTime": 7,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Support linking to any repository directory across GitLab.com and GitLab self-managed for all operations.",
-      "lastSyncUpdate": "In Review. 10/30 daily: backend merged; a small UI change (PR #6123) is waiting for review. Salim Abdul does not expect a large QA effort; Derek Fung asked about the 8-point effort.",
+      "lastSyncUpdate": "Done 11/2. Support for linking to any repository directory on GitLab.com and self-managed GitLab; merged to develop 10/29 (Salim Abdul).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1453,7 +1453,7 @@
     {
       "ticket": "APP-3207",
       "owner": "Salim Abdul",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Bug",
       "tester": "Pavan V",
       "classifications": null,
@@ -1464,10 +1464,10 @@
       "doneDate": null,
       "addedDate": null,
       "cycleTime": null,
-      "statusAging": 4,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Validating GHEC is throwing error",
-      "lastSyncUpdate": "In Progress since 10/29 (was Open). No Jira comments yet.",
+      "lastSyncUpdate": "In Review since 11/2 (Salim Abdul). PR created 11/2.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1809,8 +1809,8 @@
         "state": "active",
         "scopeTickets": 78,
         "scopePoints": 205,
-        "doneTickets": 23,
-        "donePoints": 54,
+        "doneTickets": 24,
+        "donePoints": 62,
         "doneBeforeStartTickets": 3,
         "doneBeforeStartPoints": 2
       }
