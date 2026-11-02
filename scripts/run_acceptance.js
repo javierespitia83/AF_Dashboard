@@ -1042,8 +1042,10 @@ async function suites(ctx) {
   const codeOf = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const APP = files.APP_FILES;
   const ext = [];
-  for (const f of APP) { const t = codeOf(f); (t.match(/(?:src|href)\s*=\s*"https?:\/\/[^"]+"|url\(\s*['"]?https?:/g) || []).forEach(m => ext.push(f + ': ' + m)); if (/@import|googleapis|cdn\./i.test(t)) ext.push(f + ': cdn/font/import'); if (/\bimport\s+.*from|require\(/.test(t)) ext.push(f + ': module import'); if (/XMLHttpRequest|WebSocket|sendBeacon/.test(t)) ext.push(f + ': network API'); }
-  check('No external src/href/url(), CDN, @import, web font, module import or network API', ext.length === 0, ext);
+  const LI_HREF = 'href="https://www.linkedin.com/in/javierespitia/"'; // footer navigation link; not a resource load; CSP allows navigation
+  for (const f of APP) { const t = codeOf(f); (t.match(/(?:src|href)\s*=\s*"https?:\/\/[^"]+"|url\(\s*['"]?https?:/g) || []).filter(m => !m.includes('linkedin.com/in/javierespitia')).forEach(m => ext.push(f + ': ' + m)); if (/@import|googleapis|cdn\./i.test(t)) ext.push(f + ': cdn/font/import'); if (/\bimport\s+.*from|require\(/.test(t)) ext.push(f + ': module import'); if (/XMLHttpRequest|WebSocket|sendBeacon/.test(t)) ext.push(f + ': network API'); }
+  check('No external src/href/url(), CDN, @import, web font, module import or network API (footer LinkedIn nav link allowed)', ext.length === 0, ext);
+  check('Footer LinkedIn link present on all pages', APP.filter(f => /\.html$/.test(f)).every(f => codeOf(f).includes(LI_HREF)));
   { const hits = []; APP.filter(f => /\.(html|js|css)$/.test(f)).forEach(f => { const m = codeOf(f).match(/atlassian\.net/g); if (m) hits.push(f + ' x' + m.length); });
     check('The Jira address appears once in the app source (one constant in dashboard.js)', eq(hits, ['dashboard.js x1']), hits); }
   const strip = f => codeOf(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');

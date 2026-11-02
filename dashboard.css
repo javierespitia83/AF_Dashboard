@@ -146,6 +146,8 @@ button { font: inherit; color: inherit; }
 .resetall:disabled { opacity: 0.4; cursor: default; } /* disabled controls are exempt from the contrast minimum */
 
 .foot { flex: none; height: var(--foot-h); display: flex; align-items: center; padding: 0 16px; color: var(--muted); font-size: 12px; }
+.foot-li { color: inherit; text-decoration: none; opacity: 0.8; }
+.foot-li:hover { text-decoration: underline; opacity: 1; }
 
 /* ---- board: small-screen fallback is a normal scrolling page ---- */
 .board { flex: 1; padding: 10px 12px; display: block; }
