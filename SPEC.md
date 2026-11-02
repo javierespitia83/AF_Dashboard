@@ -225,6 +225,8 @@ From 1366 px wide and 760 px high the page fills the window without page scroll 
 
 Summary line (fixed rule, no AI): `Day N of M · P% of points done ≈ at E% of the sprint time (T of N tickets closed in the sprint) · K tickets with no status change in 7+ days · backlog B tickets[ *]`. Progress is measured in **points** and counts only what was closed **inside the sprint** (D92): tickets already Done when the sprint started are listed apart ("N already Done before it started") and do not count as progress. `E` is the share of the sprint time elapsed at the snapshot date (`burndownCurrent.asOf`, else `refreshedAt`), a plain comparison with no judgement colour.
 
+Data quality chips (D95): each fill percentage under 50% turns its chip amber and adds one note under the chips, `Low fill (under 50%): <Field NN%>, ...`, listing exactly those fields; no note when every field is 50% or more. A tooltip says the numbers that depend on those fields are incomplete. The 50% limit is a display rule, not a quality judgment of the team.
+
 ### 8.3 Tiles
 
 All approximate values show `≈` with a tooltip that states the method; lower bounds show `≥`. Tile titles are questions.
@@ -234,7 +236,7 @@ All approximate values show `≈` with a tooltip that states the method; lower b
 | Header strip: sprint, dates, day, done versus time, points, data-quality chips | ≈ done | Sprint field + status-category change date |
 | "How much did the team finish?" Velocity, last 3 closed sprints: bars of done ÷ scope in tickets and in points, carried to next, created after start (≥), closed on time or N days after the planned end; the numeric table is in a "Show as a table" `<details>` | ≈/≥ | Same method as APP; scope = end-of-sprint list |
 | "Is the sprint burning down?" Burndown of the **current sprint** (main) with a toggle to the last closed sprint | ≈ | Final points; Done date = status-category change date; added dates from `created`; no removals |
-| "What is moving or stuck?" No status change 7+/14+ days, carried in, created after start (≥), bugs in sprint, bugs and all tickets created in 14 days, team size | stuck = exact; carried/created = ≈/≥ | JQL + Sprint field |
+| "What is moving or stuck?" No status change 7 to 13 days and 14+ days (two tiers; their sum is the 7+ count shown in the summary line), carried in, created after start (≥), bugs in sprint, bugs and all tickets created in 14 days, team size | stuck = exact; carried/created = ≈/≥ | JQL + Sprint field |
 | "How healthy is the backlog?" Total, one stacked bar by age (up to 90 days, 90-180, 180 days-1 year, over 1 year; counts and %), not updated in 1 year, no points, no parent; scope note for PLAT | exact | Count queries |
 
 Story points are shown beside tickets with a neutral note: "Points shown as recorded in Jira; their meaning is not confirmed for this team." The PLAT backlog counts the whole Platform project, shown with `*` and a note.

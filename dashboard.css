@@ -439,7 +439,9 @@ a.jira:hover { color: var(--teal); text-decoration-color: var(--teal); }
 .pf-progress-tickets { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .pf-dq { min-width: 0; }
 .pf-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.pf-dq-note { margin: 4px 0 0; font-size: 11.5px; color: var(--muted); }
 .pf-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--navy); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pf-chip.pf-chip-low { background: #fdecc8; }
 .pf-note { font-size: 11.5px; line-height: 1.3; color: var(--muted); margin: 3px 0 0; }
 .pf-vel-bars { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
 .pf-vel-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding-bottom: 5px; border-bottom: 1px solid var(--line-soft); }
