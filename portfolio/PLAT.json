@@ -1,8 +1,8 @@
 {
   "team": "PLAT",
   "label": "Plat Core",
-  "refreshedAt": "2026-10-31",
-  "exportedAt": "2026-10-31T12:00:00-05:00",
+  "refreshedAt": "2026-11-02",
+  "exportedAt": "2026-11-02T09:21:19-05:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12189,
@@ -11,9 +11,9 @@
     "endDate": "2026-11-09",
     "state": "active",
     "tickets": 53,
-    "points": 78,
+    "points": 78.0,
     "doneTickets": 9,
-    "donePoints": 12,
+    "donePoints": 12.0,
     "ticketsFillPct": 100,
     "pointsFillPct": 45,
     "testerFillPct": 11,
@@ -24,7 +24,7 @@
     "carriedIn": 28,
     "createdAfterStart": 11,
     "stuckD7": 19,
-    "stuckD14": 10,
+    "stuckD14": 11,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
     "doneBeforeStartPoints": 1.0
@@ -38,12 +38,12 @@
       "completedDate": "2026-09-28",
       "closedLateDays": 2,
       "scopeTickets": 38,
-      "scopePoints": 43,
+      "scopePoints": 43.0,
       "doneTickets": 8,
-      "donePoints": 7,
+      "donePoints": 7.0,
       "completionTicketsPct": 21,
       "completionPointsPct": 16,
-      "carriedToNext": 28,
+      "carriedToNext": 29,
       "createdAfterStart": 5,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -56,12 +56,12 @@
       "completedDate": "2026-10-09",
       "closedLateDays": 0,
       "scopeTickets": 61,
-      "scopePoints": 62,
+      "scopePoints": 62.0,
       "doneTickets": 21,
-      "donePoints": 1,
+      "donePoints": 1.0,
       "completionTicketsPct": 34,
       "completionPointsPct": 2,
-      "carriedToNext": 24,
+      "carriedToNext": 35,
       "createdAfterStart": 14,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -74,12 +74,12 @@
       "completedDate": "2026-10-26",
       "closedLateDays": 3,
       "scopeTickets": 53,
-      "scopePoints": 86,
+      "scopePoints": 86.0,
       "doneTickets": 27,
-      "donePoints": 42,
+      "donePoints": 42.0,
       "completionTicketsPct": 51,
       "completionPointsPct": 49,
-      "carriedToNext": 24,
+      "carriedToNext": 26,
       "createdAfterStart": 12,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -93,85 +93,84 @@
     "days": [
       [
         "2026-10-09",
-        86
+        86.0
       ],
       [
         "2026-10-10",
-        86
+        86.0
       ],
       [
         "2026-10-11",
-        86
+        86.0
       ],
       [
         "2026-10-12",
-        84
+        84.0
       ],
       [
         "2026-10-13",
-        84
+        84.0
       ],
       [
         "2026-10-14",
-        84
+        84.0
       ],
       [
         "2026-10-15",
-        84
+        84.0
       ],
       [
         "2026-10-16",
-        84
+        84.0
       ],
       [
         "2026-10-17",
-        84
+        84.0
       ],
       [
         "2026-10-18",
-        84
+        84.0
       ],
       [
         "2026-10-19",
-        82
+        82.0
       ],
       [
         "2026-10-20",
-        82
+        82.0
       ],
       [
         "2026-10-21",
-        77
+        77.0
       ],
       [
         "2026-10-22",
-        72
+        72.0
       ],
       [
         "2026-10-23",
-        49
+        49.0
       ]
     ]
   },
   "backlog": {
     "total": 2978,
-    "created90dPlus": 2925,
+    "created90dPlus": 2926,
     "created180dPlus": 2870,
     "created365dPlus": 2741,
-    "notUpdated365d": 2594,
+    "notUpdated365d": null,
     "noPoints": 2667,
     "noParent": 2361,
     "jql": "project = PLAT AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12189))",
     "scopeNote": "Whole Platform project, not only the Plat Core board."
   },
   "bugsCreated14d": 11,
-  "ticketsCreated14d": 39,
   "burndownCurrent": {
     "sprintId": 12189,
     "sprintName": "Plat Core 11-06-2026",
     "approx": true,
     "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-01",
+    "asOf": "2026-11-02",
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
     "scopePoints": 78.0,
@@ -203,7 +202,12 @@
       [
         "2026-11-01",
         66.0
+      ],
+      [
+        "2026-11-02",
+        66.0
       ]
     ]
-  }
+  },
+  "ticketsCreated14d": 39
 }

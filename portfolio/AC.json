@@ -1,8 +1,8 @@
 {
   "team": "AC",
   "label": "Agent Creator",
-  "refreshedAt": "2026-10-31",
-  "exportedAt": "2026-10-31T12:00:00-05:00",
+  "refreshedAt": "2026-11-02",
+  "exportedAt": "2026-11-02T09:21:19-05:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12135,
@@ -11,9 +11,9 @@
     "endDate": "2026-11-09",
     "state": "active",
     "tickets": 29,
-    "points": 79,
+    "points": 79.0,
     "doneTickets": 5,
-    "donePoints": 1,
+    "donePoints": 1.0,
     "ticketsFillPct": 100,
     "pointsFillPct": 69,
     "testerFillPct": 52,
@@ -23,7 +23,7 @@
     "bugsInSprint": 7,
     "carriedIn": 3,
     "createdAfterStart": 2,
-    "stuckD7": 9,
+    "stuckD7": 14,
     "stuckD14": 2,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
@@ -38,9 +38,9 @@
       "completedDate": "2026-09-21",
       "closedLateDays": 0,
       "scopeTickets": 10,
-      "scopePoints": 49,
+      "scopePoints": 49.0,
       "doneTickets": 7,
-      "donePoints": 34,
+      "donePoints": 34.0,
       "completionTicketsPct": 70,
       "completionPointsPct": 69,
       "carriedToNext": 3,
@@ -56,12 +56,12 @@
       "completedDate": "2026-10-12",
       "closedLateDays": 0,
       "scopeTickets": 37,
-      "scopePoints": 94,
+      "scopePoints": 94.0,
       "doneTickets": 13,
-      "donePoints": 39,
+      "donePoints": 39.0,
       "completionTicketsPct": 35,
       "completionPointsPct": 41,
-      "carriedToNext": 9,
+      "carriedToNext": 12,
       "createdAfterStart": 12,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -78,7 +78,7 @@
       "doneTickets": 11,
       "donePoints": 35,
       "completionTicketsPct": 79,
-      "completionPointsPct": 63,
+      "completionPointsPct": 62,
       "carriedToNext": 3,
       "createdAfterStart": 3,
       "approx": true,
@@ -164,13 +164,12 @@
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
   "bugsCreated14d": 9,
-  "ticketsCreated14d": 31,
   "burndownCurrent": {
     "sprintId": 12135,
     "sprintName": "AC 10-26-2026",
     "approx": true,
     "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-01",
+    "asOf": "2026-11-02",
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
     "scopePoints": 79.0,
@@ -202,7 +201,12 @@
       [
         "2026-11-01",
         78.0
+      ],
+      [
+        "2026-11-02",
+        78.0
       ]
     ]
-  }
+  },
+  "ticketsCreated14d": 31
 }
