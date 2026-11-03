@@ -1,8 +1,8 @@
 {
   "team": "AC",
   "label": "Agent Creator",
-  "refreshedAt": "2026-11-02",
-  "exportedAt": "2026-11-02T09:21:19-05:00",
+  "refreshedAt": "2026-11-03",
+  "exportedAt": "2026-11-03T08:47:47-05:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12135,
@@ -10,19 +10,19 @@
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
     "state": "active",
-    "tickets": 29,
-    "points": 79.0,
-    "doneTickets": 5,
-    "donePoints": 1.0,
+    "tickets": 30,
+    "points": 84.0,
+    "doneTickets": 6,
+    "donePoints": 2.0,
     "ticketsFillPct": 100,
-    "pointsFillPct": 69,
-    "testerFillPct": 52,
+    "pointsFillPct": 73,
+    "testerFillPct": 53,
     "fixVersionFillPct": 100,
-    "parentFillPct": 83,
+    "parentFillPct": 80,
     "teamSize": 5,
-    "bugsInSprint": 7,
+    "bugsInSprint": 8,
     "carriedIn": 3,
-    "createdAfterStart": 2,
+    "createdAfterStart": 3,
     "stuckD7": 14,
     "stuckD14": 2,
     "pastEndDate": false,
@@ -61,7 +61,7 @@
       "donePoints": 39.0,
       "completionTicketsPct": 35,
       "completionPointsPct": 41,
-      "carriedToNext": 12,
+      "carriedToNext": 13,
       "createdAfterStart": 12,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -154,13 +154,13 @@
     ]
   },
   "backlog": {
-    "total": 155,
+    "total": 159,
     "created90dPlus": 5,
     "created180dPlus": 0,
     "created365dPlus": 0,
     "notUpdated365d": null,
-    "noPoints": 112,
-    "noParent": 30,
+    "noPoints": 116,
+    "noParent": 34,
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
   "bugsCreated14d": 9,
@@ -169,44 +169,48 @@
     "sprintName": "AC 10-26-2026",
     "approx": true,
     "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-02",
+    "asOf": "2026-11-03",
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
-    "scopePoints": 79.0,
+    "scopePoints": 84.0,
     "days": [
       [
         "2026-10-26",
-        79.0
+        84.0
       ],
       [
         "2026-10-27",
-        79.0
+        84.0
       ],
       [
         "2026-10-28",
-        78.0
+        83.0
       ],
       [
         "2026-10-29",
-        78.0
+        83.0
       ],
       [
         "2026-10-30",
-        78.0
+        83.0
       ],
       [
         "2026-10-31",
-        78.0
+        83.0
       ],
       [
         "2026-11-01",
-        78.0
+        83.0
       ],
       [
         "2026-11-02",
-        78.0
+        82.0
+      ],
+      [
+        "2026-11-03",
+        82.0
       ]
     ]
   },
-  "ticketsCreated14d": 31
+  "ticketsCreated14d": 34
 }
