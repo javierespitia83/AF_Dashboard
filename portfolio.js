@@ -384,6 +384,73 @@
     right.appendChild(burndownTile(data)); right.appendChild(backlogTile(data));
     main.appendChild(left); main.appendChild(right);
     app.appendChild(main);
+
+    // flow metrics section (AC only — present when data.flow exists)
+    if (data.flow) {
+      var flow = data.flow;
+      var curSp = flow.sprints && flow.sprints[sprint.id];
+      var lastClosedId = null;
+      var sprintIds = Object.keys(flow.sprints || {}).map(Number).sort();
+      for (var fi = sprintIds.length - 1; fi >= 0; fi--) {
+        if (flow.sprints[sprintIds[fi]].carryoverAge_atClose !== null) { lastClosedId = sprintIds[fi]; break; }
+      }
+      var lastSp = lastClosedId ? flow.sprints[lastClosedId] : null;
+
+      var flowSec = el('section', { class: 'pf-flow', 'aria-label': 'Flow metrics (changelog)' });
+      flowSec.appendChild(el('h3', { class: 'pf-flow-heading', text: 'Flow metrics (from Jira changelogs · AC only)' }));
+      var flowGrid = el('div', { class: 'pf-flow-grid' });
+
+      // Tile 1: Scope change — last closed sprint
+      var sc1 = el('div', { class: 'pf-flow-tile' });
+      sc1.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Scope change (last closed sprint)' }));
+      if (lastSp) {
+        var sc = lastSp.scopeChange;
+        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Starting scope: ' + sc.startingScope_tickets + ' tickets · ' + (sc.startingScope_points || '—') + ' pts' }));
+        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Added after start: ' + sc.addedAfterStart_total_tickets + ' tickets (new: ' + sc.addedAfterStart_createdNew_tickets + ' · moved in: ' + sc.addedAfterStart_movedIn_tickets + ')' }));
+        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Removed not done: ' + sc.removedNotDone_tickets + ' tickets (' + sc.removedRolledToLaterSprint_tickets + ' moved to a later sprint · ' + sc.removedDropped_tickets + ' dropped)' }));
+        sc1.appendChild(el('div', { class: 'pf-flow-sprint', text: lastSp.sprintName }));
+      } else {
+        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'No closed sprint data.' }));
+      }
+      flowGrid.appendChild(sc1);
+
+      // Tile 2: Cycle time — last 3 closed sprints
+      var ct2 = el('div', { class: 'pf-flow-tile' });
+      ct2.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Cycle time (first In Progress → Done)' }));
+      var ctRows = sprintIds.filter(function(s){ return flow.sprints[s].carryoverAge_atClose !== null; });
+      if (ctRows.length) {
+        ctRows.forEach(function(s) {
+          var ct = flow.sprints[s].cycleTime;
+          var nStr = ct.doneTicketsWithCycleTime ? ct.doneTicketsWithCycleTime + ' tickets' : '—';
+          var row = (ct.medianCycleDays !== null ? 'Median ' + ct.medianCycleDays + 'd · p85 ' + ct.p85CycleDays + 'd (' + nStr + ')' : '—');
+          ct2.appendChild(el('div', { class: 'pf-flow-kv', text: flow.sprints[s].sprintName + ': ' + row }));
+        });
+      } else {
+        ct2.appendChild(el('div', { class: 'pf-flow-kv', text: 'No data.' }));
+      }
+      flowGrid.appendChild(ct2);
+
+      // Tile 3: Carryover age + status aging (current sprint)
+      var co3 = el('div', { class: 'pf-flow-tile' });
+      co3.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Sprint age distribution (all boards, current sprint)' }));
+      if (curSp) {
+        var co = curSp.carryoverAge_inSprint;
+        co3.appendChild(el('div', { class: 'pf-flow-kv', text: 'In 1st sprint: ' + co.first + ' · 2nd: ' + co.second + ' · 3rd+: ' + co.third_plus }));
+        var ag = curSp.currentStatusAging;
+        if (ag) {
+          var b = ag.ageBuckets;
+          co3.appendChild(el('div', { class: 'pf-flow-kv', text: 'Status age: 0–2d ' + b['0-2d'] + ' · 3–6d ' + b['3-6d'] + ' · 7–13d ' + b['7-13d'] + ' · 14+d ' + b['14+d'] + ' (of ' + ag.openTickets + ' open tickets)' }));
+        }
+        co3.appendChild(el('div', { class: 'pf-flow-sprint', text: curSp.sprintName }));
+      } else {
+        co3.appendChild(el('div', { class: 'pf-flow-kv', text: 'No data.' }));
+      }
+      flowGrid.appendChild(co3);
+
+      flowSec.appendChild(flowGrid);
+      flowSec.appendChild(el('p', { class: 'pf-flow-note', text: 'Pilot · ' + (flow.dataDate || '') + ' · 60 complete changelog reads · sprint age counts all boards · ' + (flow.completenessNote || '') }));
+      app.appendChild(flowSec);
+    }
   }
 
   // ── team list (no ?project=) ─────────────────────────────────────────────

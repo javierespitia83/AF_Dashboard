@@ -111,3 +111,34 @@ python3 scripts/build_portfolio.py --scratch <DIR> --current-burndown-only
 ```
 
 It adds `burndownCurrent` to the existing team files (final points, Done date from `statuscategorychangedate`, series from the sprint start to today's Pacific date). APIM was removed from the portfolio on 2026-11-01.
+
+## Flow metrics (AC only, changelog-based, added 2026-11-03, N-008)
+
+One `getJiraIssue` call per unique AC ticket in the four tracked sprints (10956/12099/12118/12135; currently 60 tickets). Save all raw responses to scratch files and run a processing script (not yet integrated into `build_portfolio.py` — see `04_Data_and_Archive/data/ac_changelog_facts_2026-11-03.json` for the private per-ticket cache).
+
+### AC status stages
+
+| Stage | Statuses |
+|---|---|
+| intake | Open, To Do, Defined, To Be Refined, Refined, In Triage, Reopened |
+| development | In Progress |
+| review | In Code Review, Ready for Branch Testing, Branch Testing In Progress, Branch Testing Complete |
+| testing | Ready for Testing, Testing in Progress |
+| docs | Doc Review, Ready to Publish |
+| done | Resolved, Closed, Rejected |
+
+### What the flow block contains
+
+- `scopeChange` per sprint: starting scope (tickets and points); added after start split into `addedAfterStart_createdNew_*` and `addedAfterStart_movedIn_*`; `removedNotDone_*` split into `removedRolledToLaterSprint_*` (moved to a later sprint) and `removedDropped_*`. Ticket counts are exact; points count only pointed tickets (`*_pointsMissing` gives the unpointed tickets, which contribute 0).
+- `cycleTime` per sprint: median and 85th-percentile days from first In-Progress-or-later status transition to Done (status-change events only — not statuscategorychangedate), over tickets Done within the sprint close window.
+- `carryoverAge_inSprint`: how many tickets are in their 1st, 2nd, or 3rd+ sprint (counting ALL boards seen in the ticket's full Sprint-field history, not only the 4 tracked AC sprints).
+- `carryoverAge_atClose`: same split, for tickets not Done at the close of each closed sprint that also appear in the next sprint.
+- `currentStatusAging` (current sprint only): count of open tickets by days-in-current-status bucket (0–2, 3–6, 7–13, 14+), broken down by stage.
+
+**Blip rule (af-jira-changelog-scan Pattern 3):** if a ticket is removed from and re-added to the same sprint within 24 hours (a bulk-edit artefact), the blip is ignored and the earlier add event is used.
+
+**Starting scope definition:** tickets in the sprint at the end of the sprint's start date (Pacific), reconstructed from Sprint-field events. A ticket whose Sprint field has no event for the sprint (created with the sprint already set) is treated as a member from its creation date: starting scope if created on or before the start date, otherwise created new. Tickets that left before the start are not counted. Check: starting scope + created new + moved in equals the tickets that were in the sprint at any time after the start.
+
+**`removedNotDone`** counts tickets that left the sprint after its start without being in a Done-category status (Resolved, Closed, Rejected) at that moment. Those moved to a later sprint at the same time are reported separately as `removedRolledToLaterSprint` (planned carry-over, not abandoned work); the rest are `removedDropped`.
+
+**Budget:** ~60 changelog reads per refresh (one per unique ticket). Run incremental by re-reading only tickets whose `updated` date is after the last scan.

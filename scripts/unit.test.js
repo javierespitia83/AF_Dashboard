@@ -229,3 +229,19 @@ test('compileSearch (R001-19): partial keys, word starts, whole phrases on their
   assert.deepEqual(hits('fix 4.46'), ['APP-2970']);   // AND
   assert.deepEqual(AF.exactFirst(rows, AF.compileSearch('APP-29', spec)).map(t => t.ticket), ['APP-29', 'APP-2970']);
 });
+
+// N-009 fix: AC flow block is consistent and public-safe
+test('portfolio/AC.json flow: scope-change fields add up and carry no ticket keys', () => {
+  const fs = require('fs'), path = require('path');
+  const raw = fs.readFileSync(path.join(__dirname, '..', 'portfolio', 'AC.json'), 'utf8');
+  const a = JSON.parse(raw);
+  assert.ok(!/\b[A-Z][A-Z0-9]+-\d+\b/.test(JSON.stringify(a.flow)), 'flow block must not contain ticket keys');
+  const ids = Object.keys(a.flow.sprints);
+  assert.ok(ids.length >= 4);
+  ids.forEach(id => {
+    const sc = a.flow.sprints[id].scopeChange;
+    assert.strictEqual(sc.addedAfterStart_total_tickets, sc.addedAfterStart_createdNew_tickets + sc.addedAfterStart_movedIn_tickets, id + ' added total');
+    assert.strictEqual(sc.removedNotDone_tickets, sc.removedRolledToLaterSprint_tickets + sc.removedDropped_tickets, id + ' removed total');
+    ['startingScope_pointsMissing', 'addedAfterStart_createdNew_pointsMissing', 'addedAfterStart_movedIn_pointsMissing'].forEach(k => assert.ok(Number.isInteger(sc[k]), id + ' ' + k));
+  });
+});
