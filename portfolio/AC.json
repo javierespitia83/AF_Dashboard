@@ -212,5 +212,233 @@
       ]
     ]
   },
-  "ticketsCreated14d": 34
+  "ticketsCreated14d": 34,
+  "flow": {
+    "sprints": {
+      "10956": {
+        "sprintId": 10956,
+        "sprintName": "AC 09-07-2026",
+        "ticketsInSprint": 14,
+        "scopeChange": {
+          "startingScope_tickets": 12,
+          "startingScope_points": 53.0,
+          "startingScope_pointsMissing": 3,
+          "addedAfterStart_createdNew_tickets": 0,
+          "addedAfterStart_createdNew_points": 0.0,
+          "addedAfterStart_createdNew_pointsMissing": 0,
+          "addedAfterStart_movedIn_tickets": 2,
+          "addedAfterStart_movedIn_points": 5.0,
+          "addedAfterStart_movedIn_pointsMissing": 1,
+          "addedAfterStart_total_tickets": 2,
+          "removedNotDone_tickets": 4,
+          "removedNotDone_points": 16.0,
+          "removedRolledToLaterSprint_tickets": 4,
+          "removedRolledToLaterSprint_points": 16.0,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0.0,
+          "note": "Sprint start = end of the sprint's start date (Pacific). Starting scope = tickets in the sprint at that moment. Created new = ticket created after the start date and put in the sprint (including tickets created with the sprint already set, which leave no sprint event). Moved in = ticket created earlier and added to the sprint after the start. Removed not done = left the sprint after the start without reaching Done; 'rolled' = moved to a later sprint, 'dropped' = not moved to a later sprint. Remove and re-add within 24 h ignored. Points use the value at the time of the event; unpointed tickets are counted in *_pointsMissing and contribute 0."
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 7,
+          "medianCycleDays": 8.0,
+          "p85CycleDays": 18.6,
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+        },
+        "currentStatusAging": null,
+        "carryoverAge_inSprint": {
+          "first": 3,
+          "second": 4,
+          "third_plus": 7
+        },
+        "carryoverAge_atClose": {
+          "first": 0,
+          "second": 2,
+          "third_plus": 4
+        }
+      },
+      "12099": {
+        "sprintId": 12099,
+        "sprintName": "AC 09-21-2026",
+        "ticketsInSprint": 38,
+        "scopeChange": {
+          "startingScope_tickets": 21,
+          "startingScope_points": 69.0,
+          "startingScope_pointsMissing": 3,
+          "addedAfterStart_createdNew_tickets": 12,
+          "addedAfterStart_createdNew_points": 0.0,
+          "addedAfterStart_createdNew_pointsMissing": 12,
+          "addedAfterStart_movedIn_tickets": 4,
+          "addedAfterStart_movedIn_points": 6.0,
+          "addedAfterStart_movedIn_pointsMissing": 2,
+          "addedAfterStart_total_tickets": 16,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": 0.0,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": 0.0,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0.0,
+          "note": "Sprint start = end of the sprint's start date (Pacific). Starting scope = tickets in the sprint at that moment. Created new = ticket created after the start date and put in the sprint (including tickets created with the sprint already set, which leave no sprint event). Moved in = ticket created earlier and added to the sprint after the start. Removed not done = left the sprint after the start without reaching Done; 'rolled' = moved to a later sprint, 'dropped' = not moved to a later sprint. Remove and re-add within 24 h ignored. Points use the value at the time of the event; unpointed tickets are counted in *_pointsMissing and contribute 0."
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 13,
+          "medianCycleDays": 16.0,
+          "p85CycleDays": 23.2,
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+        },
+        "currentStatusAging": null,
+        "carryoverAge_inSprint": {
+          "first": 7,
+          "second": 13,
+          "third_plus": 18
+        },
+        "carryoverAge_atClose": {
+          "first": 0,
+          "second": 7,
+          "third_plus": 8
+        }
+      },
+      "12118": {
+        "sprintId": 12118,
+        "sprintName": "AC 10-12-2026",
+        "ticketsInSprint": 25,
+        "scopeChange": {
+          "startingScope_tickets": 22,
+          "startingScope_points": 55.0,
+          "startingScope_pointsMissing": 4,
+          "addedAfterStart_createdNew_tickets": 5,
+          "addedAfterStart_createdNew_points": 0.0,
+          "addedAfterStart_createdNew_pointsMissing": 5,
+          "addedAfterStart_movedIn_tickets": 0,
+          "addedAfterStart_movedIn_points": 0.0,
+          "addedAfterStart_movedIn_pointsMissing": 0,
+          "addedAfterStart_total_tickets": 5,
+          "removedNotDone_tickets": 13,
+          "removedNotDone_points": 35.0,
+          "removedRolledToLaterSprint_tickets": 13,
+          "removedRolledToLaterSprint_points": 35.0,
+          "removedRolledToLaterSprint_pointsMissing": 3,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0.0,
+          "note": "Sprint start = end of the sprint's start date (Pacific). Starting scope = tickets in the sprint at that moment. Created new = ticket created after the start date and put in the sprint (including tickets created with the sprint already set, which leave no sprint event). Moved in = ticket created earlier and added to the sprint after the start. Removed not done = left the sprint after the start without reaching Done; 'rolled' = moved to a later sprint, 'dropped' = not moved to a later sprint. Remove and re-add within 24 h ignored. Points use the value at the time of the event; unpointed tickets are counted in *_pointsMissing and contribute 0."
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 12,
+          "medianCycleDays": 16.0,
+          "p85CycleDays": 20.8,
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+        },
+        "currentStatusAging": null,
+        "carryoverAge_inSprint": {
+          "first": 2,
+          "second": 12,
+          "third_plus": 11
+        },
+        "carryoverAge_atClose": {
+          "first": 0,
+          "second": 3,
+          "third_plus": 10
+        }
+      },
+      "12135": {
+        "sprintId": 12135,
+        "sprintName": "AC 10-26-2026",
+        "ticketsInSprint": 30,
+        "scopeChange": {
+          "startingScope_tickets": 26,
+          "startingScope_points": 71.0,
+          "startingScope_pointsMissing": 8,
+          "addedAfterStart_createdNew_tickets": 3,
+          "addedAfterStart_createdNew_points": 0.0,
+          "addedAfterStart_createdNew_pointsMissing": 3,
+          "addedAfterStart_movedIn_tickets": 1,
+          "addedAfterStart_movedIn_points": 5.0,
+          "addedAfterStart_movedIn_pointsMissing": 0,
+          "addedAfterStart_total_tickets": 4,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": 0.0,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": 0.0,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0.0,
+          "note": "Sprint start = end of the sprint's start date (Pacific). Starting scope = tickets in the sprint at that moment. Created new = ticket created after the start date and put in the sprint (including tickets created with the sprint already set, which leave no sprint event). Moved in = ticket created earlier and added to the sprint after the start. Removed not done = left the sprint after the start without reaching Done; 'rolled' = moved to a later sprint, 'dropped' = not moved to a later sprint. Remove and re-add within 24 h ignored. Points use the value at the time of the event; unpointed tickets are counted in *_pointsMissing and contribute 0."
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 5,
+          "medianCycleDays": 2.0,
+          "p85CycleDays": 11.0,
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+        },
+        "currentStatusAging": {
+          "asOf": "2026-11-03",
+          "openTickets": 24,
+          "ageBuckets": {
+            "0-2d": 2,
+            "3-6d": 4,
+            "7-13d": 14,
+            "14+d": 4
+          },
+          "byStage": {
+            "review": {
+              "0-2d": 0,
+              "3-6d": 2,
+              "7-13d": 7,
+              "14+d": 2
+            },
+            "docs": {
+              "0-2d": 0,
+              "3-6d": 0,
+              "7-13d": 1,
+              "14+d": 0
+            },
+            "intake": {
+              "0-2d": 1,
+              "3-6d": 0,
+              "7-13d": 2,
+              "14+d": 2
+            },
+            "development": {
+              "0-2d": 1,
+              "3-6d": 2,
+              "7-13d": 4,
+              "14+d": 0
+            }
+          }
+        },
+        "carryoverAge_inSprint": {
+          "first": 7,
+          "second": 4,
+          "third_plus": 19
+        },
+        "carryoverAge_atClose": null
+      }
+    },
+    "statusMapping": {
+      "Open": "intake",
+      "To Do": "intake",
+      "Defined": "intake",
+      "To Be Refined": "intake",
+      "Refined": "intake",
+      "In Triage": "intake",
+      "Reopened": "intake",
+      "In Progress": "development",
+      "In Code Review": "review",
+      "Ready for Branch Testing": "review",
+      "Branch Testing In Progress": "review",
+      "Branch Testing Complete": "review",
+      "Ready for Testing": "testing",
+      "Testing in Progress": "testing",
+      "Doc Review": "docs",
+      "Ready to Publish": "docs",
+      "Resolved": "done",
+      "Closed": "done",
+      "Rejected": "done"
+    },
+    "sprintAgeNote": "sprint count = distinct sprint IDs across ALL boards seen in the ticket's Sprint-field history, not limited to the 4 tracked AC sprints",
+    "methodology": "60 complete changelog reads (N-009, 6 parallel subagent batches, Atlassian MCP connector read-only); sprint analysis per af-jira-changelog-scan Pattern 3 with blip rule; cycle time = first In Progress or later transition to Done within sprint close; computed 2026-11-03",
+    "dataDate": "2026-11-03",
+    "completenessNote": "All 60 changelogs complete (changelog.total == histories.length)."
+  }
 }

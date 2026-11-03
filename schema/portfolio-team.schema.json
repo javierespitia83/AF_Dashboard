@@ -391,6 +391,69 @@
           }
         }
       }
+    },
+    "flow": {
+      "type": "object",
+      "description": "Optional changelog-derived flow metrics (AC only for now). All values are aggregates — no ticket keys, names or summaries.",
+      "properties": {
+        "dataDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "methodology": { "type": "string" },
+        "statusMapping": { "type": "object" },
+        "sprints": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "sprintId": { "type": "integer" },
+              "sprintName": { "type": "string" },
+              "scopeChange": {
+                "type": "object",
+                "properties": {
+                  "startingScope_tickets": { "type": "integer" },
+                  "startingScope_points": { "type": ["number", "null"] },
+                  "startingScope_pointsMissing": { "type": "integer" },
+                  "addedAfterStart_createdNew_tickets": { "type": "integer" },
+                  "addedAfterStart_createdNew_points": { "type": ["number", "null"] },
+                  "addedAfterStart_movedIn_tickets": { "type": "integer" },
+                  "addedAfterStart_movedIn_points": { "type": ["number", "null"] },
+                  "addedAfterStart_total_tickets": { "type": "integer" },
+                  "removedNotDone_tickets": { "type": "integer" },
+                  "removedNotDone_points": { "type": ["number", "null"] },
+                  "addedAfterStart_createdNew_pointsMissing": { "type": "integer" },
+                  "addedAfterStart_movedIn_pointsMissing": { "type": "integer" },
+                  "removedRolledToLaterSprint_tickets": { "type": "integer" },
+                  "removedRolledToLaterSprint_points": { "type": ["number", "null"] },
+                  "removedRolledToLaterSprint_pointsMissing": { "type": "integer" },
+                  "removedDropped_tickets": { "type": "integer" },
+                  "removedDropped_points": { "type": ["number", "null"] },
+                  "note": { "type": "string" }
+                }
+              },
+              "cycleTime": {
+                "type": "object",
+                "properties": {
+                  "doneTicketsWithCycleTime": { "type": "integer" },
+                  "medianCycleDays": { "type": ["number", "null"] },
+                  "p85CycleDays": { "type": ["number", "null"] },
+                  "note": { "type": "string" }
+                }
+              },
+              "currentStatusAging": {
+                "type": ["object", "null"],
+                "properties": {
+                  "asOf": { "type": "string" },
+                  "openTickets": { "type": "integer" },
+                  "ageBuckets": { "type": "object" },
+                  "byStage": { "type": "object" }
+                }
+              },
+              "carryoverAge_inSprint": { "type": ["object", "null"] },
+              "carryoverAge_atClose": { "type": ["object", "null"] }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
     }
   }
 }
