@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T07:49:57-08:00",
+  "exportedAt": "2026-11-03T10:26:29-08:00",
   "source": "daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1721,7 +1721,7 @@
       "dor": "Well-Formed",
       "points": null,
       "needsSplitting": null,
-      "days": 1,
+      "days": 0,
       "epic": null,
       "risk": null,
       "quickCheck": "AC and scope are in the ticket's own description (replace the example URL in the Git integration docs, update the value description to say only GHES URL), from description alone.",
