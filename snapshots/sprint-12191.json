@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T07:49:57-08:00",
+  "exportedAt": "2026-11-03T10:26:29-08:00",
   "source": "daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -265,7 +265,7 @@
     {
       "ticket": "APP-3125",
       "owner": "Anumeha Singh",
-      "status": "Open",
+      "status": "Done",
       "type": "Task",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -273,13 +273,13 @@
       "parent": "APP-3150 – Epic to track QA Activities for App Sprint 11-06",
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-11-03",
       "addedDate": null,
-      "cycleTime": null,
-      "statusAging": 22,
-      "statusAgingApprox": true,
+      "cycleTime": 8,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "QA Task : UAT Regression analysis for staging build for 4.46",
-      "lastSyncUpdate": "Open. No Jira comments yet.",
+      "lastSyncUpdate": "Done 11/3. QA task: UAT regression analysis for the 4.46 staging build completed (Anumeha Singh).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -353,7 +353,7 @@
     {
       "ticket": "APP-3213",
       "owner": "Anumeha Singh",
-      "status": "Open",
+      "status": "In Progress",
       "type": "Task",
       "tester": "Anumeha Singh",
       "classifications": null,
@@ -364,10 +364,10 @@
       "doneDate": null,
       "addedDate": null,
       "cycleTime": null,
-      "statusAging": 8,
-      "statusAgingApprox": true,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "API Test migration from Selenium to Playwright",
-      "lastSyncUpdate": "Open. No Jira comments yet.",
+      "lastSyncUpdate": "In Progress since 11/3 (Anumeha Singh). No Jira comments yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -433,7 +433,7 @@
       "statusAging": 36,
       "statusAgingApprox": false,
       "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "lastSyncUpdate": "In Review. 11/2 daily: Artem Velykorodnyi and Salim Abdul already discussed it; Artem Velykorodnyi to address the review comments. In sprint 11-06.",
+      "lastSyncUpdate": "In Review. 11/2 daily: Artem Velykorodnyi and Salim Abdul already discussed it; Artem Velykorodnyi to address the review comments. In sprint 11-06. 11/3: Artem Velykorodnyi replied that the scope turned out larger than expected after talks with the platform team and completing it this sprint is not realistic; the decision (split scope or move to the next sprint) is pending.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -477,7 +477,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "lastSyncUpdate": "In Review since 11/2. Barbora Novakova combined APP-2968 and APP-2969 in one PR (in review). 11/2 daily: design feedback from Mario Danilo Rojas to address; Poornima Srikantesh to sync on QA.",
+      "lastSyncUpdate": "In Review since 11/2. Barbora Novakova combined APP-2968 and APP-2969 in one PR (in review). 11/2 daily: design feedback from Mario Danilo Rojas to address; Poornima Srikantesh to sync on QA. 11/3: Barbora Novakova told Pavan V that the APP-3011 design change (bulk actions under 'More') also affects this ticket.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -697,7 +697,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "[Asset Catalog] Build the API Metrics data pipeline for Ultra Tasks and add the metrics to the Asset Catalog data model",
-      "lastSyncUpdate": "In Review since 11/2 (Indrajeet Kane). Classifications and Tester set 10/30. 10/30 daily: needs a couple of approvals. A new PR was created 11/3.",
+      "lastSyncUpdate": "In Review since 11/2 (Indrajeet Kane). Classifications and Tester set 10/30. 10/30 daily: needs a couple of approvals. A new PR was created 11/3. PR merged 11/3.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -719,7 +719,7 @@
       "statusAging": 1,
       "statusAgingApprox": false,
       "summary": "[Sl-meta] Show API Metrics for Ultra Tasks in Asset Catalog",
-      "lastSyncUpdate": "In Progress since 11/2 (Indrajeet Kane). 11/2: the team agreed to keep the column name in the ticket (Ultra requests); later changes become follow-on stories.",
+      "lastSyncUpdate": "In Progress since 11/2 (Indrajeet Kane). 11/2: the team agreed to keep the column name in the ticket (Ultra requests); later changes become follow-on stories. PR merged 11/3 (automation comment).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -807,7 +807,7 @@
       "statusAging": 4,
       "statusAgingApprox": false,
       "summary": "Resend invitation email — Admin Manager UI action",
-      "lastSyncUpdate": "In Review since 10/30 (Barbora Novakova); PR created. 11/2: the More menu (Lock, Expire Password, Update Auth) will be done in APP-2969; Barbora Novakova asked Mario Danilo Rojas to update the design specs for QA. 11/3: Bornali Nath asked Barbora Novakova whether the test cases are automated.",
+      "lastSyncUpdate": "In Review since 10/30 (Barbora Novakova); PR created. 11/2: the More menu (Lock, Expire Password, Update Auth) will be done in APP-2969; Barbora Novakova asked Mario Danilo Rojas to update the design specs for QA. 11/3: Bornali Nath asked Barbora Novakova whether the test cases are automated. 11/3: Barbora Novakova confirmed the tests are automated and added Bornali Nath as PR reviewer.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1423,7 +1423,7 @@
       "statusAging": 7,
       "statusAgingApprox": false,
       "summary": "Task creation fails (Git Checkout - Git Pull) when \"mcp_metadata\" is in the SLT file.",
-      "lastSyncUpdate": "In Progress. 11/2 daily: Derek Fung and Salim Abdul agreed to find time to discuss it (not covered in the daily); the fix outcome is for Derek Fung to confirm.",
+      "lastSyncUpdate": "In Progress. 11/2 daily: Derek Fung and Salim Abdul agreed to find time to discuss it (not covered in the daily); the fix outcome is for Derek Fung to confirm. Awaiting reply from Salim Abdul and Derek Fung to Carlos's 11/3 question.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1599,7 +1599,7 @@
       "statusAging": 7,
       "statusAgingApprox": false,
       "summary": "Setup Git Providers On UAT and UAT EMEA",
-      "lastSyncUpdate": "In Progress. 10/27 daily: Pavan V setting up Git providers on UAT. Slack 10/26: the pending item is PLATENG-4506, not for the November release but needed for the Bitbucket regression tests. Not discussed 10/28 or 10/30. A follow-up note (no reply needed) on 11/1 flags the possible risk, to be confirmed at the next daily.",
+      "lastSyncUpdate": "In Progress. 10/27 daily: Pavan V setting up Git providers on UAT. Slack 10/26: the pending item is PLATENG-4506, not for the November release but needed for the Bitbucket regression tests. Not discussed 10/28 or 10/30. A follow-up note (no reply needed) on 11/1 flags the possible risk, to be confirmed at the next daily. Awaiting reply from Pavan V to Carlos's 11/3 question on external blockers.",
       "blocker": "Dependency: PLATENG-4506 (Bitbucket Data Center off H2 to PostgreSQL; Open, unassigned, Lowest priority) must be resolved before all Bitbucket regression tests can run; not needed for the November release. Access to the on-premise Git host: owner not yet identified.",
       "demoOrSpike": null,
       "discussed": "No"
@@ -1643,7 +1643,7 @@
       "statusAging": 6,
       "statusAgingApprox": false,
       "summary": "[TechDebt] [Asset Catalog] Retire duplicate accounts and hourly models",
-      "lastSyncUpdate": "In Review. 10/29 daily: all reviews done and PRs merged to develop; Indrajeet Kane to test it, then take it to UAT and production.",
+      "lastSyncUpdate": "In Review. 10/29 daily: all reviews done and PRs merged to develop; Indrajeet Kane to test it, then take it to UAT and production. 11/3: Indrajeet Kane confirmed it is a dev-to-test ticket.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1673,7 +1673,7 @@
     {
       "ticket": "APP-2061",
       "owner": "Barbora Novakova",
-      "status": "Open",
+      "status": "In Progress",
       "type": "Story",
       "tester": "Pavan V",
       "classifications": null,
@@ -1684,10 +1684,10 @@
       "doneDate": null,
       "addedDate": "2026-10-29",
       "cycleTime": null,
-      "statusAging": 77,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "restyle app settings dialog with jellyroll component",
-      "lastSyncUpdate": "Open. 11/2 daily: a refactor that only needs locator updates; Barbora Novakova expects to finish this week (tester Pavan V). 10/27: design questions on the settings drawer had no reply yet.",
+      "lastSyncUpdate": "In Progress since 11/3 (Barbora Novakova). 11/2 daily: a refactor that only needs locator updates; Barbora Novakova expects to finish this week (tester Pavan V). 10/27: design questions on the settings drawer had no reply yet.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1783,7 +1783,7 @@
     {
       "ticket": "APP-3283",
       "owner": "Salim Abdul",
-      "status": "In Progress",
+      "status": "In Review",
       "type": "Bug",
       "tester": null,
       "classifications": null,
@@ -1797,7 +1797,7 @@
       "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "Asset Service 0015-0017 and User Suspension fail on develop after APP-2970",
-      "lastSyncUpdate": "In Progress since 11/3 (Salim Abdul). Added to the sprint on 11/3: Asset Service 0015-0017 and User Suspension fail on develop after APP-2970. PR created 11/3; Fix Version 4.46.1.0.",
+      "lastSyncUpdate": "In Review since 11/3 (Salim Abdul). Added to the sprint on 11/3: Asset Service 0015-0017 and User Suspension fail on develop after APP-2970. Fix Version 4.46.1.0. 11/3: PR to fix the tests created; the cache issue moved to a separate ticket (APP-3287).",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1853,8 +1853,8 @@
         "state": "active",
         "scopeTickets": 80,
         "scopePoints": 208,
-        "doneTickets": 30,
-        "donePoints": 75,
+        "doneTickets": 31,
+        "donePoints": 77,
         "doneBeforeStartTickets": 3,
         "doneBeforeStartPoints": 2
       }
