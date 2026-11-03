@@ -112,7 +112,7 @@ python3 scripts/build_portfolio.py --scratch <DIR> --current-burndown-only
 
 It adds `burndownCurrent` to the existing team files (final points, Done date from `statuscategorychangedate`, series from the sprint start to today's Pacific date). APIM was removed from the portfolio on 2026-11-01.
 
-## Flow metrics (AC, PLATENG, PLAT changelog-based, added 2026-11-03, N-008/N-009/N-010)
+## Flow metrics (AC, PLATENG, PLAT changelog-based, added 2026-11-03, N-008/N-009/N-010/N-011)
 
 One `getJiraIssue` call per unique ticket in each team's four tracked sprints. Save all raw responses to scratch files and run a processing script (not yet integrated into `build_portfolio.py`). Private per-ticket caches in `04_Data_and_Archive/data/`:
 
@@ -122,7 +122,11 @@ One `getJiraIssue` call per unique ticket in each team's four tracked sprints. S
 | PLATENG | 12120/12133/12177/12230 | 273 | `PLATENG_changelog_facts_2026-11-03.json` |
 | PLAT | 12121/12131/12179/12189 | 111 | `PLAT_changelog_facts_2026-11-03.json` |
 
-**Known limitation (PLATENG and PLAT):** many tickets are added to a sprint at creation time without generating a Sprint-field changelog event. Those tickets have no sprint-event history and cannot be reconstructed from the changelog alone. An estimated 10–50 tickets per sprint are not counted in scope totals. The actual sprint scope (from the portfolio snapshot) is larger than the flow block's ticket count for closed sprints.
+**PLATENG and PLAT sprint membership (N-011):** sprint membership is authoritative from JQL `sprint=<id>` (one query per sprint, 8 total). Tickets with no Sprint-field changelog event are classified by created date: created ≤ sprint-start → starting scope; created > sprint-start → created new. This reconciles `startingScope + addedAfterStart − removedNotDone = velocity.scopeTickets` for all 6 closed sprints. Cross-project tickets appearing in a sprint (COSWAT-11688 in PLATENG sprint 12177; PLATENG-4452 in PLAT sprint 12179) are included and classified from their changelog data.
+
+**`flow.pointsMostlyMissing`:** set to `true` when ≥50% of the tracked scope has no story-point events in the changelog. When true, the scope tile shows "—" for points. PLATENG and PLAT are both `true` because most points are set at ticket creation without a changelog event.
+
+**`cycleTime.lowConfidence`:** set to `true` when fewer than 10 tickets contributed to the cycle time or the median is below 1 day. The UI prefixes those rows with `~`.
 
 ### AC status stages
 

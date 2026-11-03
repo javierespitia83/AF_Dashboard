@@ -243,7 +243,8 @@
           "doneTicketsWithCycleTime": 7,
           "medianCycleDays": 8.0,
           "p85CycleDays": 18.6,
-          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close.",
+          "lowConfidence": true
         },
         "currentStatusAging": null,
         "carryoverAge_inSprint": {
@@ -285,7 +286,8 @@
           "doneTicketsWithCycleTime": 13,
           "medianCycleDays": 16.0,
           "p85CycleDays": 23.2,
-          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close.",
+          "lowConfidence": false
         },
         "currentStatusAging": null,
         "carryoverAge_inSprint": {
@@ -327,7 +329,8 @@
           "doneTicketsWithCycleTime": 12,
           "medianCycleDays": 16.0,
           "p85CycleDays": 20.8,
-          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close.",
+          "lowConfidence": false
         },
         "currentStatusAging": null,
         "carryoverAge_inSprint": {
@@ -369,7 +372,8 @@
           "doneTicketsWithCycleTime": 5,
           "medianCycleDays": 2.0,
           "p85CycleDays": 11.0,
-          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close."
+          "note": "Cycle time = first In Progress or later status transition to Done date within sprint close.",
+          "lowConfidence": true
         },
         "currentStatusAging": {
           "asOf": "2026-11-03",

@@ -1195,7 +1195,15 @@ async function suites(ctx) {
           check(`${teamFile} flow sprint ${sid}: addedAfterStart_total equals createdNew + movedIn`, sc.addedAfterStart_total_tickets === sc.addedAfterStart_createdNew_tickets + sc.addedAfterStart_movedIn_tickets, { total: sc.addedAfterStart_total_tickets, new: sc.addedAfterStart_createdNew_tickets, in: sc.addedAfterStart_movedIn_tickets });
           check(`${teamFile} flow sprint ${sid}: removedNotDone equals rolled + dropped`, sc.removedNotDone_tickets === sc.removedRolledToLaterSprint_tickets + sc.removedDropped_tickets, { removed: sc.removedNotDone_tickets, rolled: sc.removedRolledToLaterSprint_tickets, dropped: sc.removedDropped_tickets });
         }
+        // N-011: cycleTime.lowConfidence must be a boolean
+        if (sp.cycleTime) {
+          check(`${teamFile} flow sprint ${sid}: cycleTime.lowConfidence is boolean`, typeof sp.cycleTime.lowConfidence === 'boolean', sp.cycleTime.lowConfidence);
+        }
       });
+      // N-011: pointsMostlyMissing must be boolean when present
+      if ('pointsMostlyMissing' in teamData.flow) {
+        check(`${teamFile} flow.pointsMostlyMissing is boolean`, typeof teamData.flow.pointsMostlyMissing === 'boolean', teamData.flow.pointsMostlyMissing);
+      }
     }
   }
 

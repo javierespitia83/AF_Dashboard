@@ -191,7 +191,7 @@
   "ticketsCreated14d": 55,
   "flow": {
     "dataDate": "2026-11-03",
-    "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; sprint age counts all boards.",
+    "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; JQL sprint=<id> used as authoritative membership (reconciled to velocity.scopeTickets); sprint age counts all boards.",
     "statusMapping": {
       "intake": [
         "Open",
@@ -217,45 +217,47 @@
       ]
     },
     "sprintAgeNote": "sprint count = distinct sprint IDs across ALL boards seen in the ticket's Sprint-field history",
-    "completenessNote": "All 273 PLATENG changelogs complete (changelogTotal == historiesFetched). Scope numbers reflect tickets with Sprint-field events; an estimated 7-15 additional tickets per sprint were placed without changelog events and are not counted.",
+    "completenessNote": "All 277 PLATENG changelogs complete. Sprint membership from JQL sprint=<id>; tickets with no Sprint-field event classified by created date.",
+    "pointsMostlyMissing": true,
     "sprints": {
       "12120": {
         "sprintId": 12120,
         "sprintName": "PLATENG 09-25-2026",
         "scopeChange": {
-          "startingScope_tickets": 37,
-          "startingScope_points": 91.0,
-          "startingScope_pointsMissing": 12,
-          "addedAfterStart_createdNew_tickets": 37,
-          "addedAfterStart_createdNew_points": 0,
-          "addedAfterStart_createdNew_pointsMissing": 37,
-          "addedAfterStart_movedIn_tickets": 4,
-          "addedAfterStart_movedIn_points": 11.0,
-          "addedAfterStart_movedIn_pointsMissing": 2,
-          "addedAfterStart_total_tickets": 41,
-          "removedNotDone_tickets": 18,
-          "removedNotDone_points": 29.0,
-          "removedRolledToLaterSprint_tickets": 17,
-          "removedRolledToLaterSprint_points": 29.0,
-          "removedRolledToLaterSprint_pointsMissing": 11,
-          "removedDropped_tickets": 1,
-          "removedDropped_points": 0
+          "startingScope_tickets": 36,
+          "startingScope_points": null,
+          "startingScope_pointsMissing": 36,
+          "addedAfterStart_createdNew_tickets": 49,
+          "addedAfterStart_createdNew_points": null,
+          "addedAfterStart_createdNew_pointsMissing": 49,
+          "addedAfterStart_movedIn_tickets": 0,
+          "addedAfterStart_movedIn_points": null,
+          "addedAfterStart_movedIn_pointsMissing": 0,
+          "addedAfterStart_total_tickets": 49,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": null,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": null,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": null
         },
         "cycleTime": {
-          "doneTicketsWithCycleTime": 46,
-          "medianCycleDays": 4.0,
+          "doneTicketsWithCycleTime": 72,
+          "medianCycleDays": 1.0,
           "p85CycleDays": 6.8,
-          "note": "46 tickets with cycle time data."
+          "lowConfidence": false,
+          "note": "72 tickets with cycle time data."
         },
         "carryoverAge_inSprint": {
-          "first": 35,
-          "second": 15,
-          "third_plus": 28
+          "first": 85,
+          "second": 0,
+          "third_plus": 0
         },
         "carryoverAge_atClose": {
-          "first": 0,
-          "second": 8,
-          "third_plus": 6
+          "first": 13,
+          "second": 0,
+          "third_plus": 0
         },
         "currentStatusAging": null
       },
@@ -263,39 +265,40 @@
         "sprintId": 12133,
         "sprintName": "PLATENG 10-09-2026",
         "scopeChange": {
-          "startingScope_tickets": 44,
-          "startingScope_points": 84.0,
-          "startingScope_pointsMissing": 29,
-          "addedAfterStart_createdNew_tickets": 23,
-          "addedAfterStart_createdNew_points": 0,
-          "addedAfterStart_createdNew_pointsMissing": 23,
-          "addedAfterStart_movedIn_tickets": 9,
-          "addedAfterStart_movedIn_points": 11.0,
-          "addedAfterStart_movedIn_pointsMissing": 7,
-          "addedAfterStart_total_tickets": 32,
-          "removedNotDone_tickets": 14,
-          "removedNotDone_points": 18.0,
-          "removedRolledToLaterSprint_tickets": 12,
-          "removedRolledToLaterSprint_points": 13.0,
-          "removedRolledToLaterSprint_pointsMissing": 10,
-          "removedDropped_tickets": 2,
-          "removedDropped_points": 5.0
+          "startingScope_tickets": 48,
+          "startingScope_points": null,
+          "startingScope_pointsMissing": 48,
+          "addedAfterStart_createdNew_tickets": 41,
+          "addedAfterStart_createdNew_points": null,
+          "addedAfterStart_createdNew_pointsMissing": 41,
+          "addedAfterStart_movedIn_tickets": 0,
+          "addedAfterStart_movedIn_points": null,
+          "addedAfterStart_movedIn_pointsMissing": 0,
+          "addedAfterStart_total_tickets": 41,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": null,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": null,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": null
         },
         "cycleTime": {
-          "doneTicketsWithCycleTime": 43,
-          "medianCycleDays": 1.9,
-          "p85CycleDays": 5.8,
-          "note": "43 tickets with cycle time data."
+          "doneTicketsWithCycleTime": 70,
+          "medianCycleDays": 0.9,
+          "p85CycleDays": 6.0,
+          "lowConfidence": true,
+          "note": "Low confidence: n<10 or median<1d. 70 tickets with cycle time data."
         },
         "carryoverAge_inSprint": {
-          "first": 32,
-          "second": 15,
-          "third_plus": 29
+          "first": 86,
+          "second": 3,
+          "third_plus": 0
         },
         "carryoverAge_atClose": {
-          "first": 0,
-          "second": 10,
-          "third_plus": 10
+          "first": 16,
+          "second": 3,
+          "third_plus": 0
         },
         "currentStatusAging": null
       },
@@ -303,39 +306,40 @@
         "sprintId": 12177,
         "sprintName": "PLATENG 10-23-2026",
         "scopeChange": {
-          "startingScope_tickets": 30,
-          "startingScope_points": 51.0,
-          "startingScope_pointsMissing": 17,
-          "addedAfterStart_createdNew_tickets": 13,
-          "addedAfterStart_createdNew_points": 0,
-          "addedAfterStart_createdNew_pointsMissing": 13,
-          "addedAfterStart_movedIn_tickets": 14,
-          "addedAfterStart_movedIn_points": 24.0,
-          "addedAfterStart_movedIn_pointsMissing": 9,
-          "addedAfterStart_total_tickets": 27,
-          "removedNotDone_tickets": 30,
-          "removedNotDone_points": 67.0,
-          "removedRolledToLaterSprint_tickets": 29,
-          "removedRolledToLaterSprint_points": 64.0,
-          "removedRolledToLaterSprint_pointsMissing": 13,
-          "removedDropped_tickets": 1,
-          "removedDropped_points": 3.0
+          "startingScope_tickets": 31,
+          "startingScope_points": null,
+          "startingScope_pointsMissing": 19,
+          "addedAfterStart_createdNew_tickets": 32,
+          "addedAfterStart_createdNew_points": null,
+          "addedAfterStart_createdNew_pointsMissing": 32,
+          "addedAfterStart_movedIn_tickets": 6,
+          "addedAfterStart_movedIn_points": null,
+          "addedAfterStart_movedIn_pointsMissing": 5,
+          "addedAfterStart_total_tickets": 38,
+          "removedNotDone_tickets": 13,
+          "removedNotDone_points": null,
+          "removedRolledToLaterSprint_tickets": 13,
+          "removedRolledToLaterSprint_points": null,
+          "removedRolledToLaterSprint_pointsMissing": 4,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": null
         },
         "cycleTime": {
-          "doneTicketsWithCycleTime": 26,
+          "doneTicketsWithCycleTime": 55,
           "medianCycleDays": 0.1,
-          "p85CycleDays": 5.7,
-          "note": "26 tickets with cycle time data."
+          "p85CycleDays": 10.2,
+          "lowConfidence": true,
+          "note": "Low confidence: n<10 or median<1d. 55 tickets with cycle time data."
         },
         "carryoverAge_inSprint": {
-          "first": 17,
-          "second": 20,
-          "third_plus": 20
+          "first": 56,
+          "second": 13,
+          "third_plus": 0
         },
         "carryoverAge_atClose": {
-          "first": 0,
-          "second": 1,
-          "third_plus": 1
+          "first": 3,
+          "second": 0,
+          "third_plus": 0
         },
         "currentStatusAging": null
       },
@@ -344,61 +348,62 @@
         "sprintName": "PLATENG-11-06-2026",
         "scopeChange": {
           "startingScope_tickets": 41,
-          "startingScope_points": 95.0,
-          "startingScope_pointsMissing": 17,
-          "addedAfterStart_createdNew_tickets": 14,
-          "addedAfterStart_createdNew_points": 0,
-          "addedAfterStart_createdNew_pointsMissing": 14,
+          "startingScope_points": null,
+          "startingScope_pointsMissing": 27,
+          "addedAfterStart_createdNew_tickets": 17,
+          "addedAfterStart_createdNew_points": null,
+          "addedAfterStart_createdNew_pointsMissing": 17,
           "addedAfterStart_movedIn_tickets": 0,
-          "addedAfterStart_movedIn_points": 0,
+          "addedAfterStart_movedIn_points": null,
           "addedAfterStart_movedIn_pointsMissing": 0,
-          "addedAfterStart_total_tickets": 14,
+          "addedAfterStart_total_tickets": 17,
           "removedNotDone_tickets": 0,
-          "removedNotDone_points": 0,
+          "removedNotDone_points": null,
           "removedRolledToLaterSprint_tickets": 0,
-          "removedRolledToLaterSprint_points": 0,
+          "removedRolledToLaterSprint_points": null,
           "removedRolledToLaterSprint_pointsMissing": 0,
           "removedDropped_tickets": 0,
-          "removedDropped_points": 0
+          "removedDropped_points": null
         },
         "cycleTime": {
-          "doneTicketsWithCycleTime": 18,
+          "doneTicketsWithCycleTime": 22,
           "medianCycleDays": 0.0,
-          "p85CycleDays": 0.0,
-          "note": "18 tickets with cycle time data."
+          "p85CycleDays": 2.4,
+          "lowConfidence": true,
+          "note": "Low confidence: n<10 or median<1d. 22 tickets with cycle time data."
         },
         "carryoverAge_inSprint": {
-          "first": 21,
-          "second": 20,
-          "third_plus": 14
+          "first": 44,
+          "second": 13,
+          "third_plus": 1
         },
         "carryoverAge_atClose": null,
         "currentStatusAging": {
           "asOf": "2026-11-03",
-          "openTickets": 35,
+          "openTickets": 37,
           "ageBuckets": {
-            "0-2d": 1,
-            "3-6d": 10,
-            "7-13d": 5,
+            "0-2d": 3,
+            "3-6d": 8,
+            "7-13d": 7,
             "14+d": 19
           },
           "byStage": {
             "intake": {
-              "0-2d": 1,
+              "0-2d": 3,
               "3-6d": 1,
               "7-13d": 0,
               "14+d": 12
             },
             "development": {
               "0-2d": 0,
-              "3-6d": 5,
-              "7-13d": 1,
+              "3-6d": 4,
+              "7-13d": 2,
               "14+d": 5
             },
             "review": {
               "0-2d": 0,
-              "3-6d": 2,
-              "7-13d": 4,
+              "3-6d": 1,
+              "7-13d": 5,
               "14+d": 1
             },
             "testing": {

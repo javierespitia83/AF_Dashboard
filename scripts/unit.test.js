@@ -273,3 +273,35 @@ test('portfolio/AC.json flow: scope-change fields add up and carry no ticket key
     });
   });
 });
+
+// N-011: reconciliation identity for all three teams (closed sprints only)
+['AC', 'PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: closed-sprint start+added-removed == velocity.scopeTickets`, () => {
+    const fs = require('fs'), path = require('path');
+    const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8'));
+    assert.ok(d.flow && d.flow.sprints, `${team} must have a flow block with sprints`);
+    (d.velocity || []).forEach(v => {
+      const sp = d.flow.sprints[String(v.id)];
+      if (!sp) return;
+      const sc = sp.scopeChange;
+      const stillIn = sc.startingScope_tickets + sc.addedAfterStart_total_tickets - sc.removedNotDone_tickets;
+      assert.strictEqual(stillIn, v.scopeTickets,
+        `${team} sprint ${v.id}: ${sc.startingScope_tickets}+${sc.addedAfterStart_total_tickets}-${sc.removedNotDone_tickets}=${stillIn} != velocity ${v.scopeTickets}`);
+    });
+  });
+});
+
+// N-011: flow.pointsMostlyMissing boolean; cycleTime.lowConfidence boolean for PLATENG and PLAT
+['PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: pointsMostlyMissing is boolean; cycleTime has lowConfidence`, () => {
+    const fs = require('fs'), path = require('path');
+    const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8'));
+    assert.ok(d.flow, `${team} must have flow block`);
+    assert.strictEqual(typeof d.flow.pointsMostlyMissing, 'boolean',
+      `${team} flow.pointsMostlyMissing must be boolean`);
+    Object.entries(d.flow.sprints || {}).forEach(([id, sp]) => {
+      assert.strictEqual(typeof sp.cycleTime.lowConfidence, 'boolean',
+        `${team} sprint ${id} cycleTime.lowConfidence must be boolean`);
+    });
+  });
+});

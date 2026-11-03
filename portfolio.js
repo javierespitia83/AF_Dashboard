@@ -424,7 +424,8 @@
         ctRows.forEach(function(s) {
           var ct = flow.sprints[s].cycleTime;
           var nStr = ct.doneTicketsWithCycleTime ? ct.doneTicketsWithCycleTime + ' tickets' : '—';
-          var row = (ct.medianCycleDays !== null ? 'Median ' + ct.medianCycleDays + 'd · p85 ' + ct.p85CycleDays + 'd (' + nStr + ')' : '—');
+          var lc = ct.lowConfidence ? '~' : '';
+          var row = (ct.medianCycleDays !== null ? lc + 'Median ' + ct.medianCycleDays + 'd · p85 ' + ct.p85CycleDays + 'd (' + nStr + ')' : '—');
           ct2.appendChild(el('div', { class: 'pf-flow-kv', text: flow.sprints[s].sprintName + ': ' + row }));
         });
       } else {
@@ -450,7 +451,7 @@
       flowGrid.appendChild(co3);
 
       flowSec.appendChild(flowGrid);
-      flowSec.appendChild(el('p', { class: 'pf-flow-note', text: (flow.dataDate || '') + ' · changelog-based · scope = sprint-field events only (lower bound) · sprint age counts all boards · ' + (flow.completenessNote || '') }));
+      flowSec.appendChild(el('p', { class: 'pf-flow-note', text: (flow.dataDate || '') + ' · changelog-based · sprint age counts all boards · ' + (flow.completenessNote || '') }));
       app.appendChild(flowSec);
     }
   }
