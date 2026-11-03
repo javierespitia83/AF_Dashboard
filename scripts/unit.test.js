@@ -245,3 +245,63 @@ test('portfolio/AC.json flow: scope-change fields add up and carry no ticket key
     ['startingScope_pointsMissing', 'addedAfterStart_createdNew_pointsMissing', 'addedAfterStart_movedIn_pointsMissing'].forEach(k => assert.ok(Number.isInteger(sc[k]), id + ' ' + k));
   });
 });
+
+// N-010: PLATENG and PLAT flow blocks consistent and public-safe
+['PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: scope-change fields add up and carry no ticket keys`, () => {
+    const fs = require('fs'), path = require('path');
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8');
+    const d = JSON.parse(raw);
+    assert.ok(d.flow, `${team}.json must have a flow block`);
+    // Ticket keys are PROJECT-NUMBER with no further hyphen+digits after the number.
+    // Sprint names like "PLATENG-11-06-2026" are not ticket keys (hyphen continues after number).
+    assert.ok(!/\b[A-Z][A-Z0-9]+-\d+\b(?![-\d])/.test(JSON.stringify(d.flow)), `${team} flow block must not contain ticket keys`);
+    const ids = Object.keys(d.flow.sprints);
+    assert.ok(ids.length >= 4, `${team} flow must have 4 sprints`);
+    ids.forEach(id => {
+      const sc = d.flow.sprints[id].scopeChange;
+      assert.strictEqual(
+        sc.addedAfterStart_total_tickets,
+        sc.addedAfterStart_createdNew_tickets + sc.addedAfterStart_movedIn_tickets,
+        `${team} sprint ${id} added total`
+      );
+      assert.strictEqual(
+        sc.removedNotDone_tickets,
+        sc.removedRolledToLaterSprint_tickets + sc.removedDropped_tickets,
+        `${team} sprint ${id} removed total`
+      );
+    });
+  });
+});
+
+// N-011: reconciliation identity for all three teams (closed sprints only)
+['AC', 'PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: closed-sprint start+added-removed == velocity.scopeTickets`, () => {
+    const fs = require('fs'), path = require('path');
+    const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8'));
+    assert.ok(d.flow && d.flow.sprints, `${team} must have a flow block with sprints`);
+    (d.velocity || []).forEach(v => {
+      const sp = d.flow.sprints[String(v.id)];
+      if (!sp) return;
+      const sc = sp.scopeChange;
+      const stillIn = sc.startingScope_tickets + sc.addedAfterStart_total_tickets - sc.removedNotDone_tickets;
+      assert.strictEqual(stillIn, v.scopeTickets,
+        `${team} sprint ${v.id}: ${sc.startingScope_tickets}+${sc.addedAfterStart_total_tickets}-${sc.removedNotDone_tickets}=${stillIn} != velocity ${v.scopeTickets}`);
+    });
+  });
+});
+
+// N-011: flow.pointsMostlyMissing boolean; cycleTime.lowConfidence boolean for PLATENG and PLAT
+['PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: pointsMostlyMissing is boolean; cycleTime has lowConfidence`, () => {
+    const fs = require('fs'), path = require('path');
+    const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8'));
+    assert.ok(d.flow, `${team} must have flow block`);
+    assert.strictEqual(typeof d.flow.pointsMostlyMissing, 'boolean',
+      `${team} flow.pointsMostlyMissing must be boolean`);
+    Object.entries(d.flow.sprints || {}).forEach(([id, sp]) => {
+      assert.strictEqual(typeof sp.cycleTime.lowConfidence, 'boolean',
+        `${team} sprint ${id} cycleTime.lowConfidence must be boolean`);
+    });
+  });
+});

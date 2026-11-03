@@ -394,7 +394,7 @@
     },
     "flow": {
       "type": "object",
-      "description": "Optional changelog-derived flow metrics (AC only for now). All values are aggregates — no ticket keys, names or summaries.",
+      "description": "Optional changelog-derived flow metrics (AC, PLATENG, PLAT). All values are aggregates — no ticket keys, names or summaries.",
       "properties": {
         "dataDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
         "methodology": { "type": "string" },

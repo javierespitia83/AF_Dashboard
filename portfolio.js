@@ -385,7 +385,7 @@
     main.appendChild(left); main.appendChild(right);
     app.appendChild(main);
 
-    // flow metrics section (AC only — present when data.flow exists)
+    // flow metrics section — present when data.flow exists; works for any team
     if (data.flow) {
       var flow = data.flow;
       var curSp = flow.sprints && flow.sprints[sprint.id];
@@ -397,7 +397,7 @@
       var lastSp = lastClosedId ? flow.sprints[lastClosedId] : null;
 
       var flowSec = el('section', { class: 'pf-flow', 'aria-label': 'Flow metrics (changelog)' });
-      flowSec.appendChild(el('h3', { class: 'pf-flow-heading', text: 'Flow metrics (from Jira changelogs · AC only)' }));
+      flowSec.appendChild(el('h3', { class: 'pf-flow-heading', text: 'Flow metrics (from Jira changelogs · ' + data.label + ')' }));
       var flowGrid = el('div', { class: 'pf-flow-grid' });
 
       // Tile 1: Scope change — last closed sprint
@@ -405,7 +405,9 @@
       sc1.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Scope change (last closed sprint)' }));
       if (lastSp) {
         var sc = lastSp.scopeChange;
-        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Starting scope: ' + sc.startingScope_tickets + ' tickets · ' + (sc.startingScope_points || '—') + ' pts' }));
+        var ptsNote = flow.pointsMostlyMissing ? ' (most tickets unpointed)' : '';
+        var ptsStr = flow.pointsMostlyMissing ? '—' : ((sc.startingScope_points || 0) + ' pts');
+        sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Starting scope: ' + sc.startingScope_tickets + ' tickets · ' + ptsStr + ptsNote }));
         sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Added after start: ' + sc.addedAfterStart_total_tickets + ' tickets (new: ' + sc.addedAfterStart_createdNew_tickets + ' · moved in: ' + sc.addedAfterStart_movedIn_tickets + ')' }));
         sc1.appendChild(el('div', { class: 'pf-flow-kv', text: 'Removed not done: ' + sc.removedNotDone_tickets + ' tickets (' + sc.removedRolledToLaterSprint_tickets + ' moved to a later sprint · ' + sc.removedDropped_tickets + ' dropped)' }));
         sc1.appendChild(el('div', { class: 'pf-flow-sprint', text: lastSp.sprintName }));
@@ -414,7 +416,7 @@
       }
       flowGrid.appendChild(sc1);
 
-      // Tile 2: Cycle time — last 3 closed sprints
+      // Tile 2: Cycle time — closed sprints
       var ct2 = el('div', { class: 'pf-flow-tile' });
       ct2.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Cycle time (first In Progress → Done)' }));
       var ctRows = sprintIds.filter(function(s){ return flow.sprints[s].carryoverAge_atClose !== null; });
@@ -422,7 +424,8 @@
         ctRows.forEach(function(s) {
           var ct = flow.sprints[s].cycleTime;
           var nStr = ct.doneTicketsWithCycleTime ? ct.doneTicketsWithCycleTime + ' tickets' : '—';
-          var row = (ct.medianCycleDays !== null ? 'Median ' + ct.medianCycleDays + 'd · p85 ' + ct.p85CycleDays + 'd (' + nStr + ')' : '—');
+          var lc = ct.lowConfidence ? '~' : '';
+          var row = (ct.medianCycleDays !== null ? lc + 'Median ' + ct.medianCycleDays + 'd · p85 ' + ct.p85CycleDays + 'd (' + nStr + ')' : '—');
           ct2.appendChild(el('div', { class: 'pf-flow-kv', text: flow.sprints[s].sprintName + ': ' + row }));
         });
       } else {
@@ -430,10 +433,10 @@
       }
       flowGrid.appendChild(ct2);
 
-      // Tile 3: Carryover age + status aging (current sprint)
+      // Tile 3: Sprint age distribution (current sprint)
       var co3 = el('div', { class: 'pf-flow-tile' });
       co3.appendChild(el('div', { class: 'pf-flow-tile-title', text: 'Sprint age distribution (all boards, current sprint)' }));
-      if (curSp) {
+      if (curSp && curSp.carryoverAge_inSprint) {
         var co = curSp.carryoverAge_inSprint;
         co3.appendChild(el('div', { class: 'pf-flow-kv', text: 'In 1st sprint: ' + co.first + ' · 2nd: ' + co.second + ' · 3rd+: ' + co.third_plus }));
         var ag = curSp.currentStatusAging;
@@ -448,7 +451,7 @@
       flowGrid.appendChild(co3);
 
       flowSec.appendChild(flowGrid);
-      flowSec.appendChild(el('p', { class: 'pf-flow-note', text: 'Pilot · ' + (flow.dataDate || '') + ' · 60 complete changelog reads · sprint age counts all boards · ' + (flow.completenessNote || '') }));
+      flowSec.appendChild(el('p', { class: 'pf-flow-note', text: (flow.dataDate || '') + ' · changelog-based · sprint age counts all boards · ' + (flow.completenessNote || '') }));
       app.appendChild(flowSec);
     }
   }
