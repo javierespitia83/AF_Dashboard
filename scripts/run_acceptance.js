@@ -1182,6 +1182,21 @@ async function suites(ctx) {
     check(`${teamFile} privacy: no displayName fields`, !/"displayName"/.test(pfStr));
     check(`${teamFile} privacy: no emailAddress fields`, !/"emailAddress"/.test(pfStr));
     check(`${teamFile} has refreshedAt and pointsNote`, !!teamData.refreshedAt && !!teamData.pointsNote);
+    // N-010: flow block checks (present for AC, PLATENG, PLAT)
+    if (teamData.flow && teamData.flow.sprints) {
+      const flowSprints = Object.entries(teamData.flow.sprints);
+      // ticket-key check: sprint names like "PLATENG-11-06-2026" are not keys (hyphen follows the number)
+      const flowStr = JSON.stringify(teamData.flow);
+      const flowNoName = flowStr.replace(/"sprintName":"[^"]*"/g, '').replace(/"methodology":"[^"]*"/g, '').replace(/"completenessNote":"[^"]*"/g, '').replace(/"sprintAgeNote":"[^"]*"/g, '').replace(/"note":"[^"]*"/g, '');
+      check(`${teamFile} flow block carries no ticket keys`, !(/\b[A-Z][A-Z0-9]+-\d+(?![-\d])\b/.test(flowNoName)), (flowNoName.match(/\b[A-Z][A-Z0-9]+-\d+(?![-\d])\b/g) || []).slice(0, 3));
+      flowSprints.forEach(([sid, sp]) => {
+        const sc = sp.scopeChange;
+        if (sc) {
+          check(`${teamFile} flow sprint ${sid}: addedAfterStart_total equals createdNew + movedIn`, sc.addedAfterStart_total_tickets === sc.addedAfterStart_createdNew_tickets + sc.addedAfterStart_movedIn_tickets, { total: sc.addedAfterStart_total_tickets, new: sc.addedAfterStart_createdNew_tickets, in: sc.addedAfterStart_movedIn_tickets });
+          check(`${teamFile} flow sprint ${sid}: removedNotDone equals rolled + dropped`, sc.removedNotDone_tickets === sc.removedRolledToLaterSprint_tickets + sc.removedDropped_tickets, { removed: sc.removedNotDone_tickets, rolled: sc.removedRolledToLaterSprint_tickets, dropped: sc.removedDropped_tickets });
+        }
+      });
+    }
   }
 
   // ---------- N-004: clarity of units, created tickets, legend, layout ----------

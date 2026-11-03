@@ -245,3 +245,31 @@ test('portfolio/AC.json flow: scope-change fields add up and carry no ticket key
     ['startingScope_pointsMissing', 'addedAfterStart_createdNew_pointsMissing', 'addedAfterStart_movedIn_pointsMissing'].forEach(k => assert.ok(Number.isInteger(sc[k]), id + ' ' + k));
   });
 });
+
+// N-010: PLATENG and PLAT flow blocks consistent and public-safe
+['PLATENG', 'PLAT'].forEach(team => {
+  test(`portfolio/${team}.json flow: scope-change fields add up and carry no ticket keys`, () => {
+    const fs = require('fs'), path = require('path');
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'portfolio', `${team}.json`), 'utf8');
+    const d = JSON.parse(raw);
+    assert.ok(d.flow, `${team}.json must have a flow block`);
+    // Ticket keys are PROJECT-NUMBER with no further hyphen+digits after the number.
+    // Sprint names like "PLATENG-11-06-2026" are not ticket keys (hyphen continues after number).
+    assert.ok(!/\b[A-Z][A-Z0-9]+-\d+\b(?![-\d])/.test(JSON.stringify(d.flow)), `${team} flow block must not contain ticket keys`);
+    const ids = Object.keys(d.flow.sprints);
+    assert.ok(ids.length >= 4, `${team} flow must have 4 sprints`);
+    ids.forEach(id => {
+      const sc = d.flow.sprints[id].scopeChange;
+      assert.strictEqual(
+        sc.addedAfterStart_total_tickets,
+        sc.addedAfterStart_createdNew_tickets + sc.addedAfterStart_movedIn_tickets,
+        `${team} sprint ${id} added total`
+      );
+      assert.strictEqual(
+        sc.removedNotDone_tickets,
+        sc.removedRolledToLaterSprint_tickets + sc.removedDropped_tickets,
+        `${team} sprint ${id} removed total`
+      );
+    });
+  });
+});

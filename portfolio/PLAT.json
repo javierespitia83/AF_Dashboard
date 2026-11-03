@@ -213,5 +213,234 @@
       ]
     ]
   },
-  "ticketsCreated14d": 39
+  "ticketsCreated14d": 39,
+  "flow": {
+    "dataDate": "2026-11-03",
+    "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; sprint age counts all boards.",
+    "statusMapping": {
+      "intake": [
+        "Open",
+        "To Do",
+        "Refinement"
+      ],
+      "development": [
+        "In Progress",
+        "In Development",
+        "Dev Blocked",
+        "Try to Reproduce"
+      ],
+      "review": [
+        "In Code Review",
+        "Code review"
+      ],
+      "testing": [
+        "Testing in Progress",
+        "Integration Testing Complete",
+        "Test Document",
+        "Waiting for Deployment",
+        "Waiting for Prod Deployment"
+      ],
+      "done": [
+        "Done",
+        "Resolved",
+        "Closed",
+        "Rejected"
+      ]
+    },
+    "sprintAgeNote": "sprint count = distinct sprint IDs across ALL boards seen in the ticket's Sprint-field history",
+    "completenessNote": "All 111 PLAT changelogs complete (changelogTotal == historiesFetched). Scope numbers reflect tickets with Sprint-field events; an estimated 7-15 additional tickets per sprint were placed without changelog events and are not counted.",
+    "sprints": {
+      "12121": {
+        "sprintId": 12121,
+        "sprintName": "Plat Core 09-25-2026",
+        "scopeChange": {
+          "startingScope_tickets": 4,
+          "startingScope_points": 2.0,
+          "startingScope_pointsMissing": 3,
+          "addedAfterStart_createdNew_tickets": 5,
+          "addedAfterStart_createdNew_points": 0,
+          "addedAfterStart_createdNew_pointsMissing": 5,
+          "addedAfterStart_movedIn_tickets": 27,
+          "addedAfterStart_movedIn_points": 18.0,
+          "addedAfterStart_movedIn_pointsMissing": 22,
+          "addedAfterStart_total_tickets": 32,
+          "removedNotDone_tickets": 26,
+          "removedNotDone_points": 18.0,
+          "removedRolledToLaterSprint_tickets": 26,
+          "removedRolledToLaterSprint_points": 18.0,
+          "removedRolledToLaterSprint_pointsMissing": 21,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 6,
+          "medianCycleDays": 0.2,
+          "p85CycleDays": 1.9,
+          "note": "6 tickets with cycle time data."
+        },
+        "carryoverAge_inSprint": {
+          "first": 2,
+          "second": 3,
+          "third_plus": 31
+        },
+        "carryoverAge_atClose": {
+          "first": 0,
+          "second": 1,
+          "third_plus": 4
+        },
+        "currentStatusAging": null
+      },
+      "12131": {
+        "sprintId": 12131,
+        "sprintName": "Plat Core 10-09-2026",
+        "scopeChange": {
+          "startingScope_tickets": 33,
+          "startingScope_points": 37.0,
+          "startingScope_pointsMissing": 24,
+          "addedAfterStart_createdNew_tickets": 8,
+          "addedAfterStart_createdNew_points": 0,
+          "addedAfterStart_createdNew_pointsMissing": 8,
+          "addedAfterStart_movedIn_tickets": 13,
+          "addedAfterStart_movedIn_points": 2.0,
+          "addedAfterStart_movedIn_pointsMissing": 12,
+          "addedAfterStart_total_tickets": 21,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": 0,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": 0,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 14,
+          "medianCycleDays": 0.1,
+          "p85CycleDays": 4.3,
+          "note": "14 tickets with cycle time data."
+        },
+        "carryoverAge_inSprint": {
+          "first": 13,
+          "second": 4,
+          "third_plus": 37
+        },
+        "carryoverAge_atClose": {
+          "first": 11,
+          "second": 3,
+          "third_plus": 26
+        },
+        "currentStatusAging": null
+      },
+      "12179": {
+        "sprintId": 12179,
+        "sprintName": "Plat Core 10-23-2026",
+        "scopeChange": {
+          "startingScope_tickets": 35,
+          "startingScope_points": 51.0,
+          "startingScope_pointsMissing": 22,
+          "addedAfterStart_createdNew_tickets": 10,
+          "addedAfterStart_createdNew_points": 0,
+          "addedAfterStart_createdNew_pointsMissing": 10,
+          "addedAfterStart_movedIn_tickets": 5,
+          "addedAfterStart_movedIn_points": 16.0,
+          "addedAfterStart_movedIn_pointsMissing": 3,
+          "addedAfterStart_total_tickets": 15,
+          "removedNotDone_tickets": 6,
+          "removedNotDone_points": 10.0,
+          "removedRolledToLaterSprint_tickets": 6,
+          "removedRolledToLaterSprint_points": 10.0,
+          "removedRolledToLaterSprint_pointsMissing": 3,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 20,
+          "medianCycleDays": 0.0,
+          "p85CycleDays": 7.9,
+          "note": "20 tickets with cycle time data."
+        },
+        "carryoverAge_inSprint": {
+          "first": 5,
+          "second": 15,
+          "third_plus": 30
+        },
+        "carryoverAge_atClose": {
+          "first": 1,
+          "second": 10,
+          "third_plus": 14
+        },
+        "currentStatusAging": null
+      },
+      "12189": {
+        "sprintId": 12189,
+        "sprintName": "Plat Core 11-06-2026",
+        "scopeChange": {
+          "startingScope_tickets": 41,
+          "startingScope_points": 55.0,
+          "startingScope_pointsMissing": 29,
+          "addedAfterStart_createdNew_tickets": 12,
+          "addedAfterStart_createdNew_points": 0,
+          "addedAfterStart_createdNew_pointsMissing": 12,
+          "addedAfterStart_movedIn_tickets": 2,
+          "addedAfterStart_movedIn_points": 0,
+          "addedAfterStart_movedIn_pointsMissing": 2,
+          "addedAfterStart_total_tickets": 14,
+          "removedNotDone_tickets": 0,
+          "removedNotDone_points": 0,
+          "removedRolledToLaterSprint_tickets": 0,
+          "removedRolledToLaterSprint_points": 0,
+          "removedRolledToLaterSprint_pointsMissing": 0,
+          "removedDropped_tickets": 0,
+          "removedDropped_points": 0
+        },
+        "cycleTime": {
+          "doneTicketsWithCycleTime": 10,
+          "medianCycleDays": 2.2,
+          "p85CycleDays": 23.1,
+          "note": "10 tickets with cycle time data."
+        },
+        "carryoverAge_inSprint": {
+          "first": 27,
+          "second": 13,
+          "third_plus": 15
+        },
+        "carryoverAge_atClose": null,
+        "currentStatusAging": {
+          "asOf": "2026-11-03",
+          "openTickets": 44,
+          "ageBuckets": {
+            "0-2d": 6,
+            "3-6d": 9,
+            "7-13d": 11,
+            "14+d": 18
+          },
+          "byStage": {
+            "intake": {
+              "0-2d": 1,
+              "3-6d": 0,
+              "7-13d": 1,
+              "14+d": 7
+            },
+            "development": {
+              "0-2d": 4,
+              "3-6d": 5,
+              "7-13d": 6,
+              "14+d": 6
+            },
+            "review": {
+              "0-2d": 1,
+              "3-6d": 1,
+              "7-13d": 1,
+              "14+d": 3
+            },
+            "testing": {
+              "0-2d": 0,
+              "3-6d": 3,
+              "7-13d": 3,
+              "14+d": 2
+            }
+          }
+        }
+      }
+    }
+  }
 }

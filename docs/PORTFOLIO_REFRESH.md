@@ -112,9 +112,17 @@ python3 scripts/build_portfolio.py --scratch <DIR> --current-burndown-only
 
 It adds `burndownCurrent` to the existing team files (final points, Done date from `statuscategorychangedate`, series from the sprint start to today's Pacific date). APIM was removed from the portfolio on 2026-11-01.
 
-## Flow metrics (AC only, changelog-based, added 2026-11-03, N-008)
+## Flow metrics (AC, PLATENG, PLAT changelog-based, added 2026-11-03, N-008/N-009/N-010)
 
-One `getJiraIssue` call per unique AC ticket in the four tracked sprints (10956/12099/12118/12135; currently 60 tickets). Save all raw responses to scratch files and run a processing script (not yet integrated into `build_portfolio.py` — see `04_Data_and_Archive/data/ac_changelog_facts_2026-11-03.json` for the private per-ticket cache).
+One `getJiraIssue` call per unique ticket in each team's four tracked sprints. Save all raw responses to scratch files and run a processing script (not yet integrated into `build_portfolio.py`). Private per-ticket caches in `04_Data_and_Archive/data/`:
+
+| Team | Tracked sprints | Unique tickets | Cache file |
+|---|---|---|---|
+| AC | 10956/12099/12118/12135 | 60 | `ac_changelog_facts_2026-11-03.json` |
+| PLATENG | 12120/12133/12177/12230 | 273 | `PLATENG_changelog_facts_2026-11-03.json` |
+| PLAT | 12121/12131/12179/12189 | 111 | `PLAT_changelog_facts_2026-11-03.json` |
+
+**Known limitation (PLATENG and PLAT):** many tickets are added to a sprint at creation time without generating a Sprint-field changelog event. Those tickets have no sprint-event history and cannot be reconstructed from the changelog alone. An estimated 10–50 tickets per sprint are not counted in scope totals. The actual sprint scope (from the portfolio snapshot) is larger than the flow block's ticket count for closed sprints.
 
 ### AC status stages
 
@@ -127,6 +135,26 @@ One `getJiraIssue` call per unique AC ticket in the four tracked sprints (10956/
 | docs | Doc Review, Ready to Publish |
 | done | Resolved, Closed, Rejected |
 
+### PLATENG status stages
+
+| Stage | Statuses |
+|---|---|
+| intake | Open, To Do, Refinement |
+| development | In Progress, Dev Blocked |
+| review | In Code Review |
+| testing | Ready for Testing, Waiting for Prod Deployment |
+| done | Done, Closed, Resolved, Rejected |
+
+### PLAT status stages
+
+| Stage | Statuses |
+|---|---|
+| intake | Open, To Do, Refinement |
+| development | In Progress, In Development, Dev Blocked, Try to Reproduce |
+| review | In Code Review, Code review |
+| testing | Testing in Progress, Integration Testing Complete, Test Document, Waiting for Deployment, Waiting for Prod Deployment |
+| done | Done, Resolved, Closed, Rejected |
+
 ### What the flow block contains
 
 - `scopeChange` per sprint: starting scope (tickets and points); added after start split into `addedAfterStart_createdNew_*` and `addedAfterStart_movedIn_*`; `removedNotDone_*` split into `removedRolledToLaterSprint_*` (moved to a later sprint) and `removedDropped_*`. Ticket counts are exact; points count only pointed tickets (`*_pointsMissing` gives the unpointed tickets, which contribute 0).
@@ -137,8 +165,10 @@ One `getJiraIssue` call per unique AC ticket in the four tracked sprints (10956/
 
 **Blip rule (af-jira-changelog-scan Pattern 3):** if a ticket is removed from and re-added to the same sprint within 24 hours (a bulk-edit artefact), the blip is ignored and the earlier add event is used.
 
-**Starting scope definition:** tickets in the sprint at the end of the sprint's start date (Pacific), reconstructed from Sprint-field events. A ticket whose Sprint field has no event for the sprint (created with the sprint already set) is treated as a member from its creation date: starting scope if created on or before the start date, otherwise created new. Tickets that left before the start are not counted. Check: starting scope + created new + moved in equals the tickets that were in the sprint at any time after the start.
+**Starting scope definition (AC):** tickets in the sprint at the end of the sprint's start date (Pacific), reconstructed from Sprint-field events. A ticket whose Sprint field has no event for the sprint (created with the sprint already set) is treated as a member from its creation date: starting scope if created on or before the start date, otherwise created new. Tickets that left before the start are not counted. Check: starting scope + created new + moved in equals the tickets that were in the sprint at any time after the start.
+
+**Starting scope definition (PLATENG, PLAT):** same as AC, but tickets with no Sprint-field changelog event at all are excluded from all scope counts (cannot reliably determine their sprint from the changelog alone). Scope figures for these teams are lower bounds; the portfolio velocity block has the full per-sprint ticket counts.
 
 **`removedNotDone`** counts tickets that left the sprint after its start without being in a Done-category status (Resolved, Closed, Rejected) at that moment. Those moved to a later sprint at the same time are reported separately as `removedRolledToLaterSprint` (planned carry-over, not abandoned work); the rest are `removedDropped`.
 
-**Budget:** ~60 changelog reads per refresh (one per unique ticket). Run incremental by re-reading only tickets whose `updated` date is after the last scan.
+**Budget:** 60 changelog reads (AC) + 273 (PLATENG) + 111 (PLAT) = 444 total. Run incremental by re-reading only tickets whose `updated` date is after the last scan.
