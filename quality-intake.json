@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T05:24:39-08:00",
-  "source": "daily_tracker_s3.xlsx · Sprint Metrics + Quality Intake Detail",
+  "exportedAt": "2026-11-03T07:49:57-08:00",
+  "source": "daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
       "sprintId": 4697,
@@ -807,7 +807,7 @@
           "key": "PSWAT-2768",
           "summary": "In memory Oauth 2 account token refresh issue",
           "type": "Bug",
-          "status": "In Code Review",
+          "status": "Resolved",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
         },

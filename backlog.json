@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T05:24:39-08:00",
-  "source": "daily_tracker_s3.xlsx · Backlog Prioritized",
+  "exportedAt": "2026-11-03T07:49:57-08:00",
+  "source": "daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
       "ticket": "APP-38",
@@ -47,21 +47,6 @@
       "quickCheck": null,
       "cluster": null,
       "created": "2025-05-16"
-    },
-    {
-      "ticket": "APP-194",
-      "summary": "[Docs][APP] [Design] Notification dropdown navigation to notification center",
-      "type": "Task",
-      "priority": "High",
-      "dor": "Well-Formed",
-      "points": 3,
-      "needsSplitting": null,
-      "days": 4,
-      "epic": null,
-      "risk": null,
-      "quickCheck": "From description alone: target release (4.46), summary of changes, resolved open questions and the documentation-impact table are in the ticket's own description (updated 10-16); expected output is the doc updates listed there. In Progress since 10-29 (Ruth Stento).",
-      "cluster": null,
-      "created": "2025-08-25"
     },
     {
       "ticket": "APP-213",
@@ -1742,6 +1727,21 @@
       "quickCheck": "AC and scope are in the ticket's own description (replace the example URL in the Git integration docs, update the value description to say only GHES URL), from description alone.",
       "cluster": null,
       "created": "2026-11-02"
+    },
+    {
+      "ticket": "APP-3287",
+      "summary": "Admin lock does not log out user immediately",
+      "type": "Bug",
+      "priority": "Lowest",
+      "dor": "Well-Formed",
+      "points": null,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": null,
+      "risk": null,
+      "quickCheck": "AC and scope are in the ticket's own description: four acceptance criteria (a locked user is refused on every instance and worker within about 5 seconds; unlock propagates within the same bound; no added latency on the authentication path for other users; the suspension test can drop its wait). Judged from the description alone; it has no literal repro steps, but the failure and its cause are described.",
+      "cluster": null,
+      "created": "2026-11-03"
     }
   ]
 }
