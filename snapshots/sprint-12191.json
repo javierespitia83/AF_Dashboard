@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-04",
-  "exportedAt": "2026-11-04T08:43:58-08:00",
+  "exportedAt": "2026-11-04T11:19:42-08:00",
   "source": "daily_tracker.xlsx · Daily",
   "sprint": {
     "id": 12191,
@@ -59,7 +59,7 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "Intermittent Issue's while connecting the snaps at the Designer",
-      "lastSyncUpdate": "In Review since 11/2 (Vlad Storona). Root cause found (race condition); PR created 10/30. Support was asked on 10/30 for a customer check. No blockers.",
+      "lastSyncUpdate": "In Review since 11/2 (Vlad Storona). Root cause found (race condition); PR created 10/30. Support was asked on 10/30 for a customer check. No blockers. 11/3 (Slack): Anumeha Singh is testing it.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -433,7 +433,7 @@
       "statusAging": 37,
       "statusAgingApprox": false,
       "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
-      "lastSyncUpdate": "In Review. 11/2 daily: Artem Velykorodnyi and Salim Abdul already discussed it; Artem Velykorodnyi to address the review comments. In sprint 11-06. 11/3: Artem Velykorodnyi replied that the scope turned out larger than expected after talks with the platform team and completing it this sprint is not realistic; the decision (split scope or move to the next sprint) is pending.",
+      "lastSyncUpdate": "In Review. 11/2 daily: Artem Velykorodnyi and Salim Abdul already discussed it; Artem Velykorodnyi to address the review comments. In sprint 11-06. 11/3: Artem Velykorodnyi replied that the scope turned out larger than expected after talks with the platform team and completing it this sprint is not realistic; the decision (split scope or move to the next sprint) is pending. 11/4 (Slack): Artem Velykorodnyi reported it is about 70% done; addressing the PR feedback is taking longer because of backward compatibility for existing users.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -477,7 +477,7 @@
       "statusAging": 2,
       "statusAgingApprox": false,
       "summary": "Admin actions — unlock account, lock account, expire password",
-      "lastSyncUpdate": "In Review since 11/2. Barbora Novakova combined APP-2968 and APP-2969 in one PR (in review). 11/2 daily: design feedback from Mario Danilo Rojas to address; Poornima Srikantesh to sync on QA. 11/3: Barbora Novakova told Pavan V that the APP-3011 design change (bulk actions under 'More') also affects this ticket.",
+      "lastSyncUpdate": "In Review since 11/2. Barbora Novakova combined APP-2968 and APP-2969 in one PR (in review). 11/2 daily: design feedback from Mario Danilo Rojas to address; Poornima Srikantesh to sync on QA. 11/3: Barbora Novakova told Pavan V that the APP-3011 design change (bulk actions under 'More') also affects this ticket. 11/3 (Slack): Pavan V is testing it.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "Yes"
@@ -1695,7 +1695,7 @@
     {
       "ticket": "APP-3263",
       "owner": "Mario Rojas",
-      "status": "Open",
+      "status": "In Review",
       "type": "Task",
       "tester": null,
       "classifications": "Dev to Test",
@@ -1706,10 +1706,10 @@
       "doneDate": null,
       "addedDate": "2026-10-30",
       "cycleTime": null,
-      "statusAging": 6,
-      "statusAgingApprox": true,
+      "statusAging": 0,
+      "statusAgingApprox": false,
       "summary": "[UX / Design] Design handoff workspace: landing, product views, ticket pages, search",
-      "lastSyncUpdate": "Open. In sprint since 10/30 (approved at the 10/29 daily by Derek Fung). 10/30 daily: Mario Danilo Rojas will ship one handoff design per ticket in a shared layout with comments, then the clickable prototype; story points set (5).",
+      "lastSyncUpdate": "In Review since 11/4 (Mario Rojas). In sprint since 10/30 (approved at the 10/29 daily by Derek Fung); story points 5.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1717,7 +1717,7 @@
     {
       "ticket": "APP-3264",
       "owner": "Mario Rojas",
-      "status": "In Progress",
+      "status": "Done",
       "type": "Sub-task",
       "tester": null,
       "classifications": "Dev to Test",
@@ -1725,13 +1725,13 @@
       "parent": "APP-3263 – [UX / Design] Design handoff workspace: landing, product views, ticket pages, search",
       "linkedWorkItems": null,
       "fixVersion": null,
-      "doneDate": null,
+      "doneDate": "2026-11-04",
       "addedDate": "2026-10-29",
-      "cycleTime": null,
-      "statusAging": 5,
+      "cycleTime": 6,
+      "statusAging": 0,
       "statusAgingApprox": false,
       "summary": "[UX Spike] Feasibility: product context from the real UI code",
-      "lastSyncUpdate": "In Progress since 10/30. Sub-task of APP-3263: feasibility of the product context from the real UI code; story points set (3). No blockers.",
+      "lastSyncUpdate": "Done 11/4. Sub-task of APP-3263: feasibility of the product context from the real UI code.",
       "blocker": null,
       "demoOrSpike": null,
       "discussed": "No"
@@ -1853,8 +1853,8 @@
         "state": "active",
         "scopeTickets": 80,
         "scopePoints": 203,
-        "doneTickets": 40,
-        "donePoints": 99,
+        "doneTickets": 41,
+        "donePoints": 102,
         "doneBeforeStartTickets": 3,
         "doneBeforeStartPoints": 2
       }
