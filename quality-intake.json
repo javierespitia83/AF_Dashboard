@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-04",
-  "exportedAt": "2026-11-04T11:19:42-08:00",
+  "exportedAt": "2026-11-04T14:04:03-08:00",
   "source": "daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -732,11 +732,11 @@
       "partial": true,
       "counts": {
         "pswat": 6,
-        "appBugs": 11
+        "appBugs": 10
       },
       "ratesPer10Weekdays": {
         "pswat": 8.57,
-        "appBugs": 15.71
+        "appBugs": 14.29
       },
       "tickets": [
         {
@@ -798,18 +798,9 @@
           "key": "APP-3283",
           "summary": "Asset Service 0015-0017 and User Suspension fail on develop after APP-2970",
           "type": "Bug",
-          "status": "In Review",
+          "status": "Done",
           "created": "2026-11-02",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3283"
-        },
-        {
-          "source": "APP Bugs",
-          "key": "APP-3287",
-          "summary": "Admin lock does not log out user immediately",
-          "type": "Bug",
-          "status": "Open",
-          "created": "2026-11-03",
-          "url": "https://mysnaplogic.atlassian.net/browse/APP-3287"
         },
         {
           "source": "APP Bugs",

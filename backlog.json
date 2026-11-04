@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-04",
-  "exportedAt": "2026-11-04T11:19:42-08:00",
+  "exportedAt": "2026-11-04T14:04:03-08:00",
   "source": "daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1731,7 +1731,7 @@
     {
       "ticket": "APP-3287",
       "summary": "Admin lock does not log out user immediately",
-      "type": "Bug",
+      "type": "Story",
       "priority": "Lowest",
       "dor": "Well-Formed",
       "points": null,
