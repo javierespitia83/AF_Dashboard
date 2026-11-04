@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-04",
-  "exportedAt": "2026-11-04T02:49:25-08:00",
+  "exportedAt": "2026-11-04T08:43:58-08:00",
   "source": "daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -1286,7 +1286,7 @@
       "dor": "Well-Formed",
       "points": 2,
       "needsSplitting": null,
-      "days": 56,
+      "days": 0,
       "epic": null,
       "risk": null,
       "quickCheck": null,
@@ -1496,7 +1496,7 @@
       "dor": "Well-Formed",
       "points": 3,
       "needsSplitting": null,
-      "days": 36,
+      "days": 0,
       "epic": null,
       "risk": "Clear repro/error but fix approach left as open question",
       "quickCheck": null,
