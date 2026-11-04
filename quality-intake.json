@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T10:26:29-08:00",
+  "refreshedAt": "2026-11-04",
+  "exportedAt": "2026-11-04T02:49:25-08:00",
   "source": "daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-11-02",
-      "weekdays": 6,
+      "windowEnd": "2026-11-03",
+      "weekdays": 7,
       "partial": true,
       "counts": {
         "pswat": 6,
-        "appBugs": 7
+        "appBugs": 11
       },
       "ratesPer10Weekdays": {
-        "pswat": 10.0,
-        "appBugs": 11.67
+        "pswat": 8.57,
+        "appBugs": 15.71
       },
       "tickets": [
         {
@@ -798,9 +798,45 @@
           "key": "APP-3283",
           "summary": "Asset Service 0015-0017 and User Suspension fail on develop after APP-2970",
           "type": "Bug",
-          "status": "In Progress",
+          "status": "In Review",
           "created": "2026-11-02",
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3283"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3287",
+          "summary": "Admin lock does not log out user immediately",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-11-03",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3287"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3288",
+          "summary": "Node name missing in runtime information details and monitor",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-11-03",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3288"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3289",
+          "summary": "Users Required to Click SnapLogic Tile Twice from Microsoft  APP sso login screen",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-11-03",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3289"
+        },
+        {
+          "source": "APP Bugs",
+          "key": "APP-3290",
+          "summary": "[Designer] Unknown snap automatically added to parent/child pipelines causing execution failures",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-28",
+          "url": "https://mysnaplogic.atlassian.net/browse/APP-3290"
         },
         {
           "source": "PSWAT",
