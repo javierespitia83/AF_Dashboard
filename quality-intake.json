@@ -1,7 +1,7 @@
 {
   "refreshedAt": "2026-11-05",
-  "exportedAt": "2026-11-05T04:10:19-08:00",
-  "source": "daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
+  "exportedAt": "2026-11-05T10:42:17-08:00",
+  "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
       "sprintId": 4697,
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-11-04",
-      "weekdays": 8,
+      "windowEnd": "2026-11-05",
+      "weekdays": 9,
       "partial": true,
       "counts": {
         "pswat": 8,
         "appBugs": 10
       },
       "ratesPer10Weekdays": {
-        "pswat": 10.0,
-        "appBugs": 12.5
+        "pswat": 8.89,
+        "appBugs": 11.11
       },
       "tickets": [
         {
