@@ -1,8 +1,8 @@
 {
   "team": "AC",
   "label": "Agent Creator",
-  "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T08:47:47-05:00",
+  "refreshedAt": "2026-11-05",
+  "exportedAt": "2026-11-05T07:20:47-05:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12135,
@@ -10,21 +10,21 @@
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
     "state": "active",
-    "tickets": 30,
-    "points": 84.0,
-    "doneTickets": 6,
-    "donePoints": 2.0,
+    "tickets": 29,
+    "points": 71.0,
+    "doneTickets": 7,
+    "donePoints": 5.0,
     "ticketsFillPct": 100,
-    "pointsFillPct": 73,
-    "testerFillPct": 53,
+    "pointsFillPct": 76,
+    "testerFillPct": 55,
     "fixVersionFillPct": 100,
-    "parentFillPct": 80,
+    "parentFillPct": 86,
     "teamSize": 5,
     "bugsInSprint": 8,
-    "carriedIn": 3,
+    "carriedIn": 2,
     "createdAfterStart": 3,
     "stuckD7": 14,
-    "stuckD14": 2,
+    "stuckD14": 5,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
     "doneBeforeStartPoints": 0.0
@@ -56,11 +56,11 @@
       "completedDate": "2026-10-12",
       "closedLateDays": 0,
       "scopeTickets": 37,
-      "scopePoints": 94.0,
+      "scopePoints": 97.0,
       "doneTickets": 13,
       "donePoints": 39.0,
       "completionTicketsPct": 35,
-      "completionPointsPct": 41,
+      "completionPointsPct": 40,
       "carriedToNext": 13,
       "createdAfterStart": 12,
       "approx": true,
@@ -74,12 +74,12 @@
       "completedDate": "2026-10-26",
       "closedLateDays": 0,
       "scopeTickets": 14,
-      "scopePoints": 56,
+      "scopePoints": 56.0,
       "doneTickets": 11,
-      "donePoints": 35,
+      "donePoints": 35.0,
       "completionTicketsPct": 79,
       "completionPointsPct": 62,
-      "carriedToNext": 3,
+      "carriedToNext": 2,
       "createdAfterStart": 3,
       "approx": true,
       "method": "Done = statusCategoryChangedDate <= sprint close; scope = end-of-sprint list"
@@ -93,126 +93,77 @@
     "days": [
       [
         "2026-10-12",
-        56
+        56.0
       ],
       [
         "2026-10-13",
-        53
+        53.0
       ],
       [
         "2026-10-14",
-        53
+        53.0
       ],
       [
         "2026-10-15",
-        53
+        53.0
       ],
       [
         "2026-10-16",
-        51
+        51.0
       ],
       [
         "2026-10-17",
-        51
+        51.0
       ],
       [
         "2026-10-18",
-        44
+        44.0
       ],
       [
         "2026-10-19",
-        36
+        36.0
       ],
       [
         "2026-10-20",
-        36
+        36.0
       ],
       [
         "2026-10-21",
-        36
+        36.0
       ],
       [
         "2026-10-22",
-        36
+        36.0
       ],
       [
         "2026-10-23",
-        21
+        21.0
       ],
       [
         "2026-10-24",
-        21
+        21.0
       ],
       [
         "2026-10-25",
-        21
+        21.0
       ],
       [
         "2026-10-26",
-        21
+        21.0
       ]
     ]
   },
   "backlog": {
-    "total": 159,
+    "total": 157,
     "created90dPlus": 5,
     "created180dPlus": 0,
     "created365dPlus": 0,
-    "notUpdated365d": null,
-    "noPoints": 116,
-    "noParent": 34,
+    "notUpdated365d": 0,
+    "noPoints": 114,
+    "noParent": 33,
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
-  "bugsCreated14d": 9,
-  "burndownCurrent": {
-    "sprintId": 12135,
-    "sprintName": "AC 10-26-2026",
-    "approx": true,
-    "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-03",
-    "startDate": "2026-10-26",
-    "endDate": "2026-11-09",
-    "scopePoints": 84.0,
-    "days": [
-      [
-        "2026-10-26",
-        84.0
-      ],
-      [
-        "2026-10-27",
-        84.0
-      ],
-      [
-        "2026-10-28",
-        83.0
-      ],
-      [
-        "2026-10-29",
-        83.0
-      ],
-      [
-        "2026-10-30",
-        83.0
-      ],
-      [
-        "2026-10-31",
-        83.0
-      ],
-      [
-        "2026-11-01",
-        83.0
-      ],
-      [
-        "2026-11-02",
-        82.0
-      ],
-      [
-        "2026-11-03",
-        82.0
-      ]
-    ]
-  },
-  "ticketsCreated14d": 34,
+  "bugsCreated14d": 7,
   "flow": {
     "sprints": {
       "10956": {
@@ -444,5 +395,62 @@
     "methodology": "60 complete changelog reads (N-009, 6 parallel subagent batches, Atlassian MCP connector read-only); sprint analysis per af-jira-changelog-scan Pattern 3 with blip rule; cycle time = first In Progress or later transition to Done within sprint close; computed 2026-11-03",
     "dataDate": "2026-11-03",
     "completenessNote": "All 60 changelogs complete (changelog.total == histories.length)."
+  },
+  "ticketsCreated14d": 32,
+  "burndownCurrent": {
+    "sprintId": 12135,
+    "sprintName": "AC 10-26-2026",
+    "approx": true,
+    "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
+    "asOf": "2026-11-05",
+    "startDate": "2026-10-26",
+    "endDate": "2026-11-09",
+    "scopePoints": 71.0,
+    "days": [
+      [
+        "2026-10-26",
+        71.0
+      ],
+      [
+        "2026-10-27",
+        71.0
+      ],
+      [
+        "2026-10-28",
+        70.0
+      ],
+      [
+        "2026-10-29",
+        70.0
+      ],
+      [
+        "2026-10-30",
+        70.0
+      ],
+      [
+        "2026-10-31",
+        70.0
+      ],
+      [
+        "2026-11-01",
+        70.0
+      ],
+      [
+        "2026-11-02",
+        69.0
+      ],
+      [
+        "2026-11-03",
+        69.0
+      ],
+      [
+        "2026-11-04",
+        66.0
+      ],
+      [
+        "2026-11-05",
+        66.0
+      ]
+    ]
   }
 }

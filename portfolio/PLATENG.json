@@ -1,8 +1,8 @@
 {
   "team": "PLATENG",
   "label": "Platform Engineering",
-  "refreshedAt": "2026-11-03",
-  "exportedAt": "2026-11-03T08:47:47-05:00",
+  "refreshedAt": "2026-11-05",
+  "exportedAt": "2026-11-05T07:20:47-05:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12230,
@@ -10,24 +10,24 @@
     "startDate": "2026-10-29",
     "endDate": "2026-11-06",
     "state": "active",
-    "tickets": 55,
-    "points": 229.0,
-    "doneTickets": 18,
-    "donePoints": 75,
+    "tickets": 64,
+    "points": 251.0,
+    "doneTickets": 32,
+    "donePoints": 124.0,
     "ticketsFillPct": 100,
-    "pointsFillPct": 96,
-    "testerFillPct": 42,
-    "fixVersionFillPct": 76,
-    "parentFillPct": 69,
+    "pointsFillPct": 95,
+    "testerFillPct": 47,
+    "fixVersionFillPct": 69,
+    "parentFillPct": 66,
     "teamSize": 9,
-    "bugsInSprint": 8,
+    "bugsInSprint": 10,
     "carriedIn": 0,
-    "createdAfterStart": 14,
+    "createdAfterStart": 23,
     "stuckD7": 12,
-    "stuckD14": 7,
+    "stuckD14": 5,
     "pastEndDate": false,
     "doneBeforeStartTickets": 1,
-    "doneBeforeStartPoints": 2
+    "doneBeforeStartPoints": 2.0
   },
   "velocity": [
     {
@@ -56,9 +56,9 @@
       "completedDate": "2026-10-13",
       "closedLateDays": 0,
       "scopeTickets": 89,
-      "scopePoints": 302,
+      "scopePoints": 302.0,
       "doneTickets": 70,
-      "donePoints": 206,
+      "donePoints": 206.0,
       "completionTicketsPct": 79,
       "completionPointsPct": 68,
       "carriedToNext": 3,
@@ -143,52 +143,15 @@
   },
   "backlog": {
     "total": 969,
-    "created90dPlus": 887,
-    "created180dPlus": 811,
-    "created365dPlus": 639,
-    "notUpdated365d": 585,
-    "noPoints": 402,
-    "noParent": 359,
+    "created90dPlus": 884,
+    "created180dPlus": 813,
+    "created365dPlus": 642,
+    "notUpdated365d": 586,
+    "noPoints": 404,
+    "noParent": 368,
     "jql": "project = PLATENG AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12230))"
   },
   "bugsCreated14d": 7,
-  "burndownCurrent": {
-    "sprintId": 12230,
-    "sprintName": "PLATENG-11-06-2026",
-    "approx": true,
-    "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-03",
-    "startDate": "2026-10-29",
-    "endDate": "2026-11-06",
-    "scopePoints": 229.0,
-    "days": [
-      [
-        "2026-10-29",
-        225.0
-      ],
-      [
-        "2026-10-30",
-        183.0
-      ],
-      [
-        "2026-10-31",
-        183.0
-      ],
-      [
-        "2026-11-01",
-        183.0
-      ],
-      [
-        "2026-11-02",
-        154.0
-      ],
-      [
-        "2026-11-03",
-        154.0
-      ]
-    ]
-  },
-  "ticketsCreated14d": 55,
   "flow": {
     "dataDate": "2026-11-03",
     "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; JQL sprint=<id> used as authoritative membership (reconciled to velocity.scopeTickets); sprint age counts all boards.",
@@ -416,5 +379,50 @@
         }
       }
     }
+  },
+  "ticketsCreated14d": 60,
+  "burndownCurrent": {
+    "sprintId": 12230,
+    "sprintName": "PLATENG-11-06-2026",
+    "approx": true,
+    "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
+    "asOf": "2026-11-05",
+    "startDate": "2026-10-29",
+    "endDate": "2026-11-06",
+    "scopePoints": 251.0,
+    "days": [
+      [
+        "2026-10-29",
+        247.0
+      ],
+      [
+        "2026-10-30",
+        205.0
+      ],
+      [
+        "2026-10-31",
+        205.0
+      ],
+      [
+        "2026-11-01",
+        205.0
+      ],
+      [
+        "2026-11-02",
+        176.0
+      ],
+      [
+        "2026-11-03",
+        142.0
+      ],
+      [
+        "2026-11-04",
+        127.0
+      ],
+      [
+        "2026-11-05",
+        127.0
+      ]
+    ]
   }
 }
