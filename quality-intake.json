@@ -1,6 +1,6 @@
 {
-  "refreshedAt": "2026-11-04",
-  "exportedAt": "2026-11-04T14:04:03-08:00",
+  "refreshedAt": "2026-11-05",
+  "exportedAt": "2026-11-05T04:10:19-08:00",
   "source": "daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -727,16 +727,16 @@
       "sprintId": 12191,
       "name": "App Sprint 11-06-2026",
       "windowStart": "2026-10-26",
-      "windowEnd": "2026-11-03",
-      "weekdays": 7,
+      "windowEnd": "2026-11-04",
+      "weekdays": 8,
       "partial": true,
       "counts": {
-        "pswat": 6,
+        "pswat": 8,
         "appBugs": 10
       },
       "ratesPer10Weekdays": {
-        "pswat": 8.57,
-        "appBugs": 14.29
+        "pswat": 10.0,
+        "appBugs": 12.5
       },
       "tickets": [
         {
@@ -882,6 +882,24 @@
           "status": "Open",
           "created": "2026-11-02",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2775"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2776",
+          "summary": "Intermittent issues while switching the Orgs via SSO",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-11-04",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2776"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2777",
+          "summary": "Git tag checkout failure \"Asset in project did not come from the repository, move it out of the way\"",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-11-04",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2777"
         }
       ]
     }
