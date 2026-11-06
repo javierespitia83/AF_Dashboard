@@ -2,7 +2,7 @@
   "team": "PLAT",
   "label": "Plat Core",
   "refreshedAt": "2026-11-06",
-  "exportedAt": "2026-11-06T12:08:20+00:00",
+  "exportedAt": "2026-11-06T19:09:17+00:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12189,
@@ -12,19 +12,19 @@
     "state": "active",
     "tickets": 57,
     "points": 72.0,
-    "doneTickets": 15,
-    "donePoints": 16.0,
+    "doneTickets": 18,
+    "donePoints": 19.0,
     "ticketsFillPct": 100,
     "pointsFillPct": 42,
-    "testerFillPct": 12,
+    "testerFillPct": 11,
     "fixVersionFillPct": 21,
     "parentFillPct": 81,
     "teamSize": 11,
     "bugsInSprint": 18,
     "carriedIn": 28,
-    "createdAfterStart": 15,
-    "stuckD7": 22,
-    "stuckD14": 16,
+    "createdAfterStart": 16,
+    "stuckD7": 16,
+    "stuckD14": 11,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
     "doneBeforeStartPoints": 1.0
@@ -154,17 +154,17 @@
     ]
   },
   "backlog": {
-    "total": 2979,
-    "created90dPlus": 2927,
-    "created180dPlus": 2872,
+    "total": 2983,
+    "created90dPlus": 2928,
+    "created180dPlus": 2873,
     "created365dPlus": 2741,
     "notUpdated365d": 2597,
-    "noPoints": 2669,
-    "noParent": 2365,
+    "noPoints": 2673,
+    "noParent": 2368,
     "jql": "project = PLAT AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12189))",
     "scopeNote": "Whole Platform project, not only the Plat Core board."
   },
-  "bugsCreated14d": 12,
+  "bugsCreated14d": 13,
   "flow": {
     "dataDate": "2026-11-03",
     "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; JQL sprint=<id> used as authoritative membership (reconciled to velocity.scopeTickets); sprint age counts all boards.",
@@ -399,7 +399,7 @@
       }
     }
   },
-  "ticketsCreated14d": 25,
+  "ticketsCreated14d": 28,
   "burndownCurrent": {
     "sprintId": 12189,
     "sprintName": "Plat Core 11-06-2026",
@@ -456,7 +456,7 @@
       ],
       [
         "2026-11-06",
-        56.0
+        53.0
       ]
     ]
   }

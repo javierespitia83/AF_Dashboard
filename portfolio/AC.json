@@ -2,7 +2,7 @@
   "team": "AC",
   "label": "Agent Creator",
   "refreshedAt": "2026-11-06",
-  "exportedAt": "2026-11-06T12:08:20+00:00",
+  "exportedAt": "2026-11-06T19:09:17+00:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12135,
@@ -16,14 +16,14 @@
     "donePoints": 5.0,
     "ticketsFillPct": 100,
     "pointsFillPct": 76,
-    "testerFillPct": 55,
+    "testerFillPct": 52,
     "fixVersionFillPct": 100,
     "parentFillPct": 86,
     "teamSize": 5,
     "bugsInSprint": 8,
     "carriedIn": 2,
     "createdAfterStart": 3,
-    "stuckD7": 14,
+    "stuckD7": 13,
     "stuckD14": 8,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
@@ -154,16 +154,16 @@
     ]
   },
   "backlog": {
-    "total": 157,
+    "total": 158,
     "created90dPlus": 5,
     "created180dPlus": 0,
     "created365dPlus": 0,
     "notUpdated365d": 0,
-    "noPoints": 114,
-    "noParent": 33,
+    "noPoints": 115,
+    "noParent": 34,
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
-  "bugsCreated14d": 5,
+  "bugsCreated14d": 3,
   "flow": {
     "sprints": {
       "10956": {
@@ -396,7 +396,7 @@
     "dataDate": "2026-11-03",
     "completenessNote": "All 60 changelogs complete (changelog.total == histories.length)."
   },
-  "ticketsCreated14d": 24,
+  "ticketsCreated14d": 23,
   "burndownCurrent": {
     "sprintId": 12135,
     "sprintName": "AC 10-26-2026",

@@ -2,7 +2,7 @@
   "team": "PLATENG",
   "label": "Platform Engineering",
   "refreshedAt": "2026-11-06",
-  "exportedAt": "2026-11-06T12:08:20+00:00",
+  "exportedAt": "2026-11-06T19:09:17+00:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12230,
@@ -11,20 +11,20 @@
     "endDate": "2026-11-06",
     "state": "active",
     "tickets": 72,
-    "points": 271.0,
-    "doneTickets": 36,
-    "donePoints": 134.0,
+    "points": 274.0,
+    "doneTickets": 43,
+    "donePoints": 159.0,
     "ticketsFillPct": 100,
-    "pointsFillPct": 96,
+    "pointsFillPct": 97,
     "testerFillPct": 42,
     "fixVersionFillPct": 67,
     "parentFillPct": 65,
-    "teamSize": 10,
+    "teamSize": 9,
     "bugsInSprint": 12,
     "carriedIn": 0,
     "createdAfterStart": 29,
-    "stuckD7": 13,
-    "stuckD14": 7,
+    "stuckD7": 8,
+    "stuckD14": 5,
     "pastEndDate": false,
     "doneBeforeStartTickets": 1,
     "doneBeforeStartPoints": 2.0
@@ -142,16 +142,16 @@
     ]
   },
   "backlog": {
-    "total": 968,
+    "total": 969,
     "created90dPlus": 886,
     "created180dPlus": 813,
-    "created365dPlus": 644,
-    "notUpdated365d": 589,
-    "noPoints": 404,
-    "noParent": 366,
+    "created365dPlus": 645,
+    "notUpdated365d": 591,
+    "noPoints": 405,
+    "noParent": 368,
     "jql": "project = PLATENG AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12230))"
   },
-  "bugsCreated14d": 10,
+  "bugsCreated14d": 9,
   "flow": {
     "dataDate": "2026-11-03",
     "methodology": "Sprint-field changelog events; blip rule (remove+re-add within 24h ignored); sprint start = end of start date Pacific time; JQL sprint=<id> used as authoritative membership (reconciled to velocity.scopeTickets); sprint age counts all boards.",
@@ -389,43 +389,43 @@
     "asOf": "2026-11-06",
     "startDate": "2026-10-29",
     "endDate": "2026-11-06",
-    "scopePoints": 271.0,
+    "scopePoints": 274.0,
     "days": [
       [
         "2026-10-29",
-        267.0
+        270.0
       ],
       [
         "2026-10-30",
-        225.0
+        228.0
       ],
       [
         "2026-10-31",
-        225.0
+        228.0
       ],
       [
         "2026-11-01",
-        225.0
+        228.0
       ],
       [
         "2026-11-02",
-        196.0
+        199.0
       ],
       [
         "2026-11-03",
-        162.0
+        165.0
       ],
       [
         "2026-11-04",
-        147.0
+        150.0
       ],
       [
         "2026-11-05",
-        137.0
+        140.0
       ],
       [
         "2026-11-06",
-        137.0
+        115.0
       ]
     ]
   }
