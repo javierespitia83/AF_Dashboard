@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-06",
-  "exportedAt": "2026-11-06T04:08:14-08:00",
+  "exportedAt": "2026-11-06T04:19:24-08:00",
   "source": "03_Tracker/daily_tracker.xlsx · Sprint Metrics + Quality Intake Detail",
   "sprints": [
     {
@@ -731,12 +731,12 @@
       "weekdays": 9,
       "partial": true,
       "counts": {
-        "pswat": 8,
-        "appBugs": 10
+        "pswat": 11,
+        "appBugs": 9
       },
       "ratesPer10Weekdays": {
-        "pswat": 8.89,
-        "appBugs": 11.11
+        "pswat": 12.22,
+        "appBugs": 10.0
       },
       "tickets": [
         {
@@ -821,13 +821,22 @@
           "url": "https://mysnaplogic.atlassian.net/browse/APP-3289"
         },
         {
-          "source": "APP Bugs",
-          "key": "APP-3290",
+          "source": "PSWAT",
+          "key": "PSWAT-2766",
+          "summary": "SnapLogic Create Snap - Failed with status code: 400 [error: {\"error_list\":[{\"message\":\"a task already exists with job_id 64d225c47752e7ccc88e7025\"}]}]",
+          "type": "Bug",
+          "status": "Open",
+          "created": "2026-10-27",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2766"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2767",
           "summary": "[Designer] Unknown snap automatically added to parent/child pipelines causing execution failures",
           "type": "Bug",
           "status": "Open",
           "created": "2026-10-28",
-          "url": "https://mysnaplogic.atlassian.net/browse/APP-3290"
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2767"
         },
         {
           "source": "PSWAT",
@@ -837,6 +846,15 @@
           "status": "Resolved",
           "created": "2026-10-26",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2768"
+        },
+        {
+          "source": "PSWAT",
+          "key": "PSWAT-2769",
+          "summary": "Update org.apache.activemq:activemq-broker to version to 5.19.7 or higher",
+          "type": "Bug",
+          "status": "Resolved",
+          "created": "2026-10-28",
+          "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2769"
         },
         {
           "source": "PSWAT",
@@ -861,7 +879,7 @@
           "key": "PSWAT-2772",
           "summary": "SnapLogic Snowflake Ultra Pipeline stuck in Production and Did Not Auto-Restart",
           "type": "Bug",
-          "status": "Open",
+          "status": "Try to Reproduce",
           "created": "2026-10-30",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2772"
         },
@@ -870,7 +888,7 @@
           "key": "PSWAT-2773",
           "summary": "JCC: SLFS expr import request hangs ~15 min with no response and no control-plane record, then Ultra pipeline init fails",
           "type": "Bug",
-          "status": "Open",
+          "status": "Try to Reproduce",
           "created": "2026-10-30",
           "url": "https://mysnaplogic.atlassian.net/browse/PSWAT-2773"
         },
