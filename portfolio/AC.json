@@ -1,8 +1,8 @@
 {
   "team": "AC",
   "label": "Agent Creator",
-  "refreshedAt": "2026-11-05",
-  "exportedAt": "2026-11-05T07:20:47-05:00",
+  "refreshedAt": "2026-11-06",
+  "exportedAt": "2026-11-06T12:08:20+00:00",
   "pointsNote": "Points shown as recorded in Jira; their meaning is not confirmed for this team.",
   "currentSprint": {
     "id": 12135,
@@ -24,7 +24,7 @@
     "carriedIn": 2,
     "createdAfterStart": 3,
     "stuckD7": 14,
-    "stuckD14": 5,
+    "stuckD14": 8,
     "pastEndDate": false,
     "doneBeforeStartTickets": 4,
     "doneBeforeStartPoints": 0.0
@@ -163,7 +163,7 @@
     "noParent": 33,
     "jql": "project = AC AND statusCategory != Done AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (sprint is EMPTY OR sprint not in (12135))"
   },
-  "bugsCreated14d": 7,
+  "bugsCreated14d": 5,
   "flow": {
     "sprints": {
       "10956": {
@@ -396,13 +396,13 @@
     "dataDate": "2026-11-03",
     "completenessNote": "All 60 changelogs complete (changelog.total == histories.length)."
   },
-  "ticketsCreated14d": 32,
+  "ticketsCreated14d": 24,
   "burndownCurrent": {
     "sprintId": 12135,
     "sprintName": "AC 10-26-2026",
     "approx": true,
     "method": "Final points used; Done date = status-category change date; tickets added mid-sprint count from day 1; removals not tracked",
-    "asOf": "2026-11-05",
+    "asOf": "2026-11-06",
     "startDate": "2026-10-26",
     "endDate": "2026-11-09",
     "scopePoints": 71.0,
@@ -449,6 +449,10 @@
       ],
       [
         "2026-11-05",
+        66.0
+      ],
+      [
+        "2026-11-06",
         66.0
       ]
     ]
