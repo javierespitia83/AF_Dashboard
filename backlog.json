@@ -1,6 +1,6 @@
 {
   "refreshedAt": "2026-11-06",
-  "exportedAt": "2026-11-06T04:19:24-08:00",
+  "exportedAt": "2026-11-06T11:09:17-08:00",
   "source": "03_Tracker/daily_tracker.xlsx · Backlog Prioritized",
   "tickets": [
     {
@@ -979,6 +979,21 @@
       "created": "2026-08-16"
     },
     {
+      "ticket": "APP-2643",
+      "summary": "Project name with Special characters - Pipeline Preview not displaying documents in windows snaplex",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Well-Formed",
+      "points": 5,
+      "needsSplitting": null,
+      "days": 1,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": null,
+      "quickCheck": "Customer-reported bug with environment, project and pipeline to reproduce (attached mapper pipeline, Windows Snaplex only) and the observed result (preview shows no documents); expected result is implicit (documents shown). From description alone. Back in the bucket on 11/6 while In Progress, waiting on Platform Engineering review.",
+      "cluster": null,
+      "created": "2026-08-13"
+    },
+    {
       "ticket": "APP-2694",
       "summary": "Update sr_pipeline_children_rt model to use new silver layer",
       "type": "Story",
@@ -1549,6 +1564,21 @@
       "created": "2026-10-23"
     },
     {
+      "ticket": "APP-3222",
+      "summary": "Tahoe pod set up for nightly regressions",
+      "type": "Task",
+      "priority": "Lowest",
+      "dor": "Missing",
+      "points": 3,
+      "needsSplitting": null,
+      "days": 11,
+      "epic": "APP-3150 – Epic to track QA Activities for App Sprint 11-06",
+      "risk": "No description; blocked until the Tahoe pod is ready.",
+      "quickCheck": "Refinement Check — this task has no description: what the Tahoe pod set-up for nightly regressions includes and how we know it is done. It is also waiting on the Tahoe pod being ready. Under-specified tickets are parked toward the bottom of the rank until refined. Whoever wants this prioritized, please help refine it so it can move back up. Thanks.",
+      "cluster": null,
+      "created": "2026-10-26"
+    },
+    {
       "ticket": "APP-3226",
       "summary": "[SPIKE] Monitor does not return related pipelines to which a user does not have read permission",
       "type": "Story",
@@ -1682,6 +1712,36 @@
       "quickCheck": "Refinement Check — the description explains the ActiveMQ connection failure and asks for an alert and/or a Feedmaster restart, but has no acceptance criteria: how a stopped broker is detected, which of alert or restart is expected, and how to verify it. Under-specified tickets are parked toward the bottom of the rank until refined. Whoever wants this prioritized, please help refine it so it can move back up. Thanks.",
       "cluster": null,
       "created": "2026-11-05"
+    },
+    {
+      "ticket": "APP-3317",
+      "summary": "Git tag checkout failure \"Asset in project did not come from the repository, move it out of the way\"",
+      "type": "Bug",
+      "priority": "High",
+      "dor": "Well-Formed",
+      "points": 3,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": "APP-55 – App Foundation PSWAT",
+      "risk": null,
+      "quickCheck": "Customer-reported bug with the exact error, where it happens (tag checkout at project space level) and troubleshooting already done (works in a new project space, fails again on another asset); expected result is implicit (checkout succeeds). From description alone.",
+      "cluster": null,
+      "created": "2026-11-04"
+    },
+    {
+      "ticket": "APP-3322",
+      "summary": "Update emails for admin lock",
+      "type": "Story",
+      "priority": "Lowest",
+      "dor": "Weak",
+      "points": 1,
+      "needsSplitting": null,
+      "days": 0,
+      "epic": null,
+      "risk": "No link to the approved email designs; UX writing review still pending.",
+      "quickCheck": "Refinement Check — the acceptance criteria say to update the lock, unlock and expire-password emails according to the design, but the ticket does not link the approved designs or texts (UX writing review is still pending, per the 11/6 daily). Under-specified tickets are parked toward the bottom of the rank until refined. Whoever wants this prioritized, please help refine it so it can move back up. Thanks.",
+      "cluster": null,
+      "created": "2026-11-06"
     }
   ]
 }
